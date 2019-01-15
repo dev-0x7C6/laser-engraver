@@ -5,6 +5,9 @@
 
 #include <memory>
 
+
+class QGraphicsItem;
+
 namespace Ui {
 class MainWindow;
 }
@@ -23,5 +26,15 @@ public:
 	~MainWindow() final;
 
 private:
+	bool isItemSelected() const noexcept;
+
+	void itemMoveTop();
+	void removeItem();
+
+	void updateAngle(int value);
+	void updateOpacity(int value);
+
+private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
+	QGraphicsItem *m_selectedItem{nullptr};
 };
