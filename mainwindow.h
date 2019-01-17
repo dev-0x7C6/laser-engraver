@@ -5,7 +5,6 @@
 
 #include <memory>
 
-
 class QGraphicsItem;
 
 namespace Ui {
@@ -24,6 +23,10 @@ public:
 	MainWindow &operator=(MainWindow &&) = delete;
 
 	~MainWindow() final;
+
+private:
+	void open();
+	void print();
 
 private:
 	bool isItemSelected() const noexcept;

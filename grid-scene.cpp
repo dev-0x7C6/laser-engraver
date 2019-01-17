@@ -4,15 +4,21 @@
 #include <externals/common/qt/raii/raii-painter.hpp>
 
 GridScene::GridScene(qreal x, qreal y, qreal w, qreal h)
-	: QGraphicsScene(x, y, w, h) {}
+		: QGraphicsScene(x, y, w, h) {}
 
-void GridScene::setGridSize(int size) noexcept
-{
+void GridScene::setDisableBackground(bool value) noexcept {
+	m_disableBackground = value;
+}
+
+void GridScene::setGridSize(int size) noexcept {
 	m_gridSize = size;
 	update();
 }
 
 void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {
+	if (m_disableBackground)
+		return;
+
 	if (m_gridSize)
 		drawGrid(painter, rect);
 

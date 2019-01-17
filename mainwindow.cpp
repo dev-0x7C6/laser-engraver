@@ -19,25 +19,15 @@ MainWindow::MainWindow(QWidget *parent)
 
 	auto menu = m_ui->menu;
 	auto file = menu->addMenu("&File");
-	auto open = file->addAction("&Open", [this]() {
-		auto path = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp)"));
-
-		if (path.isEmpty())
-			return;
-
-		auto item = m_ui->view->scene()->addPixmap({path});
-		item->setFlag(QGraphicsItem::ItemIsMovable);
-		item->setFlag(QGraphicsItem::ItemIsSelectable);
-		item->setTransformOriginPoint(item->boundingRect().width() / 2, item->boundingRect().height() / 2);
-		item->setX(item->boundingRect().width() / -2);
-		item->setY(item->boundingRect().height() / -2);
-		item->setZValue(item->topLevelItem()->zValue() + 1.0);
-	});
+	auto print = file->addAction("&Print", this, &MainWindow::print);
+	auto open = file->addAction("&Open", this, &MainWindow::open);
 	file->addSeparator();
-	auto exit = file->addAction("&Close", [this]() { close(); });
+	auto exit = file->addAction("&Close", this, &MainWindow::close);
 
 	open->setShortcuts(QKeySequence::Open);
 	open->setIcon(QIcon::fromTheme("document-open"));
+	print->setShortcut(QKeySequence::Print);
+	print->setIcon(QIcon::fromTheme("document-print"));
 	exit->setShortcuts(QKeySequence::Quit);
 	exit->setIcon(QIcon::fromTheme("application-exit"));
 
@@ -55,9 +45,10 @@ MainWindow::MainWindow(QWidget *parent)
 	auto tool = m_ui->tool;
 	tool->addAction(open);
 	tool->addSeparator();
+	tool->addAction(print);
+	tool->addSeparator();
 	tool->addAction(move_up);
 	tool->addAction(remove);
-
 
 	constexpr auto grid_size = 5000;
 
@@ -84,7 +75,6 @@ MainWindow::MainWindow(QWidget *parent)
 		const auto v = static_cast<double>(m_ui->scale->itemData(index).toInt()) / 100.0;
 		m_ui->view->resetTransform();
 		m_ui->view->scale(v, v);
-		////m_ui->view->set
 	});
 
 	connect(m_ui->view->scene(), &QGraphicsScene::selectionChanged, [this]() {
@@ -116,6 +106,37 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->removeItemButton->setDefaultAction(remove);
 }
 
+void MainWindow::open() {
+	auto path = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp)"));
+
+	if (path.isEmpty())
+		return;
+
+	auto item = m_ui->view->scene()->addPixmap({path});
+	item->setTransformationMode(Qt::SmoothTransformation);
+	item->setFlag(QGraphicsItem::ItemIsMovable);
+	item->setFlag(QGraphicsItem::ItemIsSelectable);
+	item->setTransformOriginPoint(item->boundingRect().width() / 2, item->boundingRect().height() / 2);
+	item->setX(item->boundingRect().width() / -2);
+	item->setY(item->boundingRect().height() / -2);
+	item->setZValue(item->topLevelItem()->zValue() + 1.0);
+}
+
+void MainWindow::print() {
+	auto scene = m_ui->view->scene();
+	auto rect = scene->itemsBoundingRect().toRect();
+	rect.moveTopLeft({0, 0});
+	//rect.setY(0);
+	QPixmap canvas(rect.width(), rect.height());
+	canvas.fill(Qt::white);
+	QPainter painter(&canvas);
+	scene->clearSelection();
+	dynamic_cast<GridScene *>(scene)->setDisableBackground(true);
+	scene->render(&painter, canvas.rect(), scene->itemsBoundingRect());
+	dynamic_cast<GridScene *>(scene)->setDisableBackground(false);
+	canvas.save(QDir::homePath() + QDir::separator() + "result.png");
+}
+
 bool MainWindow::isItemSelected() const noexcept {
 	return m_selectedItem != nullptr;
 }
@@ -125,8 +146,7 @@ void MainWindow::itemMoveTop() {
 		m_selectedItem->setZValue(m_selectedItem->topLevelItem()->zValue() + 1.0);
 }
 
-void MainWindow::removeItem()
-{
+void MainWindow::removeItem() {
 	if (isItemSelected())
 		delete m_selectedItem;
 }

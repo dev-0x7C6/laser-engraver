@@ -6,6 +6,7 @@ class GridScene : public QGraphicsScene {
 public:
 	GridScene(qreal x, qreal y, qreal w, qreal h);
 
+	void setDisableBackground(bool value) noexcept;
 	void setGridSize(int size) noexcept;
 
 protected:
@@ -17,6 +18,8 @@ private:
 	void drawYAxis(QPainter *painter, QRect &&scene) noexcept;
 
 private:
+	bool m_disableBackground{false};
+
 	int m_gridSize{10};
 
 	QColor m_xAxisColor{0xff, 0x00, 0x00, 0x9f};
