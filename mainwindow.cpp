@@ -8,7 +8,11 @@
 #include <QTimer>
 
 #include <grid-scene.h>
+
 #include <chrono>
+#include <iostream>
+#include <variant>
+#include <vector>
 
 using namespace std::chrono_literals;
 
@@ -122,11 +126,51 @@ void MainWindow::open() {
 	item->setZValue(item->topLevelItem()->zValue() + 1.0);
 }
 
+namespace semi_gcodes {
+struct home {
+};
+
+struct dwell {
+	int delay;
+};
+
+struct move {
+	float x;
+	float y;
+};
+
+struct power {
+	float duty;
+};
+
+using gcode_variant = std::variant<std::monostate, dwell, move, power>;
+}
+
+std::vector<semi_gcodes::gcode_variant> semi_gcode_generator(const QImage &pixmap, float y_steps = 0.5, float x_steps = 0.5) {
+	std::vector<semi_gcodes::gcode_variant> ret;
+	ret.reserve(sizeof(semi_gcodes::gcode_variant) * (pixmap.width() / x_steps) * (pixmap.height() / y_steps) + sizeof(semi_gcodes::gcode_variant));
+	//ret.emplace_back(semi_gcodes::home{});
+	for (auto y = 0.0f; y < pixmap.height(); y += y_steps) {
+		for (auto x = 0.0f; x < pixmap.width(); x += x_steps) {
+			auto light = pixmap.pixelColor(static_cast<int>(x), static_cast<int>(y)).lightness();
+
+			if (light >= 255.0f)
+				continue;
+
+			ret.emplace_back(semi_gcodes::move{x, y});
+			ret.emplace_back(semi_gcodes::power{static_cast<float>(light) / 255.0f});
+			ret.emplace_back(semi_gcodes::dwell{1});
+			ret.emplace_back(semi_gcodes::power{0.0});
+		}
+	}
+
+	return ret;
+}
+
 void MainWindow::print() {
 	auto scene = m_ui->view->scene();
 	auto rect = scene->itemsBoundingRect().toRect();
 	rect.moveTopLeft({0, 0});
-	//rect.setY(0);
 	QPixmap canvas(rect.width(), rect.height());
 	canvas.fill(Qt::white);
 	QPainter painter(&canvas);
@@ -135,6 +179,8 @@ void MainWindow::print() {
 	scene->render(&painter, canvas.rect(), scene->itemsBoundingRect());
 	dynamic_cast<GridScene *>(scene)->setDisableBackground(false);
 	canvas.save(QDir::homePath() + QDir::separator() + "result.png");
+	auto semi = semi_gcode_generator(canvas.toImage());
+	std::cout << semi.size() << std::endl;
 }
 
 bool MainWindow::isItemSelected() const noexcept {
