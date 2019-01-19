@@ -14,6 +14,8 @@
 #include <variant>
 #include <vector>
 
+#include <externals/common/types.hpp>
+
 using namespace std::chrono_literals;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -127,42 +129,63 @@ void MainWindow::open() {
 }
 
 namespace semi_gcodes {
-struct home {
-};
+struct laser_on {};
+struct laser_off {};
+struct go_home {};
 
 struct dwell {
-	int delay;
+	i16 delay;
 };
 
 struct move {
-	float x;
-	float y;
+	i16 x;
+	i16 y;
 };
 
 struct power {
-	float duty;
+	i16 duty;
 };
 
-using gcode_variant = std::variant<std::monostate, dwell, move, power>;
+using gcode_variant = std::variant<std::monostate, laser_on, laser_off, go_home, dwell, move, power>;
+
+//static_assert (sizeof (gcode_variant) == sizeof(i16) + sizeof(i16));
 }
 
-std::vector<semi_gcodes::gcode_variant> semi_gcode_generator(const QImage &pixmap, float y_steps = 0.5, float x_steps = 0.5) {
+std::vector<semi_gcodes::gcode_variant> semi_gcode_generator(const QImage &pixmap) {
 	std::vector<semi_gcodes::gcode_variant> ret;
-	ret.reserve(sizeof(semi_gcodes::gcode_variant) * (pixmap.width() / x_steps) * (pixmap.height() / y_steps) + sizeof(semi_gcodes::gcode_variant));
-	//ret.emplace_back(semi_gcodes::home{});
-	for (auto y = 0.0f; y < pixmap.height(); y += y_steps) {
-		for (auto x = 0.0f; x < pixmap.width(); x += x_steps) {
+
+	constexpr static auto ir_size = sizeof(semi_gcodes::gcode_variant);
+	constexpr static auto ir_extra = ir_size * 100;
+	const auto w = static_cast<std::size_t>(pixmap.width());
+	const auto h = static_cast<std::size_t>(pixmap.height());
+
+	ret.reserve(ir_size * w * h + ir_extra);
+
+	auto emplace = [&ret](auto &&value) {
+		ret.emplace_back(std::move(value));
+	};
+
+	emplace(semi_gcodes::go_home{});
+	emplace(semi_gcodes::power{0});
+	emplace(semi_gcodes::laser_on{});
+
+	for (std::size_t y = 0; y < h; ++y) {
+		for (std::size_t x = 0; x < w; ++x) {
 			auto light = pixmap.pixelColor(static_cast<int>(x), static_cast<int>(y)).lightness();
 
-			if (light >= 255.0f)
+			if (light == 0xff)
 				continue;
 
-			ret.emplace_back(semi_gcodes::move{x, y});
-			ret.emplace_back(semi_gcodes::power{static_cast<float>(light) / 255.0f});
+			ret.emplace_back(semi_gcodes::move{static_cast<decltype(semi_gcodes::move::x)>(x), static_cast<decltype(semi_gcodes::move::y)>(y)});
+			ret.emplace_back(semi_gcodes::power{static_cast<i16>(light * 2)});
 			ret.emplace_back(semi_gcodes::dwell{1});
-			ret.emplace_back(semi_gcodes::power{0.0});
+			ret.emplace_back(semi_gcodes::power{0});
 		}
 	}
+
+	emplace(semi_gcodes::power{0});
+	emplace(semi_gcodes::laser_off{});
+	emplace(semi_gcodes::go_home{});
 
 	return ret;
 }
