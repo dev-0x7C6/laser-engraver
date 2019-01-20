@@ -75,7 +75,7 @@
      <x>0</x>
      <y>0</y>
      <width>1161</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -99,7 +99,7 @@
           <item>
            <widget class="QLabel" name="label">
             <property name="text">
-             <string>Scale:</string>
+             <string>Zoom:</string>
             </property>
            </widget>
           </item>

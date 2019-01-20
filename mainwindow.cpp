@@ -10,6 +10,7 @@
 #include <grid-scene.h>
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <variant>
 #include <vector>
@@ -131,7 +132,7 @@ void MainWindow::open() {
 namespace semi_gcodes {
 struct laser_on {};
 struct laser_off {};
-struct go_home {};
+struct home {};
 
 struct dwell {
 	i16 delay;
@@ -146,15 +147,18 @@ struct power {
 	i16 duty;
 };
 
-using gcode_variant = std::variant<std::monostate, laser_on, laser_off, go_home, dwell, move, power>;
+using gcode = std::variant<std::monostate, laser_on, laser_off, home, dwell, move, power>;
+using gcodes = std::vector<gcode>;
 
 //static_assert (sizeof (gcode_variant) == sizeof(i16) + sizeof(i16));
 }
 
-std::vector<semi_gcodes::gcode_variant> semi_gcode_generator(const QImage &pixmap) {
-	std::vector<semi_gcodes::gcode_variant> ret;
+semi_gcodes::gcodes semi_gcode_generator(const QImage &pixmap) {
+	using namespace semi_gcodes;
 
-	constexpr static auto ir_size = sizeof(semi_gcodes::gcode_variant);
+	gcodes ret;
+
+	constexpr static auto ir_size = sizeof(gcode);
 	constexpr static auto ir_extra = ir_size * 100;
 	const auto w = static_cast<std::size_t>(pixmap.width());
 	const auto h = static_cast<std::size_t>(pixmap.height());
@@ -165,29 +169,57 @@ std::vector<semi_gcodes::gcode_variant> semi_gcode_generator(const QImage &pixma
 		ret.emplace_back(std::move(value));
 	};
 
-	emplace(semi_gcodes::go_home{});
+	emplace(semi_gcodes::home{});
 	emplace(semi_gcodes::power{0});
 	emplace(semi_gcodes::laser_on{});
 
 	for (std::size_t y = 0; y < h; ++y) {
 		for (std::size_t x = 0; x < w; ++x) {
-			auto light = pixmap.pixelColor(static_cast<int>(x), static_cast<int>(y)).lightness();
+			auto light = pixmap.pixelColor(static_cast<int>(x), static_cast<int>(y)).lightnessF();
 
-			if (light == 0xff)
+			if (light >= 0.99)
 				continue;
 
-			ret.emplace_back(semi_gcodes::move{static_cast<decltype(semi_gcodes::move::x)>(x), static_cast<decltype(semi_gcodes::move::y)>(y)});
-			ret.emplace_back(semi_gcodes::power{static_cast<i16>(light * 2)});
-			ret.emplace_back(semi_gcodes::dwell{1});
-			ret.emplace_back(semi_gcodes::power{0});
+			ret.emplace_back(move{static_cast<decltype(move::x)>(x), static_cast<decltype(move::y)>(y)});
+			ret.emplace_back(power{static_cast<i16>((1.0 - light) * 1000.0)});
+			ret.emplace_back(dwell{1});
+			ret.emplace_back(power{0});
 		}
 	}
 
 	emplace(semi_gcodes::power{0});
 	emplace(semi_gcodes::laser_off{});
-	emplace(semi_gcodes::go_home{});
+	emplace(semi_gcodes::home{});
 
 	return ret;
+}
+
+class gcode_visitor {
+public:
+	gcode_visitor(std::ostream &stream)
+			: m_stream(stream) {}
+
+	void operator()(const semi_gcodes::dwell &value) { m_stream << "G4 P00" << value.delay << std::endl; }
+	void operator()(semi_gcodes::home) { m_stream << "G0 X0 Y0" << std::endl; }
+	void operator()(semi_gcodes::laser_off) { m_stream << "M5" << std::endl; }
+	void operator()(semi_gcodes::laser_on) { m_stream << "M3" << std::endl; }
+	void operator()(const semi_gcodes::move &value) { m_stream << "G0 X" << value.x << " Y" << value.y << std::endl; }
+	void operator()(const semi_gcodes::power &value) { m_stream << "S" << value.duty << std::endl; }
+	void operator()(std::monostate) {}
+
+private:
+	std::ostream &m_stream;
+};
+
+void generate_gcode(std::string &&dir, semi_gcodes::gcodes &&gcodes) {
+	using namespace semi_gcodes;
+
+	std::ofstream file(dir + "/result.gcode", std::ios::trunc);
+
+	gcode_visitor visitor(file);
+
+	for (auto &&gcode : gcodes)
+		std::visit(visitor, gcode);
 }
 
 void MainWindow::print() {
@@ -201,9 +233,8 @@ void MainWindow::print() {
 	dynamic_cast<GridScene *>(scene)->setDisableBackground(true);
 	scene->render(&painter, canvas.rect(), scene->itemsBoundingRect());
 	dynamic_cast<GridScene *>(scene)->setDisableBackground(false);
-	canvas.save(QDir::homePath() + QDir::separator() + "result.png");
-	auto semi = semi_gcode_generator(canvas.toImage());
-	std::cout << semi.size() << std::endl;
+	//canvas.save(QDir::homePath() + QDir::separator() + "result.png");
+	generate_gcode(QDir::homePath().toStdString(), semi_gcode_generator(canvas.toImage()));
 }
 
 bool MainWindow::isItemSelected() const noexcept {
