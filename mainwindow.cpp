@@ -194,21 +194,27 @@ semi_gcodes::gcodes semi_gcode_generator(const QImage &pixmap) {
 	return ret;
 }
 
-class gcode_visitor {
-public:
-	gcode_visitor(std::ostream &stream)
-			: m_stream(stream) {}
+constexpr double precision_multiplier(double dpi = 600) {
+	return dpi / 25.4;
+}
 
-	void operator()(const semi_gcodes::dwell &value) { m_stream << "G4 P00" << value.delay << std::endl; }
+class gcode_generator {
+public:
+	gcode_generator(std::ostream &stream, const double dpi = 600)
+			: m_stream(stream)
+			, m_precision(precision_multiplier(dpi)) {}
+
+	void operator()(const semi_gcodes::dwell &value) { m_stream << "G4 P0.00" << value.delay << std::endl; }
 	void operator()(semi_gcodes::home) { m_stream << "G0 X0 Y0" << std::endl; }
 	void operator()(semi_gcodes::laser_off) { m_stream << "M5" << std::endl; }
 	void operator()(semi_gcodes::laser_on) { m_stream << "M3" << std::endl; }
-	void operator()(const semi_gcodes::move &value) { m_stream << "G0 X" << value.x << " Y" << value.y << std::endl; }
+	void operator()(const semi_gcodes::move &value) { m_stream << "G0 X" << (static_cast<double>(value.x) / m_precision) << " Y" << (static_cast<double>(value.y) / m_precision) << std::endl; }
 	void operator()(const semi_gcodes::power &value) { m_stream << "S" << value.duty << std::endl; }
 	void operator()(std::monostate) {}
 
 private:
 	std::ostream &m_stream;
+	const double m_precision{1.0};
 };
 
 void generate_gcode(std::string &&dir, semi_gcodes::gcodes &&gcodes) {
@@ -216,11 +222,15 @@ void generate_gcode(std::string &&dir, semi_gcodes::gcodes &&gcodes) {
 
 	std::ofstream file(dir + "/result.gcode", std::ios::trunc);
 
-	gcode_visitor visitor(file);
+	gcode_generator visitor(file);
 
 	for (auto &&gcode : gcodes)
 		std::visit(visitor, gcode);
 }
+
+#include <QFile>
+#include <QSerialPort>
+#include <QTextStream>
 
 void MainWindow::print() {
 	auto scene = m_ui->view->scene();
@@ -235,6 +245,24 @@ void MainWindow::print() {
 	dynamic_cast<GridScene *>(scene)->setDisableBackground(false);
 	//canvas.save(QDir::homePath() + QDir::separator() + "result.png");
 	generate_gcode(QDir::homePath().toStdString(), semi_gcode_generator(canvas.toImage()));
+
+	QFile file(QDir::homePath() + QDir::separator() + "result.gcode");
+	file.open(QFile::ReadWrite | QFile::Text);
+	QSerialPort port("/dev/ttyUSB0");
+	port.setBaudRate(115200);
+	port.open(QSerialPort::ReadWrite);
+
+	QTextStream in(&file);
+	while (!in.atEnd()) {
+		QString line = in.readLine();
+		std::cout <<  "w: " << line.toUtf8().toStdString() << std::endl;
+		port.write(line.toLatin1());
+		port.write("\n\r");
+		port.waitForBytesWritten();
+		port.waitForReadyRead();
+		auto response = port.readLine();
+		std::cout <<  "r: " << response.toStdString() << std::endl;
+	}
 }
 
 bool MainWindow::isItemSelected() const noexcept {
