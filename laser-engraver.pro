@@ -24,6 +24,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++17
 
+QMAKE_CXXFLAGS += -std=c++17
+
 SOURCES += \
         main.cpp \
         mainwindow.cpp \

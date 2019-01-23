@@ -2,20 +2,26 @@
 #include "ui_mainwindow.h"
 
 #include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
+#include <QProgressDialog>
+#include <QSerialPort>
+#include <QTextStream>
 #include <QTimer>
-
-#include <grid-scene.h>
 
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <variant>
 #include <vector>
+#include <thread>
+#include <future>
 
+#include <grid-scene.h>
 #include <externals/common/types.hpp>
+#include <externals/common/std/raii/raii-thread.hpp>
 
 using namespace std::chrono_literals;
 
@@ -149,47 +155,51 @@ struct power {
 
 using gcode = std::variant<std::monostate, laser_on, laser_off, home, dwell, move, power>;
 using gcodes = std::vector<gcode>;
-
-//static_assert (sizeof (gcode_variant) == sizeof(i16) + sizeof(i16));
 }
 
-semi_gcodes::gcodes semi_gcode_generator(const QImage &pixmap) {
+using progress_t = std::atomic<double>;
+
+semi_gcodes::gcodes semi_gcode_generator(const u32 *data, std::size_t w, std::size_t h, progress_t &progress) {
 	using namespace semi_gcodes;
+	progress = 0.0;
 
 	gcodes ret;
 
 	constexpr static auto ir_size = sizeof(gcode);
 	constexpr static auto ir_extra = ir_size * 100;
-	const auto w = static_cast<std::size_t>(pixmap.width());
-	const auto h = static_cast<std::size_t>(pixmap.height());
 
 	ret.reserve(ir_size * w * h + ir_extra);
 
 	auto emplace = [&ret](auto &&value) {
-		ret.emplace_back(std::move(value));
+		ret.emplace_back(std::forward<decltype(value)>(value));
 	};
 
 	emplace(semi_gcodes::home{});
 	emplace(semi_gcodes::power{0});
 	emplace(semi_gcodes::laser_on{});
 
+	std::size_t index{0};
+
 	for (std::size_t y = 0; y < h; ++y) {
 		for (std::size_t x = 0; x < w; ++x) {
-			auto light = pixmap.pixelColor(static_cast<int>(x), static_cast<int>(y)).lightnessF();
-
-			if (light >= 0.99)
-				continue;
+			const auto color = data[index++];
+			const auto r = static_cast<u8>(color >> 0x0f);
+			const auto g = static_cast<u8>(color >> 0x08);
+			const auto b = static_cast<u8>(color);
 
 			ret.emplace_back(move{static_cast<decltype(move::x)>(x), static_cast<decltype(move::y)>(y)});
-			ret.emplace_back(power{static_cast<i16>((1.0 - light) * 1000.0)});
+			ret.emplace_back(power{static_cast<i16>(1000 - r - g - b)});
 			ret.emplace_back(dwell{1});
 			ret.emplace_back(power{0});
 		}
+
+		progress = static_cast<double>(y) / static_cast<double>(h);
 	}
 
 	emplace(semi_gcodes::power{0});
 	emplace(semi_gcodes::laser_off{});
 	emplace(semi_gcodes::home{});
+	progress = 1.0;
 
 	return ret;
 }
@@ -228,9 +238,38 @@ void generate_gcode(std::string &&dir, semi_gcodes::gcodes &&gcodes) {
 		std::visit(visitor, gcode);
 }
 
-#include <QFile>
-#include <QSerialPort>
-#include <QTextStream>
+void qt_generate_progress_dialog(QString &&title, progress_t &progress) {
+	QProgressDialog dialog;
+	QTimer timer;
+	QObject::connect(&timer, &QTimer::timeout, &dialog, [&dialog, &progress]() {
+		dialog.setValue(static_cast<int>(progress * 1000.0));
+	});
+
+	dialog.setLabelText(title);
+	dialog.setMinimum(0);
+	dialog.setMaximum(1000);
+	dialog.setCancelButton(nullptr);
+	timer.start(5ms);
+	dialog.exec();
+}
+
+template <typename return_type>
+return_type qt_progress_task(QString &&title, std::function<return_type(progress_t &)> &&callable) {
+	progress_t progress{};
+	auto task = std::packaged_task<return_type()>([callable{std::move(callable)}, &progress]() {
+		return callable(progress);
+	});
+
+	auto result = task.get_future();
+
+	std::thread thread(std::move(task));
+
+	qt_generate_progress_dialog(std::move(title), progress);
+	result.wait();
+	thread.join();
+
+	return result.get();
+}
 
 void MainWindow::print() {
 	auto scene = m_ui->view->scene();
@@ -244,7 +283,16 @@ void MainWindow::print() {
 	scene->render(&painter, canvas.rect(), scene->itemsBoundingRect());
 	dynamic_cast<GridScene *>(scene)->setDisableBackground(false);
 	//canvas.save(QDir::homePath() + QDir::separator() + "result.png");
-	generate_gcode(QDir::homePath().toStdString(), semi_gcode_generator(canvas.toImage()));
+
+	auto img = canvas.toImage();
+	if (img.format() != QImage::Format_RGB32)
+		img = img.convertToFormat(QImage::Format_RGB32);
+
+	auto semi = qt_progress_task<semi_gcodes::gcodes>(tr("Generating semi-gcode for post processing"), [&img](progress_t &progress) {
+		return semi_gcode_generator(reinterpret_cast<const u32 *>(img.constBits()), img.width(), img.height(), progress);
+	});
+
+	generate_gcode(QDir::homePath().toStdString(), std::move(semi));
 
 	QFile file(QDir::homePath() + QDir::separator() + "result.gcode");
 	file.open(QFile::ReadWrite | QFile::Text);
@@ -255,13 +303,13 @@ void MainWindow::print() {
 	QTextStream in(&file);
 	while (!in.atEnd()) {
 		QString line = in.readLine();
-		std::cout <<  "w: " << line.toUtf8().toStdString() << std::endl;
+		std::cout << "w: " << line.toUtf8().toStdString() << std::endl;
 		port.write(line.toLatin1());
 		port.write("\n\r");
 		port.waitForBytesWritten();
 		port.waitForReadyRead();
 		auto response = port.readLine();
-		std::cout <<  "r: " << response.toStdString() << std::endl;
+		std::cout << "r: " << response.toStdString() << std::endl;
 	}
 }
 
