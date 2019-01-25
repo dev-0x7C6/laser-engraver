@@ -10,13 +10,13 @@ semi_gcodes image_to_semi_gcode(const u8 *data, std::size_t w, std::size_t h, pr
 
 	ret.reserve(ir_size * w * h + ir_extra);
 
-	auto emplace = [&ret](auto &&value) {
+	auto encode = [&ret](auto &&value) {
 		ret.emplace_back(std::forward<decltype(value)>(value));
 	};
 
-	emplace(home{});
-	emplace(power{0});
-	emplace(laser_on{});
+	encode(home{});
+	encode(power{0});
+	encode(laser_on{});
 
 	std::size_t index{0};
 
@@ -26,18 +26,18 @@ semi_gcodes image_to_semi_gcode(const u8 *data, std::size_t w, std::size_t h, pr
 			const auto g = *(++data);
 			const auto b = *(++data);
 
-			ret.emplace_back(move{static_cast<decltype(move::x)>(x), static_cast<decltype(move::y)>(y)});
-			ret.emplace_back(power{static_cast<i16>(1000 - r - g - b)});
-			ret.emplace_back(dwell{1});
-			ret.emplace_back(power{0});
+			encode(move{static_cast<decltype(move::x)>(x), static_cast<decltype(move::y)>(y)});
+			encode(power{static_cast<i16>(1000 - r - g - b)});
+			encode(dwell{1});
+			encode(power{0});
 		}
 
 		progress = static_cast<double>(y) / static_cast<double>(h);
 	}
 
-	emplace(power{0});
-	emplace(laser_off{});
-	emplace(home{});
+	encode(power{0});
+	encode(laser_off{});
+	encode(home{});
 	progress = 1.0;
 
 	return ret;
