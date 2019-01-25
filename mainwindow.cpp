@@ -12,23 +12,25 @@
 #include <QTimer>
 
 #include <chrono>
-#include <fstream>
-#include <iostream>
-#include <variant>
-#include <vector>
-#include <thread>
 #include <future>
+#include <iostream>
+#include <thread>
 
 #include <grid-scene.h>
-#include <externals/common/types.hpp>
-#include <externals/common/std/raii/raii-thread.hpp>
+#include <src/gcode-generator.hpp>
 
 using namespace std::chrono_literals;
 
+namespace {
+constexpr auto grid_size = 5000;
+}
+
 MainWindow::MainWindow(QWidget *parent)
 		: QMainWindow(parent)
-		, m_ui(std::make_unique<Ui::MainWindow>()) {
+		, m_ui(std::make_unique<Ui::MainWindow>())
+		, m_grid(new GridScene(-grid_size, -grid_size, grid_size * 2, grid_size * 2)) {
 	m_ui->setupUi(this);
+	m_ui->view->setScene(m_grid);
 
 	auto menu = m_ui->menu;
 	auto file = menu->addMenu("&File");
@@ -63,11 +65,6 @@ MainWindow::MainWindow(QWidget *parent)
 	tool->addAction(move_up);
 	tool->addAction(remove);
 
-	constexpr auto grid_size = 5000;
-
-	auto scene = std::make_unique<GridScene>(-grid_size, -grid_size, grid_size * 2, grid_size * 2);
-	m_ui->view->setScene(scene.release());
-
 	for (auto &&v : {10, 25, 50, 100, 200, 400, 800}) {
 		m_ui->scale->addItem(QString::number(v) + "%", v);
 	}
@@ -75,8 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->scale->setCurrentText("100%");
 
 	connect(m_ui->grid, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](auto &&value) {
-		auto scene = dynamic_cast<GridScene *>(m_ui->view->scene());
-		scene->setGridSize(value);
+		m_grid->setGridSize(value);
 	});
 
 	connect(m_ui->angle, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &MainWindow::updateAngle);
@@ -90,8 +86,8 @@ MainWindow::MainWindow(QWidget *parent)
 		m_ui->view->scale(v, v);
 	});
 
-	connect(m_ui->view->scene(), &QGraphicsScene::selectionChanged, [this]() {
-		auto list = m_ui->view->scene()->selectedItems();
+	connect(m_grid, &QGraphicsScene::selectionChanged, [this]() {
+		auto list = m_grid->selectedItems();
 		if (list.isEmpty()) {
 			m_ui->itemWidget->setEnabled(false);
 			m_selectedItem = nullptr;
@@ -108,7 +104,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	auto timer = new QTimer(this);
 	connect(timer, &QTimer::timeout, [this]() {
-		auto x = m_ui->view->scene()->itemsBoundingRect();
+		auto x = m_grid->itemsBoundingRect();
 		m_ui->statusBar->showMessage(QString("X: %1 px, Y: %2 px, W: %3 px, H: %4 px").arg(QString::number(x.x()), QString::number(x.y()), QString::number(x.width()), QString::number(x.height())));
 	});
 	timer->start(50ms);
@@ -125,7 +121,7 @@ void MainWindow::open() {
 	if (path.isEmpty())
 		return;
 
-	auto item = m_ui->view->scene()->addPixmap({path});
+	auto item = m_grid->addPixmap({path});
 	item->setTransformationMode(Qt::SmoothTransformation);
 	item->setFlag(QGraphicsItem::ItemIsMovable);
 	item->setFlag(QGraphicsItem::ItemIsSelectable);
@@ -133,109 +129,6 @@ void MainWindow::open() {
 	item->setX(item->boundingRect().width() / -2);
 	item->setY(item->boundingRect().height() / -2);
 	item->setZValue(item->topLevelItem()->zValue() + 1.0);
-}
-
-namespace semi_gcodes {
-struct laser_on {};
-struct laser_off {};
-struct home {};
-
-struct dwell {
-	i16 delay;
-};
-
-struct move {
-	i16 x;
-	i16 y;
-};
-
-struct power {
-	i16 duty;
-};
-
-using gcode = std::variant<std::monostate, laser_on, laser_off, home, dwell, move, power>;
-using gcodes = std::vector<gcode>;
-}
-
-using progress_t = std::atomic<double>;
-
-semi_gcodes::gcodes semi_gcode_generator(const u32 *data, std::size_t w, std::size_t h, progress_t &progress) {
-	using namespace semi_gcodes;
-	progress = 0.0;
-
-	gcodes ret;
-
-	constexpr static auto ir_size = sizeof(gcode);
-	constexpr static auto ir_extra = ir_size * 100;
-
-	ret.reserve(ir_size * w * h + ir_extra);
-
-	auto emplace = [&ret](auto &&value) {
-		ret.emplace_back(std::forward<decltype(value)>(value));
-	};
-
-	emplace(semi_gcodes::home{});
-	emplace(semi_gcodes::power{0});
-	emplace(semi_gcodes::laser_on{});
-
-	std::size_t index{0};
-
-	for (std::size_t y = 0; y < h; ++y) {
-		for (std::size_t x = 0; x < w; ++x) {
-			const auto color = data[index++];
-			const auto r = static_cast<u8>(color >> 0x0f);
-			const auto g = static_cast<u8>(color >> 0x08);
-			const auto b = static_cast<u8>(color);
-
-			ret.emplace_back(move{static_cast<decltype(move::x)>(x), static_cast<decltype(move::y)>(y)});
-			ret.emplace_back(power{static_cast<i16>(1000 - r - g - b)});
-			ret.emplace_back(dwell{1});
-			ret.emplace_back(power{0});
-		}
-
-		progress = static_cast<double>(y) / static_cast<double>(h);
-	}
-
-	emplace(semi_gcodes::power{0});
-	emplace(semi_gcodes::laser_off{});
-	emplace(semi_gcodes::home{});
-	progress = 1.0;
-
-	return ret;
-}
-
-constexpr double precision_multiplier(double dpi = 600) {
-	return dpi / 25.4;
-}
-
-class gcode_generator {
-public:
-	gcode_generator(std::ostream &stream, const double dpi = 600)
-			: m_stream(stream)
-			, m_precision(precision_multiplier(dpi)) {}
-
-	void operator()(const semi_gcodes::dwell &value) { m_stream << "G4 P0.00" << value.delay << std::endl; }
-	void operator()(semi_gcodes::home) { m_stream << "G0 X0 Y0" << std::endl; }
-	void operator()(semi_gcodes::laser_off) { m_stream << "M5" << std::endl; }
-	void operator()(semi_gcodes::laser_on) { m_stream << "M3" << std::endl; }
-	void operator()(const semi_gcodes::move &value) { m_stream << "G0 X" << (static_cast<double>(value.x) / m_precision) << " Y" << (static_cast<double>(value.y) / m_precision) << std::endl; }
-	void operator()(const semi_gcodes::power &value) { m_stream << "S" << value.duty << std::endl; }
-	void operator()(std::monostate) {}
-
-private:
-	std::ostream &m_stream;
-	const double m_precision{1.0};
-};
-
-void generate_gcode(std::string &&dir, semi_gcodes::gcodes &&gcodes) {
-	using namespace semi_gcodes;
-
-	std::ofstream file(dir + "/result.gcode", std::ios::trunc);
-
-	gcode_generator visitor(file);
-
-	for (auto &&gcode : gcodes)
-		std::visit(visitor, gcode);
 }
 
 void qt_generate_progress_dialog(QString &&title, progress_t &progress) {
@@ -272,24 +165,23 @@ return_type qt_progress_task(QString &&title, std::function<return_type(progress
 }
 
 void MainWindow::print() {
-	auto scene = m_ui->view->scene();
-	auto rect = scene->itemsBoundingRect().toRect();
+	auto rect = m_grid->itemsBoundingRect().toRect();
 	rect.moveTopLeft({0, 0});
 	QPixmap canvas(rect.width(), rect.height());
 	canvas.fill(Qt::white);
 	QPainter painter(&canvas);
-	scene->clearSelection();
-	dynamic_cast<GridScene *>(scene)->setDisableBackground(true);
-	scene->render(&painter, canvas.rect(), scene->itemsBoundingRect());
-	dynamic_cast<GridScene *>(scene)->setDisableBackground(false);
+	m_grid->clearSelection();
+	m_grid->setDisableBackground(true);
+	m_grid->render(&painter, canvas.rect(), m_grid->itemsBoundingRect());
+	m_grid->setDisableBackground(false);
 	//canvas.save(QDir::homePath() + QDir::separator() + "result.png");
 
 	auto img = canvas.toImage();
-	if (img.format() != QImage::Format_RGB32)
-		img = img.convertToFormat(QImage::Format_RGB32);
+	if (img.format() != QImage::Format_RGB888)
+		img = img.convertToFormat(QImage::Format_RGB888);
 
-	auto semi = qt_progress_task<semi_gcodes::gcodes>(tr("Generating semi-gcode for post processing"), [&img](progress_t &progress) {
-		return semi_gcode_generator(reinterpret_cast<const u32 *>(img.constBits()), img.width(), img.height(), progress);
+	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [&img](progress_t &progress) {
+		return image_to_semi_gcode(static_cast<const u8 *>(img.constBits()), img.width(), img.height(), progress);
 	});
 
 	generate_gcode(QDir::homePath().toStdString(), std::move(semi));

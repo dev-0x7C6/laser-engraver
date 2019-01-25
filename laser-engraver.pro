@@ -29,11 +29,15 @@ QMAKE_CXXFLAGS += -std=c++17
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    grid-scene.cpp
+    grid-scene.cpp \
+    src/semi-gcode.cpp \
+    src/gcode-generator.cpp
 
 HEADERS += \
         mainwindow.h \
-    grid-scene.h
+    grid-scene.h \
+    src/semi-gcode.hpp \
+    src/gcode-generator.hpp
 
 FORMS += \
         mainwindow.ui

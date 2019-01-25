@@ -1,10 +1,9 @@
 #pragma once
 
-#include <QAction>
 #include <QMainWindow>
-
 #include <memory>
 
+class GridScene;
 class QGraphicsItem;
 
 namespace Ui {
@@ -40,4 +39,5 @@ private:
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
 	QGraphicsItem *m_selectedItem{nullptr};
+	GridScene *m_grid{nullptr};
 };
