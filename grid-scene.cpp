@@ -34,7 +34,7 @@ void GridScene::drawGrid(QPainter *painter, const QRectF &rect) noexcept {
 	qreal left = int(rect.left()) - (int(rect.left()) % m_gridSize);
 	qreal top = int(rect.top()) - (int(rect.top()) % m_gridSize);
 
-	QVarLengthArray<QLineF, 128> lines;
+	QVarLengthArray<QLineF, 1024> lines;
 
 	QPen pen = painter->pen();
 	auto color = pen.color();

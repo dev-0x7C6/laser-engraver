@@ -47,6 +47,12 @@
       <property name="dragMode">
        <enum>QGraphicsView::ScrollHandDrag</enum>
       </property>
+      <property name="cacheMode">
+       <set>QGraphicsView::CacheNone</set>
+      </property>
+      <property name="viewportUpdateMode">
+       <enum>QGraphicsView::FullViewportUpdate</enum>
+      </property>
      </widget>
     </item>
    </layout>
@@ -75,7 +81,7 @@
      <x>0</x>
      <y>0</y>
      <width>1161</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
