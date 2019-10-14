@@ -8,6 +8,7 @@
 #include <QGraphicsScene>
 #include <QProgressDialog>
 #include <QSerialPort>
+#include <QSerialPortInfo>
 #include <QTextStream>
 #include <QTimer>
 
@@ -181,16 +182,18 @@ void MainWindow::print() {
 		img = img.convertToFormat(QImage::Format_RGB888);
 
 	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [&img](progress_t &progress) {
-		return image_to_semi_gcode(static_cast<const u8 *>(img.constBits()), img.width(), img.height(), progress);
+		return image_to_semi_gcode(image(img.width(), img.height(), static_cast<const u8 *>(img.constBits())), progress);
 	});
 
 	generate_gcode(QDir::homePath().toStdString(), std::move(semi));
 
 	QFile file(QDir::homePath() + QDir::separator() + "result.gcode");
 	file.open(QFile::ReadWrite | QFile::Text);
-	QSerialPort port("/dev/ttyUSB0");
-	port.setBaudRate(115200);
+
+	QSerialPort port(QSerialPortInfo::availablePorts().back());
+
 	port.open(QSerialPort::ReadWrite);
+	port.setBaudRate(115200);
 
 	QTextStream in(&file);
 	while (!in.atEnd()) {
