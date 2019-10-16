@@ -33,8 +33,9 @@ private:
 	void itemMoveTop();
 	void removeItem();
 
-	void updateAngle(int value);
-	void updateOpacity(int value);
+	void updateItemAngle(int value);
+	void updateItemOpacity(int value);
+	void updateItemScale(double value) noexcept;
 
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;

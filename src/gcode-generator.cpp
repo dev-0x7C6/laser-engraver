@@ -10,14 +10,14 @@ constexpr double precision_multiplier(double dpi = 600) {
 
 class gcode_generator {
 public:
-	gcode_generator(const double dpi = 50)
+	gcode_generator(const double dpi = 100)
 			: m_precision(precision_multiplier(dpi)) {}
 
 	std::string operator()(const dwell v) const noexcept {
 		std::this_thread::sleep_for(std::chrono::milliseconds(v.delay));
 		return {};
 	} //return "G4 P0.00" + std::to_string(v.delay); }
-	std::string operator()(const home) const noexcept { return "G0 X0 Y0"; }
+	std::string operator()(const home) const noexcept { return "G0 X0.000 Y0.000"; }
 	std::string operator()(const laser_off) const noexcept { return "M5"; }
 	std::string operator()(const laser_on) const noexcept { return "M3"; }
 	std::string operator()(const move v) const noexcept { return "G0 X" + std::to_string(static_cast<double>(v.x) / m_precision) + " Y" + std::to_string(static_cast<double>(v.y) / m_precision); }

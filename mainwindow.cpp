@@ -51,11 +51,13 @@ MainWindow::MainWindow(QWidget *parent)
 	auto move_up = edit->addAction("Move Up", this, &MainWindow::itemMoveTop);
 	move_up->setShortcut(QKeySequence::Forward);
 	move_up->setIcon(QIcon::fromTheme("go-top"));
+	move_up->setEnabled(false);
 	edit->addSeparator();
 	auto remove = edit->addAction("Delete", this, &MainWindow::removeItem);
 
 	remove->setShortcuts(QKeySequence::Delete);
 	remove->setIcon(QIcon::fromTheme("edit-delete"));
+	remove->setEnabled(false);
 	edit->addSeparator();
 
 	auto tool = m_ui->tool;
@@ -76,38 +78,33 @@ MainWindow::MainWindow(QWidget *parent)
 		m_grid->setGridSize(value);
 	});
 
-	connect(m_ui->angle, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &MainWindow::updateAngle);
-	connect(m_ui->angleDial, &QDial::valueChanged, this, &MainWindow::updateAngle);
-	connect(m_ui->opacity, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &MainWindow::updateOpacity);
-	connect(m_ui->opacitySlider, &QSlider::valueChanged, this, &MainWindow::updateOpacity);
+	connect(m_ui->angle, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::updateItemAngle);
+	connect(m_ui->opacity, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::updateItemOpacity);
+	connect(m_ui->itemScale, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &MainWindow::updateItemScale);
 
-	connect(m_ui->scale, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](auto &&index) {
+	connect(m_ui->scale, qOverload<int>(&QComboBox::currentIndexChanged), [this](auto &&index) {
 		const auto v = static_cast<double>(m_ui->scale->itemData(index).toInt()) / 100.0;
 		m_ui->view->resetTransform();
 		m_ui->view->scale(v, v);
 	});
 
-	connect(m_ui->itemScale, qOverload<double>(&QDoubleSpinBox::valueChanged), [this](const double value) {
-		if (!isItemSelected())
-			return;
-
-		m_selectedItem->setScale(value);
-	});
-
-	connect(m_grid, &QGraphicsScene::selectionChanged, [this]() {
+	connect(m_grid, &QGraphicsScene::selectionChanged, [this, move_up, remove]() {
 		auto list = m_grid->selectedItems();
-		if (list.isEmpty()) {
-			m_ui->itemWidget->setEnabled(false);
+		const auto enabled = !list.isEmpty();
+
+		m_ui->itemWidget->setEnabled(enabled);
+		move_up->setEnabled(enabled);
+		remove->setEnabled(enabled);
+
+		if (!enabled) {
 			m_selectedItem = nullptr;
 			return;
 		}
 
 		m_selectedItem = list.first();
-
-		updateAngle(static_cast<int>(m_selectedItem->rotation()));
-		updateOpacity(static_cast<int>(m_selectedItem->opacity() * 100.0));
-
-		m_ui->itemWidget->setEnabled(true);
+		updateItemAngle(static_cast<int>(m_selectedItem->rotation()));
+		updateItemOpacity(static_cast<int>(m_selectedItem->opacity() * 100.0));
+		updateItemScale(m_selectedItem->scale());
 	});
 
 	auto timer = new QTimer(this);
@@ -172,6 +169,8 @@ return_type qt_progress_task(QString &&title, std::function<return_type(progress
 	return result.get();
 }
 
+#include <QDebug>
+
 void MainWindow::print() {
 	auto rect = m_grid->itemsBoundingRect().toRect();
 	rect.moveTopLeft({0, 0});
@@ -191,7 +190,7 @@ void MainWindow::print() {
 	std::cout << "s: " << img.sizeInBytes() << std::endl;
 
 	options opts;
-	opts.power_multiplier = 1;
+	opts.power_multiplier = 0.5;
 	opts.force_dwell_time = 1;
 
 	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [img{std::move(img)}, opts](progress_t &progress) {
@@ -202,22 +201,26 @@ void MainWindow::print() {
 	port.open(QSerialPort::ReadWrite);
 	port.setBaudRate(115200);
 
+	port.waitForReadyRead(5000);
+	port.readAll();
+
 	generate_gcode(std::move(semi), [&port](auto &&instruction) {
 		if (instruction.empty())
 			return;
 
-		std::cout << instruction << std::endl;
+		instruction += "\n";
+		std::cout << instruction;
 		port.write(instruction.c_str(), instruction.size());
-		port.write("\n\r");
 		port.waitForBytesWritten();
 
 		for (int retry = 0; retry < 30000; ++retry) {
 			port.waitForReadyRead(1);
-			if (!port.readLine().isEmpty())
+			const auto response = port.readLine();
+			if (!response.isEmpty()) {
+				std::cout << response.toStdString() << std::endl;
 				break;
+			}
 		}
-		port.waitForReadyRead(1);
-		auto response = port.readLine();
 	});
 }
 
@@ -231,24 +234,22 @@ void MainWindow::itemMoveTop() {
 }
 
 void MainWindow::removeItem() {
-	if (isItemSelected())
-		delete m_selectedItem;
+	delete m_selectedItem;
 }
 
-void MainWindow::updateAngle(int value) {
-	if (isItemSelected())
-		m_selectedItem->setRotation(value);
-
+void MainWindow::updateItemAngle(const int value) {
+	m_selectedItem->setRotation(value);
 	m_ui->angle->setValue(value);
-	m_ui->angleDial->setValue(value);
 }
 
-void MainWindow::updateOpacity(int value) {
-	if (isItemSelected())
-		m_selectedItem->setOpacity(static_cast<double>(value) / 100.0);
-
+void MainWindow::updateItemOpacity(const int value) {
+	m_selectedItem->setOpacity(static_cast<double>(value) / 100.0);
 	m_ui->opacity->setValue(value);
-	m_ui->opacitySlider->setValue(value);
+}
+
+void MainWindow::updateItemScale(const double value) noexcept {
+	m_selectedItem->setScale(value);
+	m_ui->itemScale->setValue(value);
 }
 
 MainWindow::~MainWindow() = default;

@@ -63,8 +63,8 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 			const auto pwr = 1.0 - QColor::fromRgb(img.pixel(x, y)).lightnessF();
 
 			if (pwr != 0.0) {
-				encode(move{static_cast<decltype(move::x)>(img.width() - x), static_cast<decltype(move::y)>(y)});
-				encode(power{static_cast<i16>(1000 * (pwr * opts.power_multiplier))});
+				encode(move{static_cast<decltype(move::x)>(x), static_cast<decltype(move::y)>(y)});
+				encode(power{static_cast<i16>(255 * (pwr * opts.power_multiplier))});
 				if (opts.force_dwell_time)
 					encode(dwell{opts.force_dwell_time.value()});
 				schedule_power_off = true;
