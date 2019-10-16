@@ -87,6 +87,13 @@ MainWindow::MainWindow(QWidget *parent)
 		m_ui->view->scale(v, v);
 	});
 
+	connect(m_ui->itemScale, qOverload<double>(&QDoubleSpinBox::valueChanged), [this](const double value) {
+		if (!isItemSelected())
+			return;
+
+		m_selectedItem->setScale(value);
+	});
+
 	connect(m_grid, &QGraphicsScene::selectionChanged, [this]() {
 		auto list = m_grid->selectedItems();
 		if (list.isEmpty()) {
@@ -175,37 +182,43 @@ void MainWindow::print() {
 	m_grid->setDisableBackground(true);
 	m_grid->render(&painter, canvas.rect(), m_grid->itemsBoundingRect());
 	m_grid->setDisableBackground(false);
-	//canvas.save(QDir::homePath() + QDir::separator() + "result.png");
 
 	auto img = canvas.toImage();
-	if (img.format() != QImage::Format_RGB888)
-		img = img.convertToFormat(QImage::Format_RGB888);
+	//img.convertTo(QImage::Format_Grayscale8);
 
-	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [&img](progress_t &progress) {
-		return image_to_semi_gcode(image(img.width(), img.height(), static_cast<const u8 *>(img.constBits())), progress);
+	std::cout << "w: " << img.width() << std::endl;
+	std::cout << "h: " << img.height() << std::endl;
+	std::cout << "s: " << img.sizeInBytes() << std::endl;
+
+	options opts;
+	opts.power_multiplier = 1;
+	opts.force_dwell_time = 1;
+
+	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [img{std::move(img)}, opts](progress_t &progress) {
+		return image_to_semi_gcode(img, opts, progress);
 	});
 
-	generate_gcode(QDir::homePath().toStdString(), std::move(semi));
-
-	QFile file(QDir::homePath() + QDir::separator() + "result.gcode");
-	file.open(QFile::ReadWrite | QFile::Text);
-
 	QSerialPort port(QSerialPortInfo::availablePorts().back());
-
 	port.open(QSerialPort::ReadWrite);
 	port.setBaudRate(115200);
 
-	QTextStream in(&file);
-	while (!in.atEnd()) {
-		QString line = in.readLine();
-		std::cout << "w: " << line.toUtf8().toStdString() << std::endl;
-		port.write(line.toLatin1());
+	generate_gcode(std::move(semi), [&port](auto &&instruction) {
+		if (instruction.empty())
+			return;
+
+		std::cout << instruction << std::endl;
+		port.write(instruction.c_str(), instruction.size());
 		port.write("\n\r");
 		port.waitForBytesWritten();
-		port.waitForReadyRead();
+
+		for (int retry = 0; retry < 30000; ++retry) {
+			port.waitForReadyRead(1);
+			if (!port.readLine().isEmpty())
+				break;
+		}
+		port.waitForReadyRead(1);
 		auto response = port.readLine();
-		std::cout << "r: " << response.toStdString() << std::endl;
-	}
+	});
 }
 
 bool MainWindow::isItemSelected() const noexcept {

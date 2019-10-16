@@ -87,7 +87,7 @@
   </widget>
   <widget class="QDockWidget" name="WorkspaceSettings">
    <property name="windowTitle">
-    <string>Wor&amp;kspace settings</string>
+    <string>Workspace</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -159,7 +159,7 @@
   </widget>
   <widget class="QDockWidget" name="itemWidget">
    <property name="windowTitle">
-    <string>Ite&amp;m</string>
+    <string>Item</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -167,111 +167,110 @@
    <widget class="QWidget" name="dockWidgetContents_2">
     <layout class="QVBoxLayout" name="verticalLayout_4">
      <item>
-      <widget class="QGroupBox" name="selectedItem">
-       <property name="title">
-        <string>Rotate</string>
+      <widget class="QSpinBox" name="angle">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_5">
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QSpinBox" name="angle">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="wrapping">
-             <bool>true</bool>
-            </property>
-            <property name="suffix">
-             <string> °</string>
-            </property>
-            <property name="maximum">
-             <number>359</number>
-            </property>
-            <property name="value">
-             <number>0</number>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QDial" name="angleDial">
-          <property name="maximum">
-           <number>359</number>
-          </property>
-          <property name="value">
-           <number>0</number>
-          </property>
-          <property name="invertedAppearance">
-           <bool>false</bool>
-          </property>
-          <property name="wrapping">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <property name="wrapping">
+        <bool>true</bool>
+       </property>
+       <property name="suffix">
+        <string> °</string>
+       </property>
+       <property name="prefix">
+        <string>Rotate: </string>
+       </property>
+       <property name="maximum">
+        <number>359</number>
+       </property>
+       <property name="stepType">
+        <enum>QAbstractSpinBox::DefaultStepType</enum>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
       </widget>
      </item>
      <item>
-      <widget class="QGroupBox" name="selectedItem_2">
-       <property name="title">
-        <string>Opacity</string>
+      <widget class="QSpinBox" name="opacity">
+       <property name="suffix">
+        <string> %</string>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_5">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QSpinBox" name="opacity">
-            <property name="suffix">
-             <string> %</string>
-            </property>
-            <property name="minimum">
-             <number>5</number>
-            </property>
-            <property name="maximum">
-             <number>100</number>
-            </property>
-            <property name="value">
-             <number>100</number>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QSlider" name="opacitySlider">
-          <property name="minimum">
-           <number>5</number>
-          </property>
-          <property name="maximum">
-           <number>100</number>
-          </property>
-          <property name="value">
-           <number>100</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="tickPosition">
-           <enum>QSlider::TicksBelow</enum>
-          </property>
-          <property name="tickInterval">
-           <number>10</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <property name="prefix">
+        <string>Opacity: </string>
+       </property>
+       <property name="minimum">
+        <number>5</number>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="value">
+        <number>100</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="itemScale">
+       <property name="prefix">
+        <string>Scale: </string>
+       </property>
+       <property name="suffix">
+        <string>x</string>
+       </property>
+       <property name="decimals">
+        <number>2</number>
+       </property>
+       <property name="maximum">
+        <double>1000.000000000000000</double>
+       </property>
+       <property name="stepType">
+        <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+       </property>
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSlider" name="opacitySlider">
+       <property name="minimum">
+        <number>5</number>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="value">
+        <number>100</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksBelow</enum>
+       </property>
+       <property name="tickInterval">
+        <number>10</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDial" name="angleDial">
+       <property name="maximum">
+        <number>359</number>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
+       <property name="invertedAppearance">
+        <bool>false</bool>
+       </property>
+       <property name="wrapping">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
