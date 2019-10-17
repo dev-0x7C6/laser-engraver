@@ -10,7 +10,7 @@ constexpr double precision_multiplier(double dpi = 600) {
 
 class gcode_generator {
 public:
-	gcode_generator(const double dpi = 100)
+	gcode_generator(const double dpi = 300)
 			: m_precision(precision_multiplier(dpi)) {}
 
 	std::string operator()(const dwell v) const noexcept {
@@ -29,10 +29,15 @@ private:
 };
 }
 
-void generate_gcode(semi_gcodes &&gcodes, std::function<void(std::string &&gcode, double)> instruction) {
+void generate_gcode(semi_gcodes &&gcodes, const upload_instruction &instruction) {
 	gcode_generator visitor;
 	for (auto i = 0u; i < gcodes.size(); ++i) {
 		auto &&gcode = gcodes[i];
-		instruction(std::visit(visitor, gcode), static_cast<double>(i) / static_cast<double>(gcodes.size() - 1));
+		switch (instruction(std::visit(visitor, gcode), static_cast<double>(i) / static_cast<double>(gcodes.size() - 1))) {
+			case upload_instruction_ret::keep_going:
+				break;
+			case upload_instruction_ret::cancel:
+				return;
+		}
 	}
 }

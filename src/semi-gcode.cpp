@@ -84,7 +84,7 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 	return ret;
 }
 
-semi_gcodes show_workspace(const QImage &img, int times) {
+semi_gcodes show_workspace(const QImage &img) {
 	semi_gcodes ret;
 
 	if (img.isNull())
@@ -94,23 +94,20 @@ semi_gcodes show_workspace(const QImage &img, int times) {
 		ret.emplace_back(std::forward<decltype(value)>(value));
 	};
 
+	encode(laser_off{});
 	raii_gcode home_raii(ret, home{});
 	raii_gcode power_raii(ret, power{0});
 	raii_gcode laser_raii(ret, laser_on{}, laser_off{});
 
-	encode(power{1});
-
 	const auto w = static_cast<i16>(img.width());
 	const auto h = static_cast<i16>(img.height());
 
-	for (auto i = 0; i < times; ++i) {
-		encode(power{1});
-		encode(move{0, 0});
-		encode(move{0, w});
-		encode(move{h, w});
-		encode(move{h, 0});
-		encode(move{0, 0});
-	}
+	encode(power{1});
+	encode(move{0, 0});
+	encode(move{0, w});
+	encode(move{h, w});
+	encode(move{h, 0});
+	encode(move{0, 0});
 
 	return ret;
 }

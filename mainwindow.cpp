@@ -6,7 +6,9 @@
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
+#include <QMessageBox>
 #include <QProgressDialog>
+#include <QPushButton>
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QTextStream>
@@ -203,20 +205,27 @@ void MainWindow::print() {
 
 	QProgressDialog dialog;
 	dialog.setWindowTitle("Showing workspace...");
-	dialog.setMinimum(0);
-	dialog.setMaximum(10000);
+	dialog.setLabelText("Please inspect workspace");
+	dialog.setRange(0, 0);
 	dialog.setValue(0);
+	dialog.setMinimumSize(400, 100);
 	dialog.setCancelButton(nullptr);
 	dialog.setModal(true);
 	dialog.show();
 
-	auto upload_gcode = [&port, &dialog](auto &&instruction, double progress) {
+	auto upload_gcode = [&port, &dialog](auto &&instruction, double progress) -> upload_instruction_ret {
 		if (instruction.empty())
-			return;
+			return upload_instruction_ret::keep_going;
 
-		dialog.setValue(static_cast<int>(progress * 10000));
-		dialog.setLabelText(QString::fromStdString(instruction));
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 1);
+		if (dialog.wasCanceled())
+			return upload_instruction_ret::cancel;
+
+		if (dialog.minimum() != dialog.maximum()) {
+			dialog.setValue(static_cast<int>(progress * 10000));
+			dialog.setLabelText("GCODE: " + QString::fromStdString(instruction));
+		}
+
+		QApplication::processEvents(QEventLoop::AllEvents, 1);
 
 		instruction += "\n";
 		std::cout << progress * 100.0 << "%: " << instruction;
@@ -225,17 +234,32 @@ void MainWindow::print() {
 
 		for (int retry = 0; retry < 30000; ++retry) {
 			port.waitForReadyRead(1);
+			QApplication::processEvents(QEventLoop::AllEvents, 1);
 			const auto response = port.readLine();
 			if (!response.isEmpty()) {
 				std::cout << response.toStdString() << std::endl;
 				break;
 			}
 		}
+
+		return upload_instruction_ret::keep_going;
 	};
 
-	generate_gcode(show_workspace(img, 3), upload_gcode);
+	while (true) {
+		generate_gcode(show_workspace(img), upload_gcode);
+		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
+
+		if (QMessageBox::No == response)
+			break;
+
+		if (QMessageBox::Cancel == response)
+			return;
+	}
+
 	dialog.setWindowTitle("Uploading gcodes...");
+	dialog.setRange(0, 10000);
 	dialog.setValue(0);
+	dialog.setCancelButton(new QPushButton("Cancel"));
 	dialog.show();
 	generate_gcode(std::move(semi), upload_gcode);
 
