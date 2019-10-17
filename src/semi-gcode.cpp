@@ -59,7 +59,8 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 	auto schedule_power_off{false};
 
 	for (std::size_t y = 0; y < img.height(); ++y) {
-		for (std::size_t x = 0; x < img.width(); ++x) {
+		for (std::size_t px = 0; px < img.width(); ++px) {
+			const auto x = ((y % 2) == 0) ? px : img.width() - px - 1;
 			const auto pwr = 1.0 - QColor::fromRgb(img.pixel(x, y)).lightnessF();
 
 			if (pwr != 0.0) {
@@ -78,6 +79,37 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 		encode(power{0});
 
 		progress = static_cast<double>(y) / static_cast<double>(img.height());
+	}
+
+	return ret;
+}
+
+semi_gcodes show_workspace(const QImage &img, int times) {
+	semi_gcodes ret;
+
+	if (img.isNull())
+		return ret;
+
+	auto encode = [&ret](auto &&value) {
+		ret.emplace_back(std::forward<decltype(value)>(value));
+	};
+
+	raii_gcode home_raii(ret, home{});
+	raii_gcode power_raii(ret, power{0});
+	raii_gcode laser_raii(ret, laser_on{}, laser_off{});
+
+	encode(power{1});
+
+	const auto w = static_cast<i16>(img.width());
+	const auto h = static_cast<i16>(img.height());
+
+	for (auto i = 0; i < times; ++i) {
+		encode(power{1});
+		encode(move{0, 0});
+		encode(move{0, w});
+		encode(move{h, w});
+		encode(move{h, 0});
+		encode(move{0, 0});
 	}
 
 	return ret;

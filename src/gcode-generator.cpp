@@ -29,7 +29,7 @@ private:
 };
 }
 
-void generate_gcode(semi_gcodes &&gcodes, std::function<void(std::string &&gcode)> &&instruction) {
+void generate_gcode(semi_gcodes &&gcodes, std::function<void(std::string &&gcode)> instruction) {
 	gcode_generator visitor;
 	for (auto &&gcode : gcodes)
 		instruction(std::visit(visitor, gcode));

@@ -190,10 +190,10 @@ void MainWindow::print() {
 	std::cout << "s: " << img.sizeInBytes() << std::endl;
 
 	options opts;
-	opts.power_multiplier = 0.5;
+	opts.power_multiplier = 0.2;
 	opts.force_dwell_time = 1;
 
-	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [img{std::move(img)}, opts](progress_t &progress) {
+	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
 		return image_to_semi_gcode(img, opts, progress);
 	});
 
@@ -204,7 +204,7 @@ void MainWindow::print() {
 	port.waitForReadyRead(5000);
 	port.readAll();
 
-	generate_gcode(std::move(semi), [&port](auto &&instruction) {
+	auto upload_gcode = [&port](auto &&instruction) {
 		if (instruction.empty())
 			return;
 
@@ -221,7 +221,10 @@ void MainWindow::print() {
 				break;
 			}
 		}
-	});
+	};
+
+	generate_gcode(show_workspace(img, 3), upload_gcode);
+	generate_gcode(std::move(semi), upload_gcode);
 }
 
 bool MainWindow::isItemSelected() const noexcept {

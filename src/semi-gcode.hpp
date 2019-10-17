@@ -38,3 +38,4 @@ using semi_gcode = std::variant<std::monostate, laser_on, laser_off, home, dwell
 using semi_gcodes = std::vector<semi_gcode>;
 
 semi_gcodes image_to_semi_gcode(const QImage &img, options, progress_t &);
+semi_gcodes show_workspace(const QImage &img, int times);
