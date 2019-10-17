@@ -29,8 +29,10 @@ private:
 };
 }
 
-void generate_gcode(semi_gcodes &&gcodes, std::function<void(std::string &&gcode)> instruction) {
+void generate_gcode(semi_gcodes &&gcodes, std::function<void(std::string &&gcode, double)> instruction) {
 	gcode_generator visitor;
-	for (auto &&gcode : gcodes)
-		instruction(std::visit(visitor, gcode));
+	for (auto i = 0u; i < gcodes.size(); ++i) {
+		auto &&gcode = gcodes[i];
+		instruction(std::visit(visitor, gcode), static_cast<double>(i) / static_cast<double>(gcodes.size() - 1));
+	}
 }

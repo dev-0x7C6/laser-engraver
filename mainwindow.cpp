@@ -169,8 +169,6 @@ return_type qt_progress_task(QString &&title, std::function<return_type(progress
 	return result.get();
 }
 
-#include <QDebug>
-
 void MainWindow::print() {
 	auto rect = m_grid->itemsBoundingRect().toRect();
 	rect.moveTopLeft({0, 0});
@@ -183,7 +181,6 @@ void MainWindow::print() {
 	m_grid->setDisableBackground(false);
 
 	auto img = canvas.toImage();
-	//img.convertTo(QImage::Format_Grayscale8);
 
 	std::cout << "w: " << img.width() << std::endl;
 	std::cout << "h: " << img.height() << std::endl;
@@ -204,12 +201,25 @@ void MainWindow::print() {
 	port.waitForReadyRead(5000);
 	port.readAll();
 
-	auto upload_gcode = [&port](auto &&instruction) {
+	QProgressDialog dialog;
+	dialog.setWindowTitle("Showing workspace...");
+	dialog.setMinimum(0);
+	dialog.setMaximum(10000);
+	dialog.setValue(0);
+	dialog.setCancelButton(nullptr);
+	dialog.setModal(true);
+	dialog.show();
+
+	auto upload_gcode = [&port, &dialog](auto &&instruction, double progress) {
 		if (instruction.empty())
 			return;
 
+		dialog.setValue(static_cast<int>(progress * 10000));
+		dialog.setLabelText(QString::fromStdString(instruction));
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 1);
+
 		instruction += "\n";
-		std::cout << instruction;
+		std::cout << progress * 100.0 << "%: " << instruction;
 		port.write(instruction.c_str(), instruction.size());
 		port.waitForBytesWritten();
 
@@ -224,7 +234,13 @@ void MainWindow::print() {
 	};
 
 	generate_gcode(show_workspace(img, 3), upload_gcode);
+	dialog.setWindowTitle("Uploading gcodes...");
+	dialog.setValue(0);
+	dialog.show();
 	generate_gcode(std::move(semi), upload_gcode);
+
+	dialog.setModal(false);
+	dialog.hide();
 }
 
 bool MainWindow::isItemSelected() const noexcept {
