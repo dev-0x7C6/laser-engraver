@@ -196,6 +196,9 @@ void MainWindow::print() {
 		return image_to_semi_gcode(img, opts, progress);
 	});
 
+	gcode_generation_options generation_options;
+	generation_options.dpi = m_ui->dpi->value();
+
 	QSerialPort port(QSerialPortInfo::availablePorts().back());
 	port.open(QSerialPort::ReadWrite);
 	port.setBaudRate(115200);
@@ -246,7 +249,7 @@ void MainWindow::print() {
 	};
 
 	while (true) {
-		generate_gcode(generate_workspace_demo(img), upload_gcode);
+		generate_gcode(generate_workspace_demo(img), generation_options, upload_gcode);
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -261,13 +264,13 @@ void MainWindow::print() {
 	dialog.setValue(0);
 	dialog.setCancelButton(new QPushButton("Cancel"));
 	dialog.show();
-	generate_gcode(std::move(semi), upload_gcode);
+	generate_gcode(std::move(semi), generation_options, upload_gcode);
 
 	dialog.setModal(false);
 	dialog.hide();
 	dialog.reset();
 
-	generate_gcode(generate_safety_shutdown(), upload_gcode);
+	generate_gcode(generate_safety_shutdown(), generation_options, upload_gcode);
 	QApplication::processEvents(QEventLoop::AllEvents, 1000);
 }
 
