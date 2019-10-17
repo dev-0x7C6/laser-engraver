@@ -217,7 +217,7 @@ void MainWindow::print() {
 		if (instruction.empty())
 			return upload_instruction_ret::keep_going;
 
-		if (dialog.wasCanceled())
+		if (dialog.wasCanceled() && dialog.isVisible())
 			return upload_instruction_ret::cancel;
 
 		if (dialog.minimum() != dialog.maximum()) {
@@ -246,7 +246,7 @@ void MainWindow::print() {
 	};
 
 	while (true) {
-		generate_gcode(show_workspace(img), upload_gcode);
+		generate_gcode(generate_workspace_demo(img), upload_gcode);
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -265,6 +265,10 @@ void MainWindow::print() {
 
 	dialog.setModal(false);
 	dialog.hide();
+	dialog.reset();
+
+	generate_gcode(generate_safety_shutdown(), upload_gcode);
+	QApplication::processEvents(QEventLoop::AllEvents, 1000);
 }
 
 bool MainWindow::isItemSelected() const noexcept {

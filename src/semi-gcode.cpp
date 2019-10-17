@@ -84,7 +84,7 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 	return ret;
 }
 
-semi_gcodes show_workspace(const QImage &img) {
+semi_gcodes generate_workspace_demo(const QImage &img) {
 	semi_gcodes ret;
 
 	if (img.isNull())
@@ -104,10 +104,24 @@ semi_gcodes show_workspace(const QImage &img) {
 
 	encode(power{1});
 	encode(move{0, 0});
-	encode(move{0, w});
-	encode(move{h, w});
-	encode(move{h, 0});
+	encode(move{w, 0});
+	encode(move{w, h});
+	encode(move{0, h});
 	encode(move{0, 0});
 
 	return ret;
 }
+
+semi_gcodes generate_safety_shutdown() {
+	semi_gcodes ret;
+
+	auto encode = [&ret](auto &&value) {
+		ret.emplace_back(std::forward<decltype(value)>(value));
+	};
+
+	encode(power{0});
+	encode(laser_off{});
+	encode(home{});
+
+	return ret;
+};
