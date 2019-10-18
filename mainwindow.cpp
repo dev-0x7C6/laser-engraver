@@ -171,6 +171,35 @@ return_type qt_progress_task(QString &&title, std::function<return_type(progress
 	return result.get();
 }
 
+upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
+	auto dialog = new QProgressDialog(parent);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
+	dialog->setAutoClose(true);
+	dialog->setAutoReset(true);
+	dialog->setWindowTitle(title);
+	dialog->setLabelText(text);
+	dialog->setRange(0, 10000);
+	dialog->setValue(0);
+	dialog->setMinimumSize(400, 100);
+	dialog->setModal(true);
+	dialog->show();
+
+	return [dialog, interpreter{std::move(interpreter)}, show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
+		dialog->setValue(static_cast<int>(progress * 10000));
+
+		if (show_gcode)
+			dialog->setLabelText("GCODE: " + QString::fromStdString(instruction));
+
+		if (dialog->wasCanceled()) {
+			dialog->close();
+			return upload_instruction_ret::cancel;
+		}
+
+		QApplication::processEvents(QEventLoop::AllEvents, 1);
+		return interpreter(std::move(instruction), progress);
+	};
+}
+
 void MainWindow::print() {
 	auto rect = m_grid->itemsBoundingRect().toRect();
 	rect.moveTopLeft({0, 0});
@@ -183,10 +212,6 @@ void MainWindow::print() {
 	m_grid->setDisableBackground(false);
 
 	auto img = canvas.toImage();
-
-	std::cout << "w: " << img.width() << std::endl;
-	std::cout << "h: " << img.height() << std::endl;
-	std::cout << "s: " << img.sizeInBytes() << std::endl;
 
 	options opts;
 	opts.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
@@ -212,32 +237,9 @@ void MainWindow::print() {
 	}
 	port.clear();
 
-	QProgressDialog dialog;
-	dialog.setWindowTitle("Showing workspace...");
-	dialog.setLabelText("Please inspect workspace");
-	dialog.setRange(0, 0);
-	dialog.setValue(0);
-	dialog.setMinimumSize(400, 100);
-	dialog.setCancelButton(nullptr);
-	dialog.setModal(true);
-	dialog.show();
-
-	auto upload_gcode = [&port, &dialog](auto &&instruction, double progress) -> upload_instruction_ret {
-		if (instruction.empty())
-			return upload_instruction_ret::keep_going;
-
-		if (dialog.wasCanceled() && dialog.isVisible())
-			return upload_instruction_ret::cancel;
-
-		if (dialog.minimum() != dialog.maximum()) {
-			dialog.setValue(static_cast<int>(progress * 10000));
-			dialog.setLabelText("GCODE: " + QString::fromStdString(instruction));
-		}
-
-		QApplication::processEvents(QEventLoop::AllEvents, 1);
-
+	auto write_serial = [&](auto &&instruction, double progress) -> upload_instruction_ret {
+		std::cout << "GCODE: " << instruction << std::endl;
 		instruction += "\n";
-		std::cout << progress * 100.0 << "%: " << instruction;
 		port.write(instruction.c_str(), instruction.size());
 		port.waitForBytesWritten();
 
@@ -255,7 +257,8 @@ void MainWindow::print() {
 	};
 
 	while (true) {
-		generate_gcode(generate_workspace_demo(img, opts), generation_options, upload_gcode);
+		generate_gcode(generate_workspace_demo(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", write_serial));
+		generate_gcode(generate_end_section(), generation_options, write_serial);
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -265,13 +268,8 @@ void MainWindow::print() {
 			return;
 	}
 
-	dialog.setWindowTitle("Uploading gcodes...");
-	dialog.setRange(0, 10000);
-	dialog.setValue(0);
-	dialog.setCancelButton(new QPushButton("Cancel"));
-	dialog.show();
-	generate_gcode(std::move(semi), generation_options, upload_gcode);
-	generate_gcode(generate_end_section(), generation_options, upload_gcode);
+	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, write_serial));
+	generate_gcode(generate_end_section(), generation_options, write_serial);
 }
 
 bool MainWindow::isItemSelected() const noexcept {

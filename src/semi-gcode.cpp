@@ -89,6 +89,7 @@ semi_gcodes generate_workspace_demo(const QImage &img, options opts) {
 	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y) {
 		const auto [x_offset, y_offset] = offsets;
 		encode(move{(x - x_offset), (y - y_offset)});
+		encode(wait_for_movement_finish{});
 	};
 
 	gcode_move(0, 0);
