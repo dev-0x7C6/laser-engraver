@@ -189,7 +189,7 @@ void MainWindow::print() {
 	std::cout << "s: " << img.sizeInBytes() << std::endl;
 
 	options opts;
-	opts.power_multiplier = 0.2;
+	opts.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
 	opts.force_dwell_time = 1;
 
 	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
@@ -265,13 +265,7 @@ void MainWindow::print() {
 	dialog.setCancelButton(new QPushButton("Cancel"));
 	dialog.show();
 	generate_gcode(std::move(semi), generation_options, upload_gcode);
-
-	dialog.setModal(false);
-	dialog.hide();
-	dialog.reset();
-
 	generate_gcode(generate_safety_shutdown(), generation_options, upload_gcode);
-	QApplication::processEvents(QEventLoop::AllEvents, 1000);
 }
 
 bool MainWindow::isItemSelected() const noexcept {
