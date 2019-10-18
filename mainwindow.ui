@@ -155,6 +155,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QCheckBox" name="center_object">
+       <property name="text">
+        <string>Center object</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="QLabel" name="label">

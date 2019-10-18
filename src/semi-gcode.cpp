@@ -17,54 +17,42 @@ private:
 	type &m_progress;
 };
 
-template <typename gcode_begin, typename gcode_end = gcode_begin>
-class raii_gcode {
-public:
-	raii_gcode(semi_gcodes &gcodes, gcode_begin &&begin, gcode_end &&end = gcode_begin{})
-			: m_gcodes(gcodes)
-			, m_end(std::move(end)) {
-		m_gcodes.emplace_back(begin);
-	}
+auto center_offset(const QImage &img, const options &opts) {
+	return std::make_pair(opts.center_object ? img.width() / 2 : 0,
+		opts.center_object ? img.height() / 2 : 0);
+}
 
-	~raii_gcode() {
-		m_gcodes.emplace_back(std::move(m_end));
-	}
+void move_gcodes(semi_gcodes &&source, semi_gcodes &destination) {
+	std::move(source.begin(), source.end(), std::back_inserter(destination));
+}
 
-private:
-	semi_gcodes &m_gcodes;
-	gcode_end m_end;
-};
 } // namespace
 
 semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &progress) {
 	raii_progress progress_raii(progress);
-	semi_gcodes ret;
+	auto ret = generate_begin_section();
 
 	if (img.isNull())
-		return ret;
-
-	constexpr static auto ir_size = sizeof(semi_gcode);
-	constexpr static auto ir_extra = ir_size * 100;
-
-	ret.reserve(ir_size * img.width() * img.height() + ir_extra);
+		return {};
 
 	auto encode = [&ret](auto &&value) {
 		ret.emplace_back(std::forward<decltype(value)>(value));
 	};
 
-	raii_gcode home_raii(ret, home{});
-	raii_gcode power_raii(ret, power{0});
-	raii_gcode laser_raii(ret, laser_on{}, laser_off{});
-
 	auto schedule_power_off{false};
 
-	for (std::size_t y = 0; y < img.height(); ++y) {
-		for (std::size_t px = 0; px < img.width(); ++px) {
+	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y) {
+		const auto [x_offset, y_offset] = offsets;
+		encode(move{x - x_offset, y - y_offset});
+	};
+
+	for (auto y = 0; y < img.height(); ++y) {
+		for (auto px = 0; px < img.width(); ++px) {
 			const auto x = ((y % 2) == 0) ? px : img.width() - px - 1;
 			const auto pwr = 1.0 - QColor::fromRgb(img.pixel(x, y)).lightnessF();
 
 			if (pwr != 0.0) {
-				encode(move{static_cast<decltype(move::x)>(x), static_cast<decltype(move::y)>(y)});
+				gcode_move(x, y);
 				encode(power{static_cast<i16>(255 * (pwr * opts.power_multiplier))});
 				if (opts.force_dwell_time)
 					encode(dwell{opts.force_dwell_time.value()});
@@ -81,47 +69,43 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 		progress = static_cast<double>(y) / static_cast<double>(img.height());
 	}
 
+	move_gcodes(generate_end_section(), ret);
 	return ret;
 }
 
-semi_gcodes generate_workspace_demo(const QImage &img) {
-	semi_gcodes ret;
+semi_gcodes generate_workspace_demo(const QImage &img, options opts) {
+	auto ret = generate_begin_section();
 
 	if (img.isNull())
-		return ret;
+		return {};
 
 	auto encode = [&ret](auto &&value) {
 		ret.emplace_back(std::forward<decltype(value)>(value));
 	};
-
-	encode(laser_off{});
-	raii_gcode home_raii(ret, home{});
-	raii_gcode power_raii(ret, power{0});
-	raii_gcode laser_raii(ret, laser_on{}, laser_off{});
 
 	const auto w = static_cast<i16>(img.width());
 	const auto h = static_cast<i16>(img.height());
 
-	encode(power{1});
-	encode(move{0, 0});
-	encode(move{w, 0});
-	encode(move{w, h});
-	encode(move{0, h});
-	encode(move{0, 0});
+	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y) {
+		const auto [x_offset, y_offset] = offsets;
+		encode(move{(x - x_offset), (y - y_offset)});
+	};
 
+	gcode_move(0, 0);
+	encode(power{1});
+	gcode_move(w, 0);
+	gcode_move(w, h);
+	gcode_move(0, h);
+	gcode_move(0, 0);
+
+	move_gcodes(generate_end_section(), ret);
 	return ret;
 }
 
-semi_gcodes generate_safety_shutdown() {
-	semi_gcodes ret;
+semi_gcodes generate_begin_section() {
+	return {power{0}, home{}, wait_for_movement_finish{}, laser_on{}};
+};
 
-	auto encode = [&ret](auto &&value) {
-		ret.emplace_back(std::forward<decltype(value)>(value));
-	};
-
-	encode(power{0});
-	encode(laser_off{});
-	encode(home{});
-
-	return ret;
+semi_gcodes generate_end_section() {
+	return {power{0}, home{}, wait_for_movement_finish{}, laser_off{}};
 };

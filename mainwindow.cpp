@@ -190,7 +190,7 @@ void MainWindow::print() {
 
 	options opts;
 	opts.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
-	opts.force_dwell_time = 1;
+	opts.center_object = m_ui->center_object->isChecked();
 
 	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
 		return image_to_semi_gcode(img, opts, progress);
@@ -203,8 +203,14 @@ void MainWindow::print() {
 	port.open(QSerialPort::ReadWrite);
 	port.setBaudRate(115200);
 
-	port.waitForReadyRead(5000);
-	port.readAll();
+	port.clear();
+	for (auto i = 0; i < 3000; ++i) {
+		const auto response = port.readLine();
+		if (!response.isEmpty())
+			std::cout << response.toStdString() << std::endl;
+		port.waitForReadyRead(1);
+	}
+	port.clear();
 
 	QProgressDialog dialog;
 	dialog.setWindowTitle("Showing workspace...");
@@ -249,7 +255,7 @@ void MainWindow::print() {
 	};
 
 	while (true) {
-		generate_gcode(generate_workspace_demo(img), generation_options, upload_gcode);
+		generate_gcode(generate_workspace_demo(img, opts), generation_options, upload_gcode);
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -265,7 +271,7 @@ void MainWindow::print() {
 	dialog.setCancelButton(new QPushButton("Cancel"));
 	dialog.show();
 	generate_gcode(std::move(semi), generation_options, upload_gcode);
-	generate_gcode(generate_safety_shutdown(), generation_options, upload_gcode);
+	generate_gcode(generate_end_section(), generation_options, upload_gcode);
 }
 
 bool MainWindow::isItemSelected() const noexcept {

@@ -13,16 +13,14 @@ public:
 	gcode_generator(const double dpi = 300)
 			: m_precision(precision_multiplier(dpi)) {}
 
-	std::string operator()(const dwell v) const noexcept {
-		std::this_thread::sleep_for(std::chrono::milliseconds(v.delay));
-		return {};
-	} //return "G4 P0.00" + std::to_string(v.delay); }
-	std::string operator()(const home) const noexcept { return "G0 X0.000 Y0.000"; }
+	std::string operator()(const dwell v) const noexcept { return "G4 P" + std::to_string(static_cast<double>(v.delay) / 1000.0); }
+	std::string operator()(const home) const noexcept { return "G28"; }
 	std::string operator()(const laser_off) const noexcept { return "M5"; }
 	std::string operator()(const laser_on) const noexcept { return "M3"; }
 	std::string operator()(const move v) const noexcept { return "G0 X" + std::to_string(static_cast<double>(v.x) / m_precision) + " Y" + std::to_string(static_cast<double>(v.y) / m_precision); }
 	std::string operator()(const power v) const noexcept { return "S" + std::to_string(v.duty); }
 	std::string operator()(const std::monostate) const noexcept { return {}; }
+	std::string operator()(const wait_for_movement_finish) const noexcept { return "G4 P0"; }
 
 private:
 	const double m_precision{1.0};
