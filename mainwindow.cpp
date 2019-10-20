@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
 	auto menu = m_ui->menu;
 	auto file = menu->addMenu("&File");
 	auto print = file->addAction("&Print", this, &MainWindow::print);
+	auto add_printer = file->addAction("Add printer", this, &MainWindow::addPrinter);
 	auto open = file->addAction("&Open", this, &MainWindow::open);
 	file->addSeparator();
 	auto exit = file->addAction("&Close", this, &MainWindow::close);
@@ -237,7 +238,7 @@ void MainWindow::print() {
 	}
 	port.clear();
 
-	auto write_serial = [&](auto &&instruction, double progress) -> upload_instruction_ret {
+	auto write_serial = [&](auto &&instruction, double) -> upload_instruction_ret {
 		std::cout << "GCODE: " << instruction << std::endl;
 		instruction += "\n";
 		port.write(instruction.c_str(), instruction.size());
@@ -270,6 +271,14 @@ void MainWindow::print() {
 
 	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, write_serial));
 	generate_gcode(generate_end_section(), generation_options, write_serial);
+}
+
+#include <src/add-printer-dialog.h>
+
+void MainWindow::addPrinter()
+{
+	AddPrinterDialog dialog;
+	dialog.exec();
 }
 
 bool MainWindow::isItemSelected() const noexcept {
