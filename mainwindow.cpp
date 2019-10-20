@@ -21,6 +21,7 @@
 
 #include <grid-scene.h>
 #include <src/gcode-generator.hpp>
+#include <src/add-engraver-dialog.h>
 
 using namespace std::chrono_literals;
 
@@ -38,7 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
 	auto menu = m_ui->menu;
 	auto file = menu->addMenu("&File");
 	auto print = file->addAction("&Print", this, &MainWindow::print);
-	auto add_printer = file->addAction("Add printer", this, &MainWindow::addPrinter);
 	auto open = file->addAction("&Open", this, &MainWindow::open);
 	file->addSeparator();
 	auto exit = file->addAction("&Close", this, &MainWindow::close);
@@ -70,6 +70,9 @@ MainWindow::MainWindow(QWidget *parent)
 	tool->addSeparator();
 	tool->addAction(move_up);
 	tool->addAction(remove);
+
+	auto machine = menu->addMenu("&Machine");
+	auto add_engraver = machine->addAction("Add engraver", this, &MainWindow::addEngraver);
 
 	for (auto &&v : {10, 25, 50, 100, 200, 400, 800}) {
 		m_ui->scale->addItem(QString::number(v) + "%", v);
@@ -225,9 +228,25 @@ void MainWindow::print() {
 	gcode_generation_options generation_options;
 	generation_options.dpi = m_ui->dpi->value();
 
-	QSerialPort port(QSerialPortInfo::availablePorts().back());
-	port.open(QSerialPort::ReadWrite);
-	port.setBaudRate(115200);
+	AddEngraverDialog dialog;
+	dialog.exec();
+	const auto settings = dialog.result();
+
+	if (!settings) {
+		QMessageBox::critical(this, "Error", "Please select engraver machine.", QMessageBox::StandardButton::Close);
+		return;
+	}
+
+	QSerialPort port(QString::fromStdString(settings->port));
+	port.setBaudRate(settings->baud);
+	port.setParity(settings->parity);
+	port.setDataBits(settings->bits);
+	port.setFlowControl(settings->flow_control);
+	port.setStopBits(settings->stop_bits);
+	if (!port.open(QSerialPort::ReadWrite)) {
+		QMessageBox::critical(this, "Error", "Unable to open engraver communication port.", QMessageBox::StandardButton::Close);
+		return;
+	}
 
 	port.clear();
 	for (auto i = 0; i < 3000; ++i) {
@@ -273,11 +292,8 @@ void MainWindow::print() {
 	generate_gcode(generate_end_section(), generation_options, write_serial);
 }
 
-#include <src/add-printer-dialog.h>
-
-void MainWindow::addPrinter()
-{
-	AddPrinterDialog dialog;
+void MainWindow::addEngraver() {
+	AddEngraverDialog dialog;
 	dialog.exec();
 }
 

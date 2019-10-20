@@ -30,20 +30,20 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     grid-scene.cpp \
-    src/add-printer-dialog.cpp \
+    src/add-engraver-dialog.cpp \
     src/semi-gcode.cpp \
     src/gcode-generator.cpp
 
 HEADERS += \
         mainwindow.h \
     grid-scene.h \
-    src/add-printer-dialog.h \
+    src/add-engraver-dialog.h \
     src/semi-gcode.hpp \
     src/gcode-generator.hpp
 
 FORMS += \
         mainwindow.ui \
-        src/add-printer-dialog.ui
+        src/add-engraver-dialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

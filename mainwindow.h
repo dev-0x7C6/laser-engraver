@@ -26,7 +26,7 @@ public:
 private:
 	void open();
 	void print();
-	void addPrinter();
+	void addEngraver();
 
 private:
 	bool isItemSelected() const noexcept;
