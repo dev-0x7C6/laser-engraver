@@ -23,6 +23,8 @@ public:
 
 	~MainWindow() final;
 
+	QImage prepareImage();
+
 private:
 	void open();
 	void print();

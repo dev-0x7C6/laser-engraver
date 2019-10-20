@@ -36,6 +36,9 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->setupUi(this);
 	m_ui->view->setScene(m_grid);
 
+	setWindowTitle("Laser engraver");
+	setWindowIcon(QIcon::fromTheme("document-print"));
+
 	auto menu = m_ui->menu;
 	auto file = menu->addMenu("&File");
 	auto print = file->addAction("&Print", this, &MainWindow::print);
@@ -63,6 +66,10 @@ MainWindow::MainWindow(QWidget *parent)
 	remove->setEnabled(false);
 	edit->addSeparator();
 
+	auto machine = menu->addMenu("&Machine");
+	auto add_engraver = machine->addAction("Add engraver", this, &MainWindow::addEngraver);
+	add_engraver->setIcon(QIcon::fromTheme("list-add"));
+
 	auto tool = m_ui->tool;
 	tool->addAction(open);
 	tool->addSeparator();
@@ -70,9 +77,8 @@ MainWindow::MainWindow(QWidget *parent)
 	tool->addSeparator();
 	tool->addAction(move_up);
 	tool->addAction(remove);
-
-	auto machine = menu->addMenu("&Machine");
-	auto add_engraver = machine->addAction("Add engraver", this, &MainWindow::addEngraver);
+	tool->addSeparator();
+	tool->addAction(add_engraver);
 
 	for (auto &&v : {10, 25, 50, 100, 200, 400, 800}) {
 		m_ui->scale->addItem(QString::number(v) + "%", v);
@@ -204,7 +210,7 @@ upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const
 	};
 }
 
-void MainWindow::print() {
+QImage MainWindow::prepareImage() {
 	auto rect = m_grid->itemsBoundingRect().toRect();
 	rect.moveTopLeft({0, 0});
 	QPixmap canvas(rect.width(), rect.height());
@@ -215,7 +221,11 @@ void MainWindow::print() {
 	m_grid->render(&painter, canvas.rect(), m_grid->itemsBoundingRect());
 	m_grid->setDisableBackground(false);
 
-	auto img = canvas.toImage();
+	return canvas.toImage();
+}
+
+void MainWindow::print() {
+	const auto img = prepareImage();
 
 	options opts;
 	opts.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
