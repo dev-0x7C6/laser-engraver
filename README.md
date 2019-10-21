@@ -1,14 +1,21 @@
-# laser-engraver
-Laser Engraver software (work in progress)
+# Laser Engraver Toolkit
+Graphical toolkit that allow you todo basic engraving.
 
 ## Status
-Prototype
+Works fine on Linux, but isn't feature complete.
 
-# Goals
-* Customizable composition scene that allow to add multiple images, fonts and etc.
-* Works fine on Linux
-* Works fine with EleksMaker A3 hardware
+## Features
+* Multi-object workspace scene
+* Support for multiple engraver profiles
+* Support for Grbl firmware (G-code Grbl flavor)
+* Support for EleksMaker A3 hardware
+
+## Scheduled features
+* Allow to change speed or power of laser while engraving (live parameters customization)
+* Allow to add an customize labels to workspace
+* Allow to save/load workspace project
+* Multiple tool profiles (for different laser modules)
 * Command line options to generate gcode without gui usage
-* Customizable and multiple engraver profiles
+* Cmake migration
 
-![](https://devwork.space/wp-content/uploads/2019/01/laser_engraver.png)
+![](https://devwork.space/wp-content/uploads/2019/10/laser-engraver-1.png)
