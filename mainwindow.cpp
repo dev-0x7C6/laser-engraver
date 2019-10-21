@@ -20,9 +20,8 @@
 #include <thread>
 
 #include <grid-scene.h>
-#include <src/gcode-generator.hpp>
-#include <src/add-engraver-dialog.h>
-#include <src/select-engraver-dialog.h>
+#include <src/move-tool-dialog.h>
+#include <src/engraver-connection.h>
 
 using namespace std::chrono_literals;
 
@@ -70,8 +69,11 @@ MainWindow::MainWindow(QWidget *parent)
 	edit->addSeparator();
 
 	auto machine = menu->addMenu("&Machine");
+	auto move_tool = machine->addAction("Move tool", this, &MainWindow::moveTool);
+	machine->addSeparator();
 	auto add_engraver = machine->addAction("Add engraver", &m_engraverManager, &EngraverManager::addEngraver);
 	auto remove_engraver = machine->addAction("Remove engraver", &m_engraverManager, &EngraverManager::removeEngraver);
+	move_tool->setIcon(QIcon::fromTheme("go-home"));
 	add_engraver->setIcon(QIcon::fromTheme("list-add"));
 	remove_engraver->setIcon(QIcon::fromTheme("list-remove"));
 	remove_engraver->setEnabled(m_engraverManager.atLeastOneEngraverAvailable());
@@ -261,48 +263,16 @@ void MainWindow::print() {
 	if (!engraver)
 		return;
 
-	QSerialPort port(engraver->port);
-	port.setBaudRate(engraver->baud);
-	port.setParity(engraver->parity);
-	port.setDataBits(engraver->bits);
-	port.setFlowControl(engraver->flow_control);
-	port.setStopBits(engraver->stop_bits);
-	if (!port.open(QSerialPort::ReadWrite)) {
+	EngraverConnection connection(engraver.value());
+
+	if (!connection.isOpen()) {
 		QMessageBox::critical(this, "Error", "Unable to open engraver communication port.", QMessageBox::StandardButton::Close);
 		return;
 	}
 
-	port.clear();
-	for (auto i = 0; i < 3000; ++i) {
-		const auto response = port.readLine();
-		if (!response.isEmpty())
-			std::cout << response.toStdString() << std::endl;
-		port.waitForReadyRead(1);
-	}
-	port.clear();
-
-	auto write_serial = [&](auto &&instruction, double) -> upload_instruction_ret {
-		std::cout << "GCODE: " << instruction << std::endl;
-		instruction += "\n";
-		port.write(instruction.c_str(), instruction.size());
-		port.waitForBytesWritten();
-
-		for (int retry = 0; retry < 30000; ++retry) {
-			port.waitForReadyRead(1);
-			QApplication::processEvents(QEventLoop::AllEvents, 1);
-			const auto response = port.readLine();
-			if (!response.isEmpty()) {
-				std::cout << response.toStdString() << std::endl;
-				break;
-			}
-		}
-
-		return upload_instruction_ret::keep_going;
-	};
-
 	while (true) {
-		generate_gcode(generate_workspace_demo(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", write_serial));
-		generate_gcode(generate_end_section(), generation_options, write_serial);
+		generate_gcode(generate_workspace_demo(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", connection.process()));
+		generate_gcode(generate_end_section(), generation_options, connection.process());
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -312,8 +282,13 @@ void MainWindow::print() {
 			return;
 	}
 
-	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, write_serial));
-	generate_gcode(generate_end_section(), generation_options, write_serial);
+	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, connection.process()));
+	generate_gcode(generate_end_section(), generation_options, connection.process());
+}
+
+void MainWindow::moveTool() {
+	MoveToolDialog dialog;
+	dialog.exec();
 }
 
 bool MainWindow::isItemSelected() const noexcept {

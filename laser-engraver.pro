@@ -31,6 +31,7 @@ SOURCES += \
         mainwindow.cpp \
     grid-scene.cpp \
     src/add-engraver-dialog.cpp \
+    src/engraver-connection.cpp \
     src/engraver-manager.cpp \
     src/move-tool-dialog.cpp \
     src/select-engraver-dialog.cpp \
@@ -41,6 +42,7 @@ HEADERS += \
         mainwindow.h \
     grid-scene.h \
     src/add-engraver-dialog.h \
+    src/engraver-connection.h \
     src/engraver-manager.h \
     src/engraver-settings.h \
     src/move-tool-dialog.h \

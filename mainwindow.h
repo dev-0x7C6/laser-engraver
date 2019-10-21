@@ -32,6 +32,7 @@ public:
 private:
 	void open();
 	void print();
+	void moveTool();
 
 private:
 	bool isItemSelected() const noexcept;
