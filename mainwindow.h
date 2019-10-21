@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include <src/engraver-settings.h>
+#include <src/engraver-manager.h>
 
 class GridScene;
 class QGraphicsItem;
@@ -32,7 +32,6 @@ public:
 private:
 	void open();
 	void print();
-	void addEngraver();
 
 private:
 	bool isItemSelected() const noexcept;
@@ -46,8 +45,8 @@ private:
 
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
-	std::vector<EngraverSettings> m_engravers;
 	QSettings m_settings;
+	EngraverManager m_engraverManager;
 	QGraphicsItem *m_selectedItem{nullptr};
 	GridScene *m_grid{nullptr};
 };

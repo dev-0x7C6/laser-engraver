@@ -31,6 +31,8 @@ SOURCES += \
         mainwindow.cpp \
     grid-scene.cpp \
     src/add-engraver-dialog.cpp \
+    src/engraver-manager.cpp \
+    src/move-tool-dialog.cpp \
     src/select-engraver-dialog.cpp \
     src/semi-gcode.cpp \
     src/gcode-generator.cpp
@@ -39,7 +41,9 @@ HEADERS += \
         mainwindow.h \
     grid-scene.h \
     src/add-engraver-dialog.h \
+    src/engraver-manager.h \
     src/engraver-settings.h \
+    src/move-tool-dialog.h \
     src/select-engraver-dialog.h \
     src/semi-gcode.hpp \
     src/gcode-generator.hpp
@@ -47,6 +51,7 @@ HEADERS += \
 FORMS += \
         mainwindow.ui \
         src/add-engraver-dialog.ui \
+        src/move-tool-dialog.ui \
         src/select-engraver-dialog.ui
 
 # Default rules for deployment.

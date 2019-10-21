@@ -4,6 +4,8 @@
 #include <QSerialPortInfo>
 #include <QSettings>
 
+#include <vector>
+
 enum class GcodeFlavor {
 	Grbl
 };
@@ -40,3 +42,5 @@ inline void save(QSettings &handle, EngraverSettings &settings) {
 	handle.setValue("flow_control", settings.flow_control);
 	handle.setValue("stop_bits", settings.stop_bits);
 }
+
+using Engravers = std::vector<EngraverSettings>;

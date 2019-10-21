@@ -34,17 +34,10 @@ MainWindow::MainWindow(QWidget *parent)
 		: QMainWindow(parent)
 		, m_ui(std::make_unique<Ui::MainWindow>())
 		, m_settings("Laser", "Engraver")
+		, m_engraverManager(m_settings, this)
 		, m_grid(new GridScene(-grid_size, -grid_size, grid_size * 2, grid_size * 2)) {
 	m_ui->setupUi(this);
 	m_ui->view->setScene(m_grid);
-
-	m_settings.beginGroup("devices");
-	for (auto &&key : m_settings.childGroups()) {
-		m_settings.beginGroup(key);
-		m_engravers.emplace_back(load(m_settings));
-		m_settings.endGroup();
-	}
-	m_settings.endGroup();
 
 	setWindowTitle("Laser engraver");
 	setWindowIcon(QIcon::fromTheme("document-print"));
@@ -77,8 +70,15 @@ MainWindow::MainWindow(QWidget *parent)
 	edit->addSeparator();
 
 	auto machine = menu->addMenu("&Machine");
-	auto add_engraver = machine->addAction("Add engraver", this, &MainWindow::addEngraver);
+	auto add_engraver = machine->addAction("Add engraver", &m_engraverManager, &EngraverManager::addEngraver);
+	auto remove_engraver = machine->addAction("Remove engraver", &m_engraverManager, &EngraverManager::removeEngraver);
 	add_engraver->setIcon(QIcon::fromTheme("list-add"));
+	remove_engraver->setIcon(QIcon::fromTheme("list-remove"));
+	remove_engraver->setEnabled(m_engraverManager.atLeastOneEngraverAvailable());
+
+	connect(&m_engraverManager, &EngraverManager::engraverListChanged, [this, remove_engraver]() {
+		remove_engraver->setEnabled(m_engraverManager.atLeastOneEngraverAvailable());
+	});
 
 	auto tool = m_ui->tool;
 	tool->addAction(open);
@@ -89,6 +89,7 @@ MainWindow::MainWindow(QWidget *parent)
 	tool->addAction(remove);
 	tool->addSeparator();
 	tool->addAction(add_engraver);
+	tool->addAction(remove_engraver);
 
 	for (auto &&v : {10, 25, 50, 100, 200, 400, 800}) {
 		m_ui->scale->addItem(QString::number(v) + "%", v);
@@ -142,15 +143,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->removeItemButton->setDefaultAction(remove);
 }
 
-MainWindow::~MainWindow() {
-	m_settings.beginGroup("devices");
-	for (auto &&engraver : m_engravers) {
-		m_settings.beginGroup(engraver.name);
-		save(m_settings, engraver);
-		m_settings.endGroup();
-	}
-	m_settings.endGroup();
-}
+MainWindow::~MainWindow() = default;
 
 void MainWindow::open() {
 	auto path = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp *.svg)"));
@@ -258,21 +251,22 @@ void MainWindow::print() {
 	gcode_generation_options generation_options;
 	generation_options.dpi = m_ui->dpi->value();
 
-	SelectEngraverDialog dialog(m_engravers, this);
-	dialog.exec();
-	const auto settings = dialog.result();
-
-	if (!settings) {
-		QMessageBox::critical(this, "Error", "Please select engraver machine.", QMessageBox::StandardButton::Close);
+	if (!m_engraverManager.atLeastOneEngraverAvailable()) {
+		QMessageBox::information(this, "Information", "Please add engraver machine before printing.", QMessageBox::StandardButton::Close);
 		return;
 	}
 
-	QSerialPort port(settings->port);
-	port.setBaudRate(settings->baud);
-	port.setParity(settings->parity);
-	port.setDataBits(settings->bits);
-	port.setFlowControl(settings->flow_control);
-	port.setStopBits(settings->stop_bits);
+	auto engraver = m_engraverManager.selectEngraver();
+
+	if (!engraver)
+		return;
+
+	QSerialPort port(engraver->port);
+	port.setBaudRate(engraver->baud);
+	port.setParity(engraver->parity);
+	port.setDataBits(engraver->bits);
+	port.setFlowControl(engraver->flow_control);
+	port.setStopBits(engraver->stop_bits);
 	if (!port.open(QSerialPort::ReadWrite)) {
 		QMessageBox::critical(this, "Error", "Unable to open engraver communication port.", QMessageBox::StandardButton::Close);
 		return;
@@ -320,14 +314,6 @@ void MainWindow::print() {
 
 	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, write_serial));
 	generate_gcode(generate_end_section(), generation_options, write_serial);
-}
-
-void MainWindow::addEngraver() {
-	AddEngraverDialog dialog;
-	dialog.exec();
-
-	if (dialog.result())
-		m_engravers.emplace_back(dialog.result().value());
 }
 
 bool MainWindow::isItemSelected() const noexcept {
