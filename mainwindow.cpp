@@ -22,6 +22,7 @@
 #include <grid-scene.h>
 #include <src/gcode-generator.hpp>
 #include <src/add-engraver-dialog.h>
+#include <src/select-engraver-dialog.h>
 
 using namespace std::chrono_literals;
 
@@ -32,9 +33,18 @@ constexpr auto grid_size = 5000;
 MainWindow::MainWindow(QWidget *parent)
 		: QMainWindow(parent)
 		, m_ui(std::make_unique<Ui::MainWindow>())
+		, m_settings("Laser", "Engraver")
 		, m_grid(new GridScene(-grid_size, -grid_size, grid_size * 2, grid_size * 2)) {
 	m_ui->setupUi(this);
 	m_ui->view->setScene(m_grid);
+
+	m_settings.beginGroup("devices");
+	for (auto &&key : m_settings.childGroups()) {
+		m_settings.beginGroup(key);
+		m_engravers.emplace_back(load(m_settings));
+		m_settings.endGroup();
+	}
+	m_settings.endGroup();
 
 	setWindowTitle("Laser engraver");
 	setWindowIcon(QIcon::fromTheme("document-print"));
@@ -132,8 +142,18 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->removeItemButton->setDefaultAction(remove);
 }
 
+MainWindow::~MainWindow() {
+	m_settings.beginGroup("devices");
+	for (auto &&engraver : m_engravers) {
+		m_settings.beginGroup(engraver.name);
+		save(m_settings, engraver);
+		m_settings.endGroup();
+	}
+	m_settings.endGroup();
+}
+
 void MainWindow::open() {
-	auto path = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp)"));
+	auto path = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp *.svg)"));
 
 	if (path.isEmpty())
 		return;
@@ -238,7 +258,7 @@ void MainWindow::print() {
 	gcode_generation_options generation_options;
 	generation_options.dpi = m_ui->dpi->value();
 
-	AddEngraverDialog dialog;
+	SelectEngraverDialog dialog(m_engravers, this);
 	dialog.exec();
 	const auto settings = dialog.result();
 
@@ -247,7 +267,7 @@ void MainWindow::print() {
 		return;
 	}
 
-	QSerialPort port(QString::fromStdString(settings->port));
+	QSerialPort port(settings->port);
 	port.setBaudRate(settings->baud);
 	port.setParity(settings->parity);
 	port.setDataBits(settings->bits);
@@ -305,6 +325,9 @@ void MainWindow::print() {
 void MainWindow::addEngraver() {
 	AddEngraverDialog dialog;
 	dialog.exec();
+
+	if (dialog.result())
+		m_engravers.emplace_back(dialog.result().value());
 }
 
 bool MainWindow::isItemSelected() const noexcept {
@@ -334,5 +357,3 @@ void MainWindow::updateItemScale(const double value) noexcept {
 	m_selectedItem->setScale(value);
 	m_ui->itemScale->setValue(value);
 }
-
-MainWindow::~MainWindow() = default;

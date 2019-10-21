@@ -4,12 +4,17 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 
-Q_DECLARE_METATYPE(QSerialPortInfo);
 Q_DECLARE_METATYPE(GcodeFlavor);
+Q_DECLARE_METATYPE(QSerialPort::BaudRate);
+Q_DECLARE_METATYPE(QSerialPort::DataBits);
+Q_DECLARE_METATYPE(QSerialPort::FlowControl);
+Q_DECLARE_METATYPE(QSerialPort::Parity);
+Q_DECLARE_METATYPE(QSerialPort::StopBits);
+Q_DECLARE_METATYPE(QSerialPortInfo);
 
 AddEngraverDialog::AddEngraverDialog(QWidget *parent)
 		: QDialog(parent)
-		, m_ui(new Ui::AddPrinterDialog) {
+		, m_ui(std::make_unique<Ui::AddPrinterDialog>()) {
 	m_ui->setupUi(this);
 	setWindowIcon(QIcon::fromTheme("document-print"));
 	setWindowTitle("Add printer");
@@ -47,14 +52,12 @@ AddEngraverDialog::AddEngraverDialog(QWidget *parent)
 	connect(m_ui->buttons, &QDialogButtonBox::accepted, this, &AddEngraverDialog::saveResult);
 }
 
-AddEngraverDialog::~AddEngraverDialog() {
-	delete m_ui;
-}
+AddEngraverDialog::~AddEngraverDialog() = default;
 
 void AddEngraverDialog::saveResult() {
 	EngraverSettings settings;
-	settings.name = m_ui->name->text().toStdString();
-	settings.port = m_ui->device->currentText().toStdString();
+	settings.name = m_ui->name->text();
+	settings.port = m_ui->device->currentText();
 	settings.baud = m_ui->baud->currentData().value<QSerialPort::BaudRate>();
 	settings.parity = m_ui->parity->currentData().value<QSerialPort::Parity>();
 	settings.stop_bits = m_ui->stop_bits->currentData().value<QSerialPort::StopBits>();

@@ -1,23 +1,10 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <QDialog>
-#include <QSerialPort>
-#include <QSerialPortInfo>
 
-enum class GcodeFlavor {
-	Grbl
-};
-
-struct EngraverSettings {
-	std::string name;
-	std::string port;
-	QSerialPort::DataBits bits{QSerialPort::DataBits::Data8};
-	QSerialPort::BaudRate baud{QSerialPort::BaudRate::Baud115200};
-	QSerialPort::Parity parity{QSerialPort::Parity::NoParity};
-	QSerialPort::FlowControl flow_control{QSerialPort::FlowControl::NoFlowControl};
-	QSerialPort::StopBits stop_bits{QSerialPort::StopBits::OneStop};
-};
+#include <src/engraver-settings.h>
 
 namespace Ui {
 class AddPrinterDialog;
@@ -37,5 +24,5 @@ private:
 
 private:
 	std::optional<EngraverSettings> m_result;
-	Ui::AddPrinterDialog *m_ui;
+	std::unique_ptr<Ui::AddPrinterDialog> m_ui;
 };

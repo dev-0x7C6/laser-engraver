@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT += core gui serialport
+QT += core gui serialport svg
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -31,6 +31,7 @@ SOURCES += \
         mainwindow.cpp \
     grid-scene.cpp \
     src/add-engraver-dialog.cpp \
+    src/select-engraver-dialog.cpp \
     src/semi-gcode.cpp \
     src/gcode-generator.cpp
 
@@ -38,12 +39,15 @@ HEADERS += \
         mainwindow.h \
     grid-scene.h \
     src/add-engraver-dialog.h \
+    src/engraver-settings.h \
+    src/select-engraver-dialog.h \
     src/semi-gcode.hpp \
     src/gcode-generator.hpp
 
 FORMS += \
         mainwindow.ui \
-        src/add-engraver-dialog.ui
+        src/add-engraver-dialog.ui \
+        src/select-engraver-dialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

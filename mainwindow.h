@@ -1,7 +1,11 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QSettings>
+
 #include <memory>
+
+#include <src/engraver-settings.h>
 
 class GridScene;
 class QGraphicsItem;
@@ -42,6 +46,8 @@ private:
 
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
+	std::vector<EngraverSettings> m_engravers;
+	QSettings m_settings;
 	QGraphicsItem *m_selectedItem{nullptr};
 	GridScene *m_grid{nullptr};
 };
