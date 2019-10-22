@@ -15,6 +15,7 @@ public:
 
 	std::string operator()(const dwell v) const noexcept { return "G4 P" + std::to_string(static_cast<double>(v.delay) / 1000.0); }
 	std::string operator()(const home) const noexcept { return "G28"; }
+	std::string operator()(const new_home v) const noexcept { return "G92 X0 Y0 Z0"; }
 	std::string operator()(const laser_off) const noexcept { return "M5"; }
 	std::string operator()(const laser_on) const noexcept { return "M3"; }
 	std::string operator()(const move v) const noexcept { return "G0 X" + std::to_string(static_cast<double>(v.x) / m_precision) + " Y" + std::to_string(static_cast<double>(v.y) / m_precision); }

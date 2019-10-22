@@ -15,6 +15,7 @@ EngraverConnection::EngraverConnection(const EngraverSettings &configuration)
 		m_port.clear();
 		for (auto i = 0; i < 3000; ++i) {
 			const auto response = m_port.readLine();
+			QApplication::processEvents(QEventLoop::AllEvents, 1);
 			if (!response.isEmpty())
 				std::cout << response.toStdString() << std::endl;
 			m_port.waitForReadyRead(1);

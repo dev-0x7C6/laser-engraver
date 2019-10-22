@@ -20,7 +20,6 @@
 #include <thread>
 
 #include <grid-scene.h>
-#include <src/move-tool-dialog.h>
 #include <src/engraver-connection.h>
 
 using namespace std::chrono_literals;
@@ -43,6 +42,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 	auto menu = m_ui->menu;
 	auto file = menu->addMenu("&File");
+	m_actionConnectEngraver = file->addAction("Connect", this, &MainWindow::connectEngraver);
+	m_actionDisconnectEngraver = file->addAction("Disconnect", this, &MainWindow::disconnectEngraver);
+	m_actionConnectEngraver->setIcon(QIcon::fromTheme("network-wired"));
+	m_actionDisconnectEngraver->setIcon(QIcon::fromTheme("network-offline"));
 	auto print = file->addAction("&Print", this, &MainWindow::print);
 	auto open = file->addAction("&Open", this, &MainWindow::open);
 	file->addSeparator();
@@ -68,12 +71,50 @@ MainWindow::MainWindow(QWidget *parent)
 	remove->setEnabled(false);
 	edit->addSeparator();
 
-	auto machine = menu->addMenu("&Machine");
-	auto move_tool = machine->addAction("Move tool", this, &MainWindow::moveTool);
-	machine->addSeparator();
+	auto tool = menu->addMenu("&Commands");
+	auto home = tool->addAction("Home", [this]() { go(direction::home); });
+	auto new_home = tool->addAction("Save as Home", [this]() { go(direction::new_home); });
+	tool->addSeparator();
+	m_actionLaserOn = tool->addAction("Laser On", [this]() { turnLaser(true); });
+	m_actionLaserOff = tool->addAction("Laser Off", [this]() { turnLaser(false); });
+	tool->addSeparator();
+	auto go_u = tool->addAction("Go Up", [this]() { go(direction::up); });
+	auto go_d = tool->addAction("Go Down", [this]() { go(direction::down); });
+	auto go_l = tool->addAction("Go Left", [this]() { go(direction::left); });
+	auto go_r = tool->addAction("Go Right", [this]() { go(direction::right); });
+
+	m_actionLaserOn->setVisible(true);
+	m_actionLaserOff->setVisible(false);
+	m_actionLaserOn->setShortcut(QKeySequence(Qt::Key::Key_Space));
+	m_actionLaserOff->setShortcut(QKeySequence(Qt::Key::Key_Space));
+	m_ui->turnLaserOn->setDefaultAction(m_actionLaserOn);
+	m_ui->turnLaserOff->setDefaultAction(m_actionLaserOff);
+
+	new_home->setIcon(QIcon::fromTheme("go-home"));
+	new_home->setShortcut(QKeySequence(Qt::Key::Key_S));
+	home->setIcon(QIcon::fromTheme("go-home"));
+	home->setShortcut(QKeySequence(Qt::Key::Key_H));
+	go_u->setIcon(QIcon::fromTheme("go-up"));
+	go_u->setShortcut(QKeySequence(Qt::Key::Key_Up));
+	go_d->setIcon(QIcon::fromTheme("go-down"));
+	go_d->setShortcut(QKeySequence(Qt::Key::Key_Down));
+	go_l->setIcon(QIcon::fromTheme("go-previous"));
+	go_l->setShortcut(QKeySequence(Qt::Key::Key_Left));
+	go_r->setIcon(QIcon::fromTheme("go-next"));
+	go_r->setShortcut(QKeySequence(Qt::Key::Key_Right));
+
+	m_ui->tabWidget->setCurrentIndex(0);
+	m_ui->moveToolGroupBox->setEnabled(false);
+
+	for (auto &&action : {home, go_u, go_d, go_l, go_r, print})
+		m_enableIfEngraverConnected.addAction(action);
+
+	m_enableIfEngraverConnected.setEnabled(false);
+	m_actionDisconnectEngraver->setVisible(false);
+
+	auto machine = menu->addMenu("&Settings");
 	auto add_engraver = machine->addAction("Add engraver", &m_engraverManager, &EngraverManager::addEngraver);
 	auto remove_engraver = machine->addAction("Remove engraver", &m_engraverManager, &EngraverManager::removeEngraver);
-	move_tool->setIcon(QIcon::fromTheme("go-home"));
 	add_engraver->setIcon(QIcon::fromTheme("list-add"));
 	remove_engraver->setIcon(QIcon::fromTheme("list-remove"));
 	remove_engraver->setEnabled(m_engraverManager.atLeastOneEngraverAvailable());
@@ -82,16 +123,15 @@ MainWindow::MainWindow(QWidget *parent)
 		remove_engraver->setEnabled(m_engraverManager.atLeastOneEngraverAvailable());
 	});
 
-	auto tool = m_ui->tool;
-	tool->addAction(open);
-	tool->addSeparator();
-	tool->addAction(print);
-	tool->addSeparator();
-	tool->addAction(move_up);
-	tool->addAction(remove);
-	tool->addSeparator();
-	tool->addAction(add_engraver);
-	tool->addAction(remove_engraver);
+	auto toolbar = m_ui->tool;
+	toolbar->addAction(open);
+	toolbar->addAction(m_actionConnectEngraver);
+	toolbar->addAction(m_actionDisconnectEngraver);
+	toolbar->addSeparator();
+	toolbar->addAction(print);
+	toolbar->addSeparator();
+	toolbar->addAction(move_up);
+	toolbar->addAction(remove);
 
 	for (auto &&v : {10, 25, 50, 100, 200, 400, 800}) {
 		m_ui->scale->addItem(QString::number(v) + "%", v);
@@ -117,7 +157,7 @@ MainWindow::MainWindow(QWidget *parent)
 		auto list = m_grid->selectedItems();
 		const auto enabled = !list.isEmpty();
 
-		m_ui->itemWidget->setEnabled(enabled);
+		m_ui->itemGroup->setEnabled(enabled);
 		move_up->setEnabled(enabled);
 		remove->setEnabled(enabled);
 
@@ -139,10 +179,19 @@ MainWindow::MainWindow(QWidget *parent)
 	});
 	timer->start(50ms);
 
-	m_ui->itemWidget->setEnabled(false);
+	m_ui->itemGroup->setEnabled(false);
 
 	m_ui->moveTopButton->setDefaultAction(move_up);
 	m_ui->removeItemButton->setDefaultAction(remove);
+
+	m_ui->goHome->setDefaultAction(home);
+	m_ui->goUp->setDefaultAction(go_u);
+	m_ui->goDown->setDefaultAction(go_d);
+	m_ui->goLeft->setDefaultAction(go_l);
+	m_ui->goRight->setDefaultAction(go_r);
+
+	for (auto &&widget : {m_ui->goHome, m_ui->goUp, m_ui->goDown, m_ui->goLeft, m_ui->goRight})
+		widget->setIconSize({48, 48});
 }
 
 MainWindow::~MainWindow() = default;
@@ -240,6 +289,12 @@ QImage MainWindow::prepareImage() {
 }
 
 void MainWindow::print() {
+	if (!m_connection)
+		return;
+
+	if (!m_connection->isOpen())
+		return;
+
 	const auto img = prepareImage();
 
 	options opts;
@@ -253,6 +308,23 @@ void MainWindow::print() {
 	gcode_generation_options generation_options;
 	generation_options.dpi = m_ui->dpi->value();
 
+	while (true) {
+		generate_gcode(generate_workspace_demo(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
+		generate_gcode(generate_end_section(), generation_options, m_connection->process());
+		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
+
+		if (QMessageBox::No == response)
+			break;
+
+		if (QMessageBox::Cancel == response)
+			return;
+	}
+
+	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, m_connection->process()));
+	generate_gcode(generate_end_section(), generation_options, m_connection->process());
+}
+
+void MainWindow::connectEngraver() {
 	if (!m_engraverManager.atLeastOneEngraverAvailable()) {
 		QMessageBox::information(this, "Information", "Please add engraver machine before printing.", QMessageBox::StandardButton::Close);
 		return;
@@ -263,32 +335,68 @@ void MainWindow::print() {
 	if (!engraver)
 		return;
 
-	EngraverConnection connection(engraver.value());
+	QProgressDialog progress(this);
+	progress.setWindowIcon(QIcon::fromTheme("network-wired"));
+	progress.setWindowTitle("Connect with Engraver");
+	progress.setLabelText("Connecting...");
+	progress.setMinimumWidth(400);
+	progress.setRange(0, 0);
+	progress.setValue(0);
+	progress.setCancelButton(nullptr);
+	progress.setModal(true);
+	progress.show();
 
-	if (!connection.isOpen()) {
+	auto connection = std::make_unique<EngraverConnection>(engraver.value());
+
+	if (!connection->isOpen()) {
 		QMessageBox::critical(this, "Error", "Unable to open engraver communication port.", QMessageBox::StandardButton::Close);
 		return;
 	}
 
-	while (true) {
-		generate_gcode(generate_workspace_demo(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", connection.process()));
-		generate_gcode(generate_end_section(), generation_options, connection.process());
-		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
+	m_connection = std::move(connection);
+	m_enableIfEngraverConnected.setEnabled(true);
+	m_actionConnectEngraver->setVisible(false);
+	m_actionDisconnectEngraver->setVisible(true);
+	m_ui->moveToolGroupBox->setEnabled(true);
 
-		if (QMessageBox::No == response)
-			break;
-
-		if (QMessageBox::Cancel == response)
-			return;
-	}
-
-	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, connection.process()));
-	generate_gcode(generate_end_section(), generation_options, connection.process());
+	QMessageBox::information(this, "Information", "Engraver connected.", QMessageBox::StandardButton::Ok);
 }
 
-void MainWindow::moveTool() {
-	MoveToolDialog dialog;
-	dialog.exec();
+void MainWindow::disconnectEngraver() {
+	m_connection.reset(nullptr);
+	m_enableIfEngraverConnected.setEnabled(false);
+	m_actionConnectEngraver->setVisible(true);
+	m_actionDisconnectEngraver->setVisible(false);
+	m_ui->moveToolGroupBox->setEnabled(false);
+}
+
+void MainWindow::turnLaser(const bool on) {
+	if (on)
+		generate_gcode({laser_on{}, power{1}}, {}, m_connection->process());
+	else
+		generate_gcode({power{0}, laser_off{}}, {}, m_connection->process());
+
+	m_actionLaserOn->setVisible(!on);
+	m_actionLaserOff->setVisible(on);
+}
+
+void MainWindow::go(const direction value) {
+	const auto step = m_ui->move_step->value();
+	switch (value) {
+		case direction::up: return generate_gcode({::move{m_x, (m_y -= step)}}, {}, m_connection->process());
+		case direction::down: return generate_gcode({::move{m_x, (m_y += step)}}, {}, m_connection->process());
+		case direction::left: return generate_gcode({::move{(m_x -= step), m_y}}, {}, m_connection->process());
+		case direction::right: return generate_gcode({::move{(m_x += step), m_y}}, {}, m_connection->process());
+		case direction::home:
+			m_x = 0.0;
+			m_y = 0.0;
+			return generate_gcode({home{}}, {}, m_connection->process());
+		case direction::new_home:
+			generate_gcode({new_home{0, 0}, home{}}, {}, m_connection->process());
+			m_x = 0.0;
+			m_y = 0.0;
+			return;
+	}
 }
 
 bool MainWindow::isItemSelected() const noexcept {

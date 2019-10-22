@@ -20,6 +20,10 @@ using progress_t = std::atomic<double>;
 
 struct laser_on {};
 struct laser_off {};
+struct new_home {
+	i32 x;
+	i32 y;
+};
 struct home {};
 struct wait_for_movement_finish {};
 
@@ -36,7 +40,7 @@ struct power {
 	i32 duty;
 };
 
-using semi_gcode = std::variant<std::monostate, laser_on, laser_off, home, dwell, move, power, wait_for_movement_finish>;
+using semi_gcode = std::variant<std::monostate, laser_on, laser_off, home, new_home, dwell, move, power, wait_for_movement_finish>;
 using semi_gcodes = std::vector<semi_gcode>;
 
 semi_gcodes image_to_semi_gcode(const QImage &img, options, progress_t &);

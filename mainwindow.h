@@ -2,10 +2,21 @@
 
 #include <QMainWindow>
 #include <QSettings>
+#include <QActionGroup>
 
 #include <memory>
 
 #include <src/engraver-manager.h>
+#include <src/engraver-connection.h>
+
+enum class direction {
+	up,
+	down,
+	left,
+	right,
+	home,
+	new_home,
+};
 
 class GridScene;
 class QGraphicsItem;
@@ -32,7 +43,11 @@ public:
 private:
 	void open();
 	void print();
-	void moveTool();
+	void connectEngraver();
+	void disconnectEngraver();
+	void turnLaser(bool on);
+
+	void go(direction);
 
 private:
 	bool isItemSelected() const noexcept;
@@ -46,6 +61,17 @@ private:
 
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
+	std::unique_ptr<EngraverConnection> m_connection;
+
+	double m_x{};
+	double m_y{};
+
+	QActionGroup m_enableIfEngraverConnected{nullptr};
+	QAction *m_actionConnectEngraver{nullptr};
+	QAction *m_actionDisconnectEngraver{nullptr};
+	QAction *m_actionLaserOn{nullptr};
+	QAction *m_actionLaserOff{nullptr};
+
 	QSettings m_settings;
 	EngraverManager m_engraverManager;
 	QGraphicsItem *m_selectedItem{nullptr};
