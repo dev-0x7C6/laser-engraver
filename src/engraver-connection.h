@@ -5,12 +5,12 @@
 
 class EngraverConnection {
 public:
-	EngraverConnection(const EngraverSettings &settings);
+	EngraverConnection(const engraver::settings::configuration &settings);
 
 	bool isOpen() const noexcept;
 	upload_instruction process();
 
-	void updateEngraverParameters(const EngraverParameters &parameters);
+	void updateEngraverParameters(const engraver::settings::movement_parameters &parameters);
 
 	const auto &name() const noexcept { return m_name; }
 

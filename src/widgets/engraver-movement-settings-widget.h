@@ -15,8 +15,8 @@ public:
 	explicit EngraverMovementSettingsWidget(QWidget *parent = nullptr);
 	~EngraverMovementSettingsWidget();
 
-	void setParameters(const EngraverParameters &parameters);
-	EngraverParameters parameters();
+	void setParameters(const engraver::settings::movement_parameters &parameters);
+	engraver::settings::movement_parameters parameters();
 
 signals:
 	void settingsChanged();

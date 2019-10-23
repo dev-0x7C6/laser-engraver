@@ -377,7 +377,7 @@ void MainWindow::connectEngraver() {
 	m_actionDisconnectEngraver->setVisible(true);
 	m_ui->moveToolGroupBox->setEnabled(true);
 	m_ui->movementSettingsGroupBox->setEnabled(true);
-	m_ui->movementSettings->setParameters(engraver->params);
+	m_ui->movementSettings->setParameters(engraver->movement_params);
 
 	QMessageBox::information(this, "Information", "Engraver connected.", QMessageBox::StandardButton::Ok);
 }
@@ -402,9 +402,9 @@ void MainWindow::turnLaser(const bool on) {
 }
 
 void MainWindow::applyMovementSettings() {
-	const auto params = m_ui->movementSettings->parameters();
-	m_connection->updateEngraverParameters(params);
-	m_engraverManager.update(m_connection->name(), params);
+	const auto movement_params = m_ui->movementSettings->parameters();
+	m_connection->updateEngraverParameters(movement_params);
+	m_engraverManager.update(m_connection->name(), movement_params);
 }
 
 void MainWindow::go(const direction value) {

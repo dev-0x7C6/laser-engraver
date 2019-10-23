@@ -12,7 +12,7 @@ EngraverMovementSettingsWidget::EngraverMovementSettingsWidget(QWidget *parent)
 		});
 }
 
-void EngraverMovementSettingsWidget::setParameters(const EngraverParameters &parameters) {
+void EngraverMovementSettingsWidget::setParameters(const engraver::settings::movement_parameters &parameters) {
 	m_ui->x_max_speed->setValue(parameters.x_max_speed);
 	m_ui->y_max_speed->setValue(parameters.y_max_speed);
 	m_ui->z_max_speed->setValue(parameters.z_max_speed);
@@ -24,8 +24,8 @@ void EngraverMovementSettingsWidget::setParameters(const EngraverParameters &par
 	m_ui->z_acceleration->setValue(parameters.z_acceleration);
 }
 
-EngraverParameters EngraverMovementSettingsWidget::parameters() {
-	EngraverParameters ret;
+engraver::settings::movement_parameters EngraverMovementSettingsWidget::parameters() {
+	engraver::settings::movement_parameters ret;
 	ret.x_max_speed = m_ui->x_max_speed->value();
 	ret.y_max_speed = m_ui->y_max_speed->value();
 	ret.z_max_speed = m_ui->z_max_speed->value();

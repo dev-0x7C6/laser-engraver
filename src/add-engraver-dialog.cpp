@@ -55,13 +55,14 @@ AddEngraverDialog::AddEngraverDialog(QWidget *parent)
 AddEngraverDialog::~AddEngraverDialog() = default;
 
 void AddEngraverDialog::saveResult() {
-	EngraverSettings settings;
-	settings.name = m_ui->name->text();
-	settings.port = m_ui->device->currentText();
-	settings.baud = m_ui->baud->currentData().value<QSerialPort::BaudRate>();
-	settings.parity = m_ui->parity->currentData().value<QSerialPort::Parity>();
-	settings.stop_bits = m_ui->stop_bits->currentData().value<QSerialPort::StopBits>();
-	settings.bits = m_ui->data_bits->currentData().value<QSerialPort::DataBits>();
-	settings.flow_control = m_ui->flow_control->currentData().value<QSerialPort::FlowControl>();
-	m_result = settings;
+	engraver::settings::configuration configuration;
+	configuration.name = m_ui->name->text();
+	configuration.serial_params.port = m_ui->device->currentText();
+	configuration.serial_params.baud = m_ui->baud->currentData().value<QSerialPort::BaudRate>();
+	configuration.serial_params.parity = m_ui->parity->currentData().value<QSerialPort::Parity>();
+	configuration.serial_params.stop_bits = m_ui->stop_bits->currentData().value<QSerialPort::StopBits>();
+	configuration.serial_params.bits = m_ui->data_bits->currentData().value<QSerialPort::DataBits>();
+	configuration.serial_params.flow_control = m_ui->flow_control->currentData().value<QSerialPort::FlowControl>();
+	configuration.movement_params = m_ui->movementParameters->parameters();
+	m_result = configuration;
 }

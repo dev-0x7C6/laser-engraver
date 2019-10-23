@@ -3,14 +3,14 @@
 #include <QApplication>
 #include <iostream>
 
-EngraverConnection::EngraverConnection(const EngraverSettings &settings)
-		: m_port(settings.port)
+EngraverConnection::EngraverConnection(const engraver::settings::configuration &settings)
+		: m_port(settings.serial_params.port)
 		, m_name(settings.name) {
-	m_port.setBaudRate(settings.baud);
-	m_port.setParity(settings.parity);
-	m_port.setDataBits(settings.bits);
-	m_port.setFlowControl(settings.flow_control);
-	m_port.setStopBits(settings.stop_bits);
+	m_port.setBaudRate(settings.serial_params.baud);
+	m_port.setParity(settings.serial_params.parity);
+	m_port.setDataBits(settings.serial_params.bits);
+	m_port.setFlowControl(settings.serial_params.flow_control);
+	m_port.setStopBits(settings.serial_params.stop_bits);
 
 	if (m_port.open(QSerialPort::ReadWrite)) {
 		m_port.clear();
@@ -23,7 +23,7 @@ EngraverConnection::EngraverConnection(const EngraverSettings &settings)
 		}
 		m_port.clear();
 
-		updateEngraverParameters(settings.params);
+		updateEngraverParameters(settings.movement_params);
 	}
 }
 
@@ -50,7 +50,7 @@ upload_instruction EngraverConnection::process() {
 	};
 }
 
-void EngraverConnection::updateEngraverParameters(const EngraverParameters &parameters) {
+void EngraverConnection::updateEngraverParameters(const engraver::settings::movement_parameters &parameters) {
 	const auto callable = process();
 	callable("$100=" + std::to_string(parameters.x_steps_per_mm), {});
 	callable("$100=" + std::to_string(parameters.x_steps_per_mm), {});

@@ -12,10 +12,10 @@ public:
 	~EngraverManager();
 
 	void addEngraver();
-	std::optional<EngraverSettings> selectEngraver();
+	std::optional<engraver::settings::configuration> selectEngraver();
 	void removeEngraver();
 
-	void update(const QString &name, const EngraverParameters &parameters);
+	void update(const QString &name, const engraver::settings::movement_parameters &parameters);
 
 	bool atLeastOneEngraverAvailable() const noexcept;
 
@@ -25,5 +25,5 @@ signals:
 private:
 	QSettings &m_settings;
 	QWidget *m_parent;
-	Engravers m_engravers;
+	engraver::settings::configurations m_configurations;
 };
