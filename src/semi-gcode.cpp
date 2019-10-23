@@ -41,9 +41,9 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 
 	auto schedule_power_off{false};
 
-	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y) {
+	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y, const i32 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		encode(move{x - x_offset, y - y_offset});
+		encode(move_dpi{x - x_offset, y - y_offset, pwr});
 	};
 
 	for (auto y = 0; y < img.height(); ++y) {
@@ -52,7 +52,7 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 			const auto pwr = 1.0 - QColor::fromRgb(img.pixel(x, y)).lightnessF();
 
 			if (pwr != 0.0) {
-				gcode_move(x, y);
+				gcode_move(x, y, 0);
 				encode(power{static_cast<i16>(255 * (pwr * opts.power_multiplier))});
 				if (opts.force_dwell_time)
 					encode(dwell{opts.force_dwell_time.value()});
@@ -86,18 +86,17 @@ semi_gcodes generate_workspace_demo(const QImage &img, options opts) {
 	const auto w = static_cast<i16>(img.width());
 	const auto h = static_cast<i16>(img.height());
 
-	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y) {
+	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y, const i32 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		encode(move{(x - x_offset), (y - y_offset)});
+		encode(move_dpi{(x - x_offset), (y - y_offset), pwr});
 		encode(wait_for_movement_finish{});
 	};
 
-	gcode_move(0, 0);
-	encode(power{1});
-	gcode_move(w, 0);
-	gcode_move(w, h);
-	gcode_move(0, h);
-	gcode_move(0, 0);
+	gcode_move(0, 0, 0);
+	gcode_move(w, 0, 1);
+	gcode_move(w, h, 1);
+	gcode_move(0, h, 1);
+	gcode_move(0, 0, 1);
 
 	move_gcodes(generate_end_section(), ret);
 	return ret;

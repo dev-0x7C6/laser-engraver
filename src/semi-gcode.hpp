@@ -31,16 +31,22 @@ struct dwell {
 	i32 delay;
 };
 
-struct move {
+struct move_dpi {
 	i32 x;
 	i32 y;
+	i32 power;
+};
+
+struct move_raw {
+	double x;
+	double y;
 };
 
 struct power {
 	i32 duty;
 };
 
-using semi_gcode = std::variant<std::monostate, laser_on, laser_off, home, new_home, dwell, move, power, wait_for_movement_finish>;
+using semi_gcode = std::variant<std::monostate, laser_on, laser_off, home, new_home, dwell, move_dpi, move_raw, power, wait_for_movement_finish>;
 using semi_gcodes = std::vector<semi_gcode>;
 
 semi_gcodes image_to_semi_gcode(const QImage &img, options, progress_t &);

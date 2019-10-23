@@ -26,6 +26,9 @@ using namespace std::chrono_literals;
 
 namespace {
 constexpr auto grid_size = 5000;
+constexpr auto scale_zoom_step = 0.25;
+constexpr auto scale_zoom_in_step = 1.00 + scale_zoom_step;
+constexpr auto scale_zoom_out_step = 1.00 - scale_zoom_step;
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -58,18 +61,28 @@ MainWindow::MainWindow(QWidget *parent)
 	exit->setShortcuts(QKeySequence::Quit);
 	exit->setIcon(QIcon::fromTheme("application-exit"));
 
-	auto edit = menu->addMenu("&Edit");
-	auto move_up = edit->addAction("Move Up", this, &MainWindow::itemMoveTop);
+	auto object = menu->addMenu("&Object");
+
+	auto move_up = object->addAction("Move Up", this, &MainWindow::itemMoveTop);
+	object->addSeparator();
+	auto object_zoom_in_half = object->addAction("Zoom in", this, &MainWindow::zoomInObject);
+	auto object_zoom_out_half = object->addAction("Zoom out", this, &MainWindow::zoomOutObject);
+	auto remove = object->addAction("Delete", this, &MainWindow::removeItem);
+	object->addSeparator();
+
+	object_zoom_in_half->setShortcut(QKeySequence(Qt::Key::Key_Plus));
+	object_zoom_out_half->setShortcut(QKeySequence(Qt::Key::Key_Minus));
+	object_zoom_in_half->setIcon(QIcon::fromTheme("zoom-in"));
+	object_zoom_out_half->setIcon(QIcon::fromTheme("zoom-out"));
 	move_up->setShortcut(QKeySequence::Forward);
 	move_up->setIcon(QIcon::fromTheme("go-top"));
-	move_up->setEnabled(false);
-	edit->addSeparator();
-	auto remove = edit->addAction("Delete", this, &MainWindow::removeItem);
-
 	remove->setShortcuts(QKeySequence::Delete);
 	remove->setIcon(QIcon::fromTheme("edit-delete"));
-	remove->setEnabled(false);
-	edit->addSeparator();
+
+	for (auto &&action : {move_up, remove, object_zoom_in_half, object_zoom_out_half})
+		m_enableIfObjectIsSelected.addAction(action);
+
+	m_enableIfObjectIsSelected.setEnabled(false);
 
 	auto tool = menu->addMenu("&Commands");
 	auto home = tool->addAction("Home", [this]() { go(direction::home); });
@@ -105,8 +118,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_ui->tabWidget->setCurrentIndex(0);
 	m_ui->moveToolGroupBox->setEnabled(false);
+	m_ui->movementSettingsGroupBox->setEnabled(false);
 
-	for (auto &&action : {home, go_u, go_d, go_l, go_r, print})
+	for (auto &&action : {home, go_u, go_d, go_l, go_r, print, new_home, m_actionLaserOn, m_actionLaserOff})
 		m_enableIfEngraverConnected.addAction(action);
 
 	m_enableIfEngraverConnected.setEnabled(false);
@@ -153,13 +167,12 @@ MainWindow::MainWindow(QWidget *parent)
 		m_ui->view->scale(v, v);
 	});
 
-	connect(m_grid, &QGraphicsScene::selectionChanged, [this, move_up, remove]() {
+	connect(m_grid, &QGraphicsScene::selectionChanged, [this]() {
 		auto list = m_grid->selectedItems();
 		const auto enabled = !list.isEmpty();
 
 		m_ui->itemGroup->setEnabled(enabled);
-		move_up->setEnabled(enabled);
-		remove->setEnabled(enabled);
+		m_enableIfObjectIsSelected.setEnabled(enabled);
 
 		if (!enabled) {
 			m_selectedItem = nullptr;
@@ -191,10 +204,15 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->goRight->setDefaultAction(go_r);
 
 	for (auto &&widget : {m_ui->goHome, m_ui->goUp, m_ui->goDown, m_ui->goLeft, m_ui->goRight})
-		widget->setIconSize({48, 48});
+		widget->setIconSize({42, 42});
+
+	connect(m_ui->applyMovementSettings, &QToolButton::clicked, this, &MainWindow::applyMovementSettings);
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() {
+	if (m_connection)
+		disconnectEngraver();
+}
 
 void MainWindow::open() {
 	auto path = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp *.svg)"));
@@ -284,7 +302,6 @@ QImage MainWindow::prepareImage() {
 	m_grid->setDisableBackground(true);
 	m_grid->render(&painter, canvas.rect(), m_grid->itemsBoundingRect());
 	m_grid->setDisableBackground(false);
-
 	return canvas.toImage();
 }
 
@@ -300,6 +317,7 @@ void MainWindow::print() {
 	options opts;
 	opts.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
 	opts.center_object = m_ui->center_object->isChecked();
+	opts.force_dwell_time = 0;
 
 	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
 		return image_to_semi_gcode(img, opts, progress);
@@ -358,6 +376,8 @@ void MainWindow::connectEngraver() {
 	m_actionConnectEngraver->setVisible(false);
 	m_actionDisconnectEngraver->setVisible(true);
 	m_ui->moveToolGroupBox->setEnabled(true);
+	m_ui->movementSettingsGroupBox->setEnabled(true);
+	m_ui->movementSettings->setParameters(engraver->params);
 
 	QMessageBox::information(this, "Information", "Engraver connected.", QMessageBox::StandardButton::Ok);
 }
@@ -368,6 +388,7 @@ void MainWindow::disconnectEngraver() {
 	m_actionConnectEngraver->setVisible(true);
 	m_actionDisconnectEngraver->setVisible(false);
 	m_ui->moveToolGroupBox->setEnabled(false);
+	m_ui->movementSettingsGroupBox->setEnabled(false);
 }
 
 void MainWindow::turnLaser(const bool on) {
@@ -380,13 +401,19 @@ void MainWindow::turnLaser(const bool on) {
 	m_actionLaserOff->setVisible(on);
 }
 
+void MainWindow::applyMovementSettings() {
+	const auto params = m_ui->movementSettings->parameters();
+	m_connection->updateEngraverParameters(params);
+	m_engraverManager.update(m_connection->name(), params);
+}
+
 void MainWindow::go(const direction value) {
 	const auto step = m_ui->move_step->value();
 	switch (value) {
-		case direction::up: return generate_gcode({::move{m_x, (m_y -= step)}}, {}, m_connection->process());
-		case direction::down: return generate_gcode({::move{m_x, (m_y += step)}}, {}, m_connection->process());
-		case direction::left: return generate_gcode({::move{(m_x -= step), m_y}}, {}, m_connection->process());
-		case direction::right: return generate_gcode({::move{(m_x += step), m_y}}, {}, m_connection->process());
+		case direction::up: return generate_gcode({::move_raw{m_x, (m_y -= step)}}, {}, m_connection->process());
+		case direction::down: return generate_gcode({::move_raw{m_x, (m_y += step)}}, {}, m_connection->process());
+		case direction::left: return generate_gcode({::move_raw{(m_x -= step), m_y}}, {}, m_connection->process());
+		case direction::right: return generate_gcode({::move_raw{(m_x += step), m_y}}, {}, m_connection->process());
 		case direction::home:
 			m_x = 0.0;
 			m_y = 0.0;
@@ -396,6 +423,20 @@ void MainWindow::go(const direction value) {
 			m_x = 0.0;
 			m_y = 0.0;
 			return;
+	}
+}
+
+void MainWindow::zoomInObject() {
+	if (const auto value = m_selectedItem->scale() * scale_zoom_in_step; m_ui->itemScale->maximum() > value) {
+		m_selectedItem->setScale(value);
+		m_ui->itemScale->setValue(value);
+	}
+}
+
+void MainWindow::zoomOutObject() {
+	if (const auto value = m_selectedItem->scale() * scale_zoom_out_step; m_ui->itemScale->minimum() < value) {
+		m_selectedItem->setScale(value);
+		m_ui->itemScale->setValue(value);
 	}
 }
 

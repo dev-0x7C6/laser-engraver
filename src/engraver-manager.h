@@ -15,6 +15,8 @@ public:
 	std::optional<EngraverSettings> selectEngraver();
 	void removeEngraver();
 
+	void update(const QString &name, const EngraverParameters &parameters);
+
 	bool atLeastOneEngraverAvailable() const noexcept;
 
 signals:

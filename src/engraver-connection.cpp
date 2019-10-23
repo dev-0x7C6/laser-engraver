@@ -3,13 +3,14 @@
 #include <QApplication>
 #include <iostream>
 
-EngraverConnection::EngraverConnection(const EngraverSettings &configuration)
-		: m_port(configuration.port) {
-	m_port.setBaudRate(configuration.baud);
-	m_port.setParity(configuration.parity);
-	m_port.setDataBits(configuration.bits);
-	m_port.setFlowControl(configuration.flow_control);
-	m_port.setStopBits(configuration.stop_bits);
+EngraverConnection::EngraverConnection(const EngraverSettings &settings)
+		: m_port(settings.port)
+		, m_name(settings.name) {
+	m_port.setBaudRate(settings.baud);
+	m_port.setParity(settings.parity);
+	m_port.setDataBits(settings.bits);
+	m_port.setFlowControl(settings.flow_control);
+	m_port.setStopBits(settings.stop_bits);
 
 	if (m_port.open(QSerialPort::ReadWrite)) {
 		m_port.clear();
@@ -21,6 +22,8 @@ EngraverConnection::EngraverConnection(const EngraverSettings &configuration)
 			m_port.waitForReadyRead(1);
 		}
 		m_port.clear();
+
+		updateEngraverParameters(settings.params);
 	}
 }
 
@@ -45,4 +48,18 @@ upload_instruction EngraverConnection::process() {
 
 		return upload_instruction_ret::keep_going;
 	};
+}
+
+void EngraverConnection::updateEngraverParameters(const EngraverParameters &parameters) {
+	const auto callable = process();
+	callable("$100=" + std::to_string(parameters.x_steps_per_mm), {});
+	callable("$100=" + std::to_string(parameters.x_steps_per_mm), {});
+	callable("$101=" + std::to_string(parameters.y_steps_per_mm), {});
+	callable("$102=" + std::to_string(parameters.z_steps_per_mm), {});
+	callable("$110=" + std::to_string(parameters.x_max_speed), {});
+	callable("$111=" + std::to_string(parameters.y_max_speed), {});
+	callable("$112=" + std::to_string(parameters.z_max_speed), {});
+	callable("$120=" + std::to_string(parameters.x_acceleration), {});
+	callable("$121=" + std::to_string(parameters.y_acceleration), {});
+	callable("$122=" + std::to_string(parameters.z_acceleration), {});
 }

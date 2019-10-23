@@ -52,6 +52,11 @@ void EngraverManager::removeEngraver() {
 	}
 }
 
+void EngraverManager::update(const QString &name, const EngraverParameters &parameters) {
+	if (auto it = std::find_if(m_engravers.begin(), m_engravers.end(), [&name](auto &&settings) { return settings.name == name; }); it != m_engravers.end())
+		it->params = parameters;
+}
+
 bool EngraverManager::atLeastOneEngraverAvailable() const noexcept {
 	return !m_engravers.empty();
 }

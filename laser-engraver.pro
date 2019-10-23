@@ -35,7 +35,8 @@ SOURCES += \
     src/engraver-manager.cpp \
     src/select-engraver-dialog.cpp \
     src/semi-gcode.cpp \
-    src/gcode-generator.cpp
+    src/gcode-generator.cpp \
+    src/widgets/engraver-movement-settings-widget.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -46,12 +47,14 @@ HEADERS += \
     src/engraver-settings.h \
     src/select-engraver-dialog.h \
     src/semi-gcode.hpp \
-    src/gcode-generator.hpp
+    src/gcode-generator.hpp \
+    src/widgets/engraver-movement-settings-widget.h
 
 FORMS += \
         mainwindow.ui \
         src/add-engraver-dialog.ui \
-        src/select-engraver-dialog.ui
+        src/select-engraver-dialog.ui \
+        src/widgets/engraver-movement-settings-widget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

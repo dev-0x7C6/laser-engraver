@@ -46,8 +46,13 @@ private:
 	void connectEngraver();
 	void disconnectEngraver();
 	void turnLaser(bool on);
+	void applyMovementSettings();
 
 	void go(direction);
+
+private:
+	void zoomInObject();
+	void zoomOutObject();
 
 private:
 	bool isItemSelected() const noexcept;
@@ -67,6 +72,7 @@ private:
 	double m_y{};
 
 	QActionGroup m_enableIfEngraverConnected{nullptr};
+	QActionGroup m_enableIfObjectIsSelected{nullptr};
 	QAction *m_actionConnectEngraver{nullptr};
 	QAction *m_actionDisconnectEngraver{nullptr};
 	QAction *m_actionLaserOn{nullptr};
