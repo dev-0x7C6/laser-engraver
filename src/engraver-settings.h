@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QSerialPort>
-#include <QSerialPortInfo>
 #include <QSettings>
 
 #include <vector>

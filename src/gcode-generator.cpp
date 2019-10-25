@@ -1,7 +1,5 @@
 #include "gcode-generator.hpp"
 
-#include <thread>
-
 namespace {
 
 constexpr double precision_multiplier(double dpi = 600) {

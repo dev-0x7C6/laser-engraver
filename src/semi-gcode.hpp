@@ -4,11 +4,10 @@
 
 #include <atomic>
 #include <variant>
-#include <functional>
-#include <optional>
 #include <vector>
+#include <optional>
 
-#include <QImage>
+class QImage;
 
 struct options {
 	double power_multiplier{1.0};

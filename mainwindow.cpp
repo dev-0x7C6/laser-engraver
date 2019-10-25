@@ -1,22 +1,15 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QDir>
-#include <QFile>
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QMessageBox>
 #include <QProgressDialog>
-#include <QPushButton>
-#include <QSerialPort>
-#include <QSerialPortInfo>
-#include <QTextStream>
 #include <QTimer>
 
 #include <chrono>
 #include <future>
-#include <iostream>
 #include <thread>
 
 #include <grid-scene.h>

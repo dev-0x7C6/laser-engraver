@@ -1,5 +1,7 @@
 #include "semi-gcode.hpp"
 
+#include <QImage>
+
 namespace {
 template <typename type>
 class raii_progress {
