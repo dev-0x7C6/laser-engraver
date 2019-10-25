@@ -1,6 +1,7 @@
 #pragma once
 
 #include <src/semi-gcode.hpp>
+#include <functional>
 
 enum class upload_instruction_ret {
 	keep_going,
