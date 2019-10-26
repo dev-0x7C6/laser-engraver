@@ -47,6 +47,7 @@ private:
 	void disconnectEngraver();
 	void turnLaser(bool on);
 	void applyMovementSettings();
+	void updateSheetReferences();
 
 	void go(direction);
 

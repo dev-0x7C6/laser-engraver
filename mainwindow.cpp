@@ -49,8 +49,11 @@ MainWindow::MainWindow(QWidget *parent)
 	file->addSeparator();
 	auto exit = file->addAction("&Close", this, &MainWindow::close);
 
-	m_grid->updateDpi(m_ui->dpi->value());
 	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), m_grid, &GridScene::updateDpi);
+
+	for (auto &&checkbox : {m_ui->drawA0, m_ui->drawA1, m_ui->drawA2, m_ui->drawA3, m_ui->drawA4, m_ui->drawA5, m_ui->drawA6, m_ui->drawA7, m_ui->drawA8})
+		connect(checkbox, &QCheckBox::clicked, this, &MainWindow::updateSheetReferences);
+	updateSheetReferences();
 
 	open->setShortcuts(QKeySequence::Open);
 	open->setIcon(QIcon::fromTheme("document-open"));
@@ -427,6 +430,30 @@ void MainWindow::applyMovementSettings() {
 	const auto movement_params = m_ui->movementSettings->parameters();
 	m_connection->updateEngraverParameters(movement_params);
 	m_engraverManager.update(m_connection->name(), movement_params);
+}
+
+void MainWindow::updateSheetReferences() {
+	std::vector<sheet_metrics> sheets;
+	if (m_ui->drawA0->isChecked())
+		sheets.push_back({"A0", 841, 1189});
+	if (m_ui->drawA1->isChecked())
+		sheets.push_back({"A1", 594, 841});
+	if (m_ui->drawA2->isChecked())
+		sheets.push_back({"A2", 420, 594});
+	if (m_ui->drawA3->isChecked())
+		sheets.push_back({"A3", 297, 420});
+	if (m_ui->drawA4->isChecked())
+		sheets.push_back({"A4", 210, 297});
+	if (m_ui->drawA5->isChecked())
+		sheets.push_back({"A5", 148, 210});
+	if (m_ui->drawA6->isChecked())
+		sheets.push_back({"A6", 105, 148});
+	if (m_ui->drawA7->isChecked())
+		sheets.push_back({"A7", 74, 105});
+	if (m_ui->drawA8->isChecked())
+		sheets.push_back({"A8", 52, 74});
+	m_grid->updateDpi(m_ui->dpi->value());
+	m_grid->drawSheetAreas(std::move(sheets));
 }
 
 void MainWindow::go(const direction value) {

@@ -49,7 +49,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -124,6 +124,90 @@
                </widget>
               </item>
              </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="drawBordersGroupBox">
+           <property name="title">
+            <string>Reference</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_12">
+            <item>
+             <widget class="QCheckBox" name="drawA0">
+              <property name="text">
+               <string>Draw A0 borders</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="drawA1">
+              <property name="text">
+               <string>Draw A1 borders</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="drawA2">
+              <property name="text">
+               <string>Draw A2 borders</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="drawA3">
+              <property name="text">
+               <string>Draw A3 borders</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="drawA4">
+              <property name="text">
+               <string>Draw A4 borders</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="drawA5">
+              <property name="text">
+               <string>Draw A5 borders</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="drawA6">
+              <property name="text">
+               <string>Draw A6 borders</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="drawA7">
+              <property name="text">
+               <string>Draw A7 borders</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="drawA8">
+              <property name="text">
+               <string>Draw A8 borders</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>

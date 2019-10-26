@@ -5,7 +5,6 @@
 
 GridScene::GridScene(qreal x, qreal y, qreal w, qreal h)
 		: QGraphicsScene(x, y, w, h) {
-	drawSheetAreas({{"A4", 210, 297}, {"A5", 148, 210}, {"A6", 105, 148}});
 }
 
 void GridScene::setDisableBackground(bool value) noexcept {
@@ -19,6 +18,7 @@ void GridScene::setGridSize(int size) noexcept {
 
 void GridScene::drawSheetAreas(std::vector<sheet_metrics> &&papers) {
 	m_papers = std::move(papers);
+	update();
 }
 
 void GridScene::updateDpi(double dpi) {
@@ -51,11 +51,12 @@ void GridScene::drawSheet(QPainter *painter, const sheet_metrics &sheet) noexcep
 	const auto w = (m_dpi * iw) / inch;
 	const auto h = (m_dpi * ih) / inch;
 	auto pen = painter->pen();
+	pen.setStyle(Qt::PenStyle::DashLine);
 	pen.setColor(Qt::white);
 	painter->setPen(pen);
 
 	painter->drawRect(-w / 2, -h / 2, w, h);
-	painter->drawText(-w / 2, h / 2 + painter->fontMetrics().ascent(), QString("%1: %2mm x %3mm").arg(QString::fromStdString(sheet.name), QString::number(iw), QString::number(ih)));
+	painter->drawText(-w / 2, h / 2 + painter->fontMetrics().ascent(), QString("%1: %2mm x %3mm (%4px x %5px)").arg(QString::fromStdString(sheet.name), QString::number(iw), QString::number(ih), QString::number(w), QString::number(h)));
 }
 
 void GridScene::drawGrid(QPainter *painter, const QRectF &rect) noexcept {
