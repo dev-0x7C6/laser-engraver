@@ -23,7 +23,7 @@ public:
 	std::string operator()(const wait_for_movement_finish) const noexcept { return "G4 P0"; }
 
 private:
-	const double m_precision{1.0};
+	const double m_precision{precision_multiplier(300.0)};
 };
 }
 

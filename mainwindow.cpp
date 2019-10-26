@@ -6,7 +6,9 @@
 #include <QGraphicsScene>
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <QScrollBar>
 #include <QTimer>
+#include <QDateTime>
 
 #include <chrono>
 #include <future>
@@ -200,6 +202,8 @@ MainWindow::MainWindow(QWidget *parent)
 		widget->setIconSize({42, 42});
 
 	connect(m_ui->applyMovementSettings, &QToolButton::clicked, this, &MainWindow::applyMovementSettings);
+
+	m_ui->outgoingGCode->append(QDateTime::currentDateTime().toString() + '\n');
 }
 
 MainWindow::~MainWindow() {
@@ -358,6 +362,22 @@ void MainWindow::connectEngraver() {
 	progress.show();
 
 	auto connection = std::make_unique<EngraverConnection>(engraver.value());
+	connect(connection.get(), &EngraverConnection::gcodeSended, this, [this](auto &&line) {
+		m_ui->outgoingGCode->append(line);
+		auto scroll = m_ui->outgoingGCode->verticalScrollBar();
+		scroll->setValue(scroll->maximum());
+	});
+	connect(connection.get(), &EngraverConnection::gcodeReceived, this, [this](auto &&line) {
+		m_ui->outgoingGCode->append(line);
+		auto scroll = m_ui->outgoingGCode->verticalScrollBar();
+		scroll->setValue(scroll->maximum());
+	});
+	connect(m_ui->gcodeToSend, &QLineEdit::returnPressed, [this]() {
+		if (m_connection && m_connection->isOpen()) {
+			m_connection->process()(m_ui->gcodeToSend->text().toStdString() + '\n', {});
+			m_ui->gcodeToSend->clear();
+		}
+	});
 
 	if (!connection->isOpen()) {
 		QMessageBox::critical(this, "Error", "Unable to open engraver communication port.", QMessageBox::StandardButton::Close);

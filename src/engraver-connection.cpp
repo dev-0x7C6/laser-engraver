@@ -31,9 +31,9 @@ bool EngraverConnection::isOpen() const noexcept { return m_port.isOpen(); }
 
 upload_instruction EngraverConnection::process() {
 	return [this](std::string &&instruction, double) -> upload_instruction_ret {
-		std::cout << "GCODE: " << instruction << std::endl;
-		instruction += "\n";
-		m_port.write(instruction.c_str(), instruction.size());
+		emit gcodeSended(QString::fromStdString(instruction));
+		instruction += '\n';
+		m_port.write(instruction.c_str(), static_cast<i64>(instruction.size()));
 		m_port.waitForBytesWritten();
 
 		for (int retry = 0; retry < 30000; ++retry) {
@@ -41,7 +41,7 @@ upload_instruction EngraverConnection::process() {
 			QApplication::processEvents(QEventLoop::AllEvents, 1);
 			const auto response = m_port.readLine();
 			if (!response.isEmpty()) {
-				std::cout << response.toStdString() << std::endl;
+				emit gcodeReceived(QString::fromUtf8(response));
 				break;
 			}
 		}
