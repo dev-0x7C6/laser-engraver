@@ -4,7 +4,9 @@
 #include <externals/common/qt/raii/raii-painter.hpp>
 
 GridScene::GridScene(qreal x, qreal y, qreal w, qreal h)
-		: QGraphicsScene(x, y, w, h) {}
+		: QGraphicsScene(x, y, w, h) {
+	drawSheetAreas({{"A4", 210, 297}, {"A5", 148, 210}, {"A6", 105, 148}});
+}
 
 void GridScene::setDisableBackground(bool value) noexcept {
 	m_disableBackground = value;
@@ -12,6 +14,15 @@ void GridScene::setDisableBackground(bool value) noexcept {
 
 void GridScene::setGridSize(int size) noexcept {
 	m_gridSize = size;
+	update();
+}
+
+void GridScene::drawSheetAreas(std::vector<sheet_metrics> &&papers) {
+	m_papers = std::move(papers);
+}
+
+void GridScene::updateDpi(double dpi) {
+	m_dpi = dpi;
 	update();
 }
 
@@ -27,6 +38,24 @@ void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {
 
 	if (m_yAxisEnabled)
 		drawYAxis(painter, sceneRect().toRect());
+
+	for (auto &&paper : m_papers)
+		drawSheet(painter, paper);
+}
+
+void GridScene::drawSheet(QPainter *painter, const sheet_metrics &sheet) noexcept {
+	raii_painter _(painter);
+	constexpr auto inch = 25.4;
+	const auto iw = m_invertPaperSheets ? sheet.h : sheet.w;
+	const auto ih = m_invertPaperSheets ? sheet.w : sheet.h;
+	const auto w = (m_dpi * iw) / inch;
+	const auto h = (m_dpi * ih) / inch;
+	auto pen = painter->pen();
+	pen.setColor(Qt::white);
+	painter->setPen(pen);
+
+	painter->drawRect(-w / 2, -h / 2, w, h);
+	painter->drawText(-w / 2, h / 2 + painter->fontMetrics().ascent(), QString("%1: %2mm x %3mm").arg(QString::fromStdString(sheet.name), QString::number(iw), QString::number(ih)));
 }
 
 void GridScene::drawGrid(QPainter *painter, const QRectF &rect) noexcept {

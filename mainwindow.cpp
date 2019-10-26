@@ -24,7 +24,7 @@ constexpr auto grid_size = 5000;
 constexpr auto scale_zoom_step = 0.25;
 constexpr auto scale_zoom_in_step = 1.00 + scale_zoom_step;
 constexpr auto scale_zoom_out_step = 1.00 - scale_zoom_step;
-}
+} // namespace
 
 MainWindow::MainWindow(QWidget *parent)
 		: QMainWindow(parent)
@@ -48,6 +48,9 @@ MainWindow::MainWindow(QWidget *parent)
 	auto open = file->addAction("&Open", this, &MainWindow::open);
 	file->addSeparator();
 	auto exit = file->addAction("&Close", this, &MainWindow::close);
+
+	m_grid->updateDpi(m_ui->dpi->value());
+	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), m_grid, &GridScene::updateDpi);
 
 	open->setShortcuts(QKeySequence::Open);
 	open->setIcon(QIcon::fromTheme("document-open"));
@@ -308,6 +311,12 @@ void MainWindow::print() {
 
 	if (!m_connection->isOpen())
 		return;
+
+	if (m_ui->saveHomeAfterMove->isChecked()) {
+		generate_gcode({new_home{0, 0}}, {}, m_connection->process());
+		m_x = 0.0;
+		m_y = 0.0;
+	}
 
 	const auto img = prepareImage();
 

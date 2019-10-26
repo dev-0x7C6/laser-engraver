@@ -562,6 +562,16 @@
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="saveHomeAfterMove">
+              <property name="text">
+               <string>Save home position after move</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QDoubleSpinBox" name="move_step">
               <property name="prefix">
                <string>Move by: </string>
