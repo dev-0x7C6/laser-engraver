@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QDateTime>
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
@@ -8,12 +9,12 @@
 #include <QProgressDialog>
 #include <QScrollBar>
 #include <QTimer>
-#include <QDateTime>
 
 #include <chrono>
 #include <future>
 #include <thread>
 
+#include <externals/common/std/raii/raii-tail-call.hpp>
 #include <grid-scene.h>
 #include <src/engraver-connection.h>
 
@@ -335,9 +336,12 @@ void MainWindow::print() {
 	gcode_generation_options generation_options;
 	generation_options.dpi = m_ui->dpi->value();
 
+	raii_tail_call finalize_with_safty_gcode([&]() {
+		generate_gcode(generate_end_section(), generation_options, m_connection->process());
+	});
+
 	while (true) {
 		generate_gcode(generate_workspace_demo(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
-		generate_gcode(generate_end_section(), generation_options, m_connection->process());
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -348,7 +352,6 @@ void MainWindow::print() {
 	}
 
 	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, m_connection->process()));
-	generate_gcode(generate_end_section(), generation_options, m_connection->process());
 }
 
 void MainWindow::connectEngraver() {

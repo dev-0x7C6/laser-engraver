@@ -2,27 +2,24 @@
 
 #include <src/select-engraver-dialog.h>
 #include <src/add-engraver-dialog.h>
+#include <externals/common/qt/raii/raii-settings-group.hpp>
 
 EngraverManager::EngraverManager(QSettings &settings, QWidget *parent)
 		: m_settings(settings)
 		, m_parent(parent) {
-	m_settings.beginGroup("devices");
+	raii_settings_group _(m_settings, "devices");
 	for (auto &&key : m_settings.childGroups()) {
-		m_settings.beginGroup(key);
+		raii_settings_group _(m_settings, key);
 		m_configurations.emplace_back(engraver::settings::load(m_settings));
-		m_settings.endGroup();
 	}
-	m_settings.endGroup();
 }
 
 EngraverManager::~EngraverManager() {
-	m_settings.beginGroup("devices");
+	raii_settings_group _(m_settings, "devices");
 	for (auto &&engraver : m_configurations) {
-		m_settings.beginGroup(engraver.name);
+		raii_settings_group _(m_settings, engraver.name);
 		save(m_settings, engraver);
-		m_settings.endGroup();
 	}
-	m_settings.endGroup();
 }
 
 void EngraverManager::addEngraver() {

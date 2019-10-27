@@ -65,7 +65,6 @@ inline auto load(QSettings &handle) {
 }
 
 inline void save(QSettings &handle, configuration &settings) {
-	configuration ret;
 	handle.setValue("name", settings.name);
 	handle.setValue("port", settings.serial_params.port);
 	handle.setValue("bits", settings.serial_params.bits);
