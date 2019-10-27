@@ -20,8 +20,8 @@ private:
 };
 
 auto center_offset(const QImage &img, const options &opts) {
-	return std::make_pair(opts.center_object ? img.width() / 2 : 0,
-		opts.center_object ? img.height() / 2 : 0);
+	return std::make_pair(static_cast<float>(opts.center_object ? img.width() / 2 : 0),
+		static_cast<float>(opts.center_object ? img.height() / 2 : 0));
 }
 
 void move_gcodes(semi_gcodes &&source, semi_gcodes &destination) {
@@ -43,9 +43,9 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 
 	auto schedule_power_off{false};
 
-	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y, const i32 pwr) {
+	auto gcode_move = [&, offsets{center_offset(img, opts)}](const float x, const float y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		encode(move_dpi{x - x_offset, y - y_offset, pwr});
+		encode(instruction::move_dpi{x - x_offset, y - y_offset, pwr});
 	};
 
 	for (auto y = 0; y < img.height(); ++y) {
@@ -55,18 +55,18 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 
 			if (pwr != 0.0) {
 				gcode_move(x, y, 0);
-				encode(power{static_cast<i16>(255 * (pwr * opts.power_multiplier))});
+				encode(instruction::power{static_cast<i16>(255 * (pwr * opts.power_multiplier))});
 				if (opts.force_dwell_time)
-					encode(dwell{opts.force_dwell_time.value()});
+					encode(instruction::dwell{opts.force_dwell_time.value()});
 				schedule_power_off = true;
 			} else {
 				if (schedule_power_off) {
-					encode(power{0});
+					encode(instruction::power{0});
 					schedule_power_off = false;
 				}
 			}
 		}
-		encode(power{0});
+		encode(instruction::power{0});
 
 		progress = static_cast<double>(y) / static_cast<double>(img.height());
 	}
@@ -88,10 +88,10 @@ semi_gcodes generate_workspace_demo(const QImage &img, options opts) {
 	const auto w = static_cast<i16>(img.width());
 	const auto h = static_cast<i16>(img.height());
 
-	auto gcode_move = [&, offsets{center_offset(img, opts)}](const i32 x, const i32 y, const i32 pwr) {
+	auto gcode_move = [&, offsets{center_offset(img, opts)}](const float x, const float y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		encode(move_dpi{(x - x_offset), (y - y_offset), pwr});
-		encode(wait_for_movement_finish{});
+		encode(instruction::move_dpi{(x - x_offset), (y - y_offset), pwr});
+		encode(instruction::wait_for_movement_finish{});
 	};
 
 	gcode_move(0, 0, 0);
@@ -105,9 +105,9 @@ semi_gcodes generate_workspace_demo(const QImage &img, options opts) {
 }
 
 semi_gcodes generate_begin_section() {
-	return {power{0}, home{}, wait_for_movement_finish{}, laser_on{}};
-};
+	return {instruction::power{0}, instruction::home{}, instruction::wait_for_movement_finish{}, instruction::laser_on{}};
+}
 
 semi_gcodes generate_end_section() {
-	return {power{0}, home{}, wait_for_movement_finish{}, laser_off{}};
-};
+	return {instruction::power{0}, instruction::home{}, instruction::wait_for_movement_finish{}, instruction::laser_off{}};
+}

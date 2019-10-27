@@ -319,11 +319,8 @@ void MainWindow::print() {
 	if (!m_connection->isOpen())
 		return;
 
-	if (m_ui->saveHomeAfterMove->isChecked()) {
-		generate_gcode({new_home{0, 0}}, {}, m_connection->process());
-		m_x = 0.0;
-		m_y = 0.0;
-	}
+	if (m_ui->saveHomeAfterMove->isChecked())
+		command({position.reset_home()});
 
 	const auto img = prepareImage();
 
@@ -340,7 +337,8 @@ void MainWindow::print() {
 	generation_options.dpi = m_ui->dpi->value();
 
 	raii_tail_call finalize_with_safty_gcode([&]() {
-		generate_gcode(generate_end_section(), generation_options, m_connection->process());
+		command(generate_end_section());
+		command(position.preview_gcode());
 	});
 
 	while (true) {
@@ -385,11 +383,13 @@ void MainWindow::connectEngraver() {
 		auto scroll = m_ui->outgoingGCode->verticalScrollBar();
 		scroll->setValue(scroll->maximum());
 	});
+
 	connect(connection.get(), &EngraverConnection::gcodeReceived, this, [this](auto &&line) {
 		m_ui->outgoingGCode->append(line);
 		auto scroll = m_ui->outgoingGCode->verticalScrollBar();
 		scroll->setValue(scroll->maximum());
 	});
+
 	connect(m_ui->gcodeToSend, &QLineEdit::returnPressed, [this]() {
 		if (m_connection && m_connection->isOpen()) {
 			m_connection->process()(m_ui->gcodeToSend->text().toStdString() + '\n', {});
@@ -422,14 +422,10 @@ void MainWindow::disconnectEngraver() {
 	m_ui->movementSettingsGroupBox->setEnabled(false);
 }
 
-void MainWindow::turnLaser(const bool on) {
-	if (on)
-		generate_gcode({laser_on{}, power{1}}, {}, m_connection->process());
-	else
-		generate_gcode({power{0}, laser_off{}}, {}, m_connection->process());
-
-	m_actionLaserOn->setVisible(!on);
-	m_actionLaserOff->setVisible(on);
+void MainWindow::turnLaser(const bool state) {
+	command(position.set_preview_on(state));
+	m_actionLaserOn->setVisible(!state);
+	m_actionLaserOff->setVisible(state);
 }
 
 void MainWindow::applyMovementSettings() {
@@ -469,19 +465,15 @@ void MainWindow::updateSheetReferences() {
 void MainWindow::go(const direction value) {
 	const auto step = m_ui->move_step->value();
 	switch (value) {
-		case direction::up: return generate_gcode({::move_raw{m_x, (m_y -= step)}}, {}, m_connection->process());
-		case direction::down: return generate_gcode({::move_raw{m_x, (m_y += step)}}, {}, m_connection->process());
-		case direction::left: return generate_gcode({::move_raw{(m_x -= step), m_y}}, {}, m_connection->process());
-		case direction::right: return generate_gcode({::move_raw{(m_x += step), m_y}}, {}, m_connection->process());
+		case direction::up: return command({position.move_mm_y(-step)});
+		case direction::down: return command({position.move_mm_y(step)});
+		case direction::left: return command({position.move_mm_x(-step)});
+		case direction::right: return command({position.move_mm_x(step)});
 		case direction::home:
-			m_x = 0.0;
-			m_y = 0.0;
-			return generate_gcode({home{}}, {}, m_connection->process());
+			position.reset_home();
+			return command({instruction::home{}});
 		case direction::new_home:
-			generate_gcode({new_home{0, 0}, home{}}, {}, m_connection->process());
-			m_x = 0.0;
-			m_y = 0.0;
-			return;
+			return command({position.reset_home(), instruction::home{}});
 	}
 }
 
@@ -525,4 +517,8 @@ void MainWindow::updateItemOpacity(const int value) {
 void MainWindow::updateItemScale(const double value) noexcept {
 	m_selectedItem->setScale(value);
 	m_ui->itemScale->setValue(value);
+}
+
+void MainWindow::command(semi_gcodes &&gcodes) {
+	generate_gcode(std::move(gcodes), {}, m_connection->process());
 }

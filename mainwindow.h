@@ -25,6 +25,39 @@ namespace Ui {
 class MainWindow;
 }
 
+struct spindle_position {
+	float x{};
+	float y{};
+
+	semi_gcodes preview_gcode() noexcept {
+		return is_preview_on_state ? semi_gcodes{instruction::laser_on{}, instruction::power{1}} : semi_gcodes{instruction::power{0}, instruction::laser_off{}};
+	}
+
+	semi_gcodes set_preview_on(const bool value) noexcept {
+		is_preview_on_state = value;
+		return preview_gcode();
+	}
+
+	constexpr instruction::move_mm move_mm_x(const float step) noexcept {
+		return {x += step, y};
+	}
+
+	constexpr instruction::move_mm move_mm_y(const float step) noexcept {
+		return {x, y += step};
+	}
+
+	constexpr instruction::move_mm reset_mm() noexcept {
+		return {x = 0.0f, y = 0.0f};
+	}
+
+	constexpr instruction::set_home_position reset_home() noexcept {
+		return {x = 0.0f, y = 0.0f};
+	}
+
+private:
+	bool is_preview_on_state{false};
+};
+
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 
@@ -65,12 +98,13 @@ private:
 	void updateItemOpacity(int value);
 	void updateItemScale(double value) noexcept;
 
+	void command(semi_gcodes &&gcodes);
+
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
 	std::unique_ptr<EngraverConnection> m_connection;
 
-	double m_x{};
-	double m_y{};
+	spindle_position position{};
 
 	QActionGroup m_enableIfEngraverConnected{nullptr};
 	QActionGroup m_enableIfObjectIsSelected{nullptr};

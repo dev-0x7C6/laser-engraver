@@ -11,41 +11,44 @@ class QImage;
 
 struct options {
 	double power_multiplier{1.0};
-	std::optional<i16> force_dwell_time;
+	std::optional<u16> force_dwell_time;
 	bool center_object{true};
 };
 
 using progress_t = std::atomic<double>;
 
+namespace instruction {
+
 struct laser_on {};
 struct laser_off {};
-struct new_home {
-	i32 x;
-	i32 y;
+struct set_home_position {
+	float x;
+	float y;
 };
 struct home {};
 struct wait_for_movement_finish {};
 
 struct dwell {
-	i32 delay;
+	u16 delay;
 };
 
 struct move_dpi {
-	i32 x;
-	i32 y;
-	i32 power;
+	float x;
+	float y;
+	u16 power;
 };
 
-struct move_raw {
-	double x;
-	double y;
+struct move_mm {
+	float x;
+	float y;
 };
 
 struct power {
 	i32 duty;
 };
+} // namespace instruction
 
-using semi_gcode = std::variant<std::monostate, laser_on, laser_off, home, new_home, dwell, move_dpi, move_raw, power, wait_for_movement_finish>;
+using semi_gcode = std::variant<std::monostate, instruction::laser_on, instruction::laser_off, instruction::home, instruction::set_home_position, instruction::dwell, instruction::move_dpi, instruction::move_mm, instruction::power, instruction::wait_for_movement_finish>;
 using semi_gcodes = std::vector<semi_gcode>;
 
 semi_gcodes image_to_semi_gcode(const QImage &img, options, progress_t &);
