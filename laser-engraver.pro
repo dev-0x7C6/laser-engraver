@@ -36,7 +36,8 @@ SOURCES += \
     src/select-engraver-dialog.cpp \
     src/semi-gcode.cpp \
     src/gcode-generator.cpp \
-    src/widgets/engraver-movement-settings-widget.cpp
+    src/widgets/engraver-movement-settings-widget.cpp \
+    src/widgets/graphics-view.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -48,7 +49,8 @@ HEADERS += \
     src/select-engraver-dialog.h \
     src/semi-gcode.hpp \
     src/gcode-generator.hpp \
-    src/widgets/engraver-movement-settings-widget.h
+    src/widgets/engraver-movement-settings-widget.h \
+    src/widgets/graphics-view.h
 
 FORMS += \
         mainwindow.ui \

@@ -735,7 +735,7 @@
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
-       <widget class="QGraphicsView" name="view">
+       <widget class="GraphicsView" name="view">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -845,6 +845,11 @@
    <extends>QWidget</extends>
    <header>src/widgets/engraver-movement-settings-widget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>GraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>src/widgets/graphics-view.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
