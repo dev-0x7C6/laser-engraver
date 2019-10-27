@@ -46,8 +46,8 @@ void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {
 void GridScene::drawSheet(QPainter *painter, const sheet_metrics &sheet) noexcept {
 	raii_painter _(painter);
 	constexpr auto inch = 25.4;
-	const auto iw = m_invertPaperSheets ? sheet.h : sheet.w;
-	const auto ih = m_invertPaperSheets ? sheet.w : sheet.h;
+	const auto iw = sheet.invert ? sheet.h : sheet.w;
+	const auto ih = sheet.invert ? sheet.w : sheet.h;
 	const auto w = (m_dpi * iw) / inch;
 	const auto h = (m_dpi * ih) / inch;
 	auto pen = painter->pen();

@@ -52,8 +52,11 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), m_grid, &GridScene::updateDpi);
 
-	for (auto &&checkbox : {m_ui->drawA0, m_ui->drawA1, m_ui->drawA2, m_ui->drawA3, m_ui->drawA4, m_ui->drawA5, m_ui->drawA6, m_ui->drawA7, m_ui->drawA8})
+	for (auto &&checkbox : {m_ui->drawInverted, m_ui->drawA0, m_ui->drawA1, m_ui->drawA2, m_ui->drawA3, m_ui->drawA4, m_ui->drawA5, m_ui->drawA6, m_ui->drawA7, m_ui->drawA8})
 		connect(checkbox, &QCheckBox::clicked, this, &MainWindow::updateSheetReferences);
+	connect(m_ui->drawCustom, &QGroupBox::clicked, this, &MainWindow::updateSheetReferences);
+	connect(m_ui->drawCustomH, qOverload<double>(&QDoubleSpinBox::valueChanged), [this](auto &&) { updateSheetReferences(); });
+	connect(m_ui->drawCustomW, qOverload<double>(&QDoubleSpinBox::valueChanged), [this](auto &&) { updateSheetReferences(); });
 	updateSheetReferences();
 
 	open->setShortcuts(QKeySequence::Open);
@@ -437,24 +440,28 @@ void MainWindow::applyMovementSettings() {
 
 void MainWindow::updateSheetReferences() {
 	std::vector<sheet_metrics> sheets;
+	const auto inverted = m_ui->drawInverted->isChecked();
 	if (m_ui->drawA0->isChecked())
-		sheets.push_back({"A0", 841, 1189});
+		sheets.push_back({"A0", 841, 1189, inverted});
 	if (m_ui->drawA1->isChecked())
-		sheets.push_back({"A1", 594, 841});
+		sheets.push_back({"A1", 594, 841, inverted});
 	if (m_ui->drawA2->isChecked())
-		sheets.push_back({"A2", 420, 594});
+		sheets.push_back({"A2", 420, 594, inverted});
 	if (m_ui->drawA3->isChecked())
-		sheets.push_back({"A3", 297, 420});
+		sheets.push_back({"A3", 297, 420, inverted});
 	if (m_ui->drawA4->isChecked())
-		sheets.push_back({"A4", 210, 297});
+		sheets.push_back({"A4", 210, 297, inverted});
 	if (m_ui->drawA5->isChecked())
-		sheets.push_back({"A5", 148, 210});
+		sheets.push_back({"A5", 148, 210, inverted});
 	if (m_ui->drawA6->isChecked())
-		sheets.push_back({"A6", 105, 148});
+		sheets.push_back({"A6", 105, 148, inverted});
 	if (m_ui->drawA7->isChecked())
-		sheets.push_back({"A7", 74, 105});
+		sheets.push_back({"A7", 74, 105, inverted});
 	if (m_ui->drawA8->isChecked())
-		sheets.push_back({"A8", 52, 74});
+		sheets.push_back({"A8", 52, 74, inverted});
+	if (m_ui->drawCustom->isChecked())
+		sheets.push_back({"Custom", m_ui->drawCustomW->value(), m_ui->drawCustomH->value()});
+
 	m_grid->updateDpi(m_ui->dpi->value());
 	m_grid->drawSheetAreas(std::move(sheets));
 }

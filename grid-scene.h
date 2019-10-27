@@ -4,8 +4,9 @@
 
 struct sheet_metrics {
 	std::string name;
-	int w{};
-	int h{};
+	double w{};
+	double h{};
+	bool invert{false};
 };
 
 class GridScene : public QGraphicsScene {
@@ -31,14 +32,12 @@ private:
 	std::vector<sheet_metrics> m_papers;
 	double m_dpi{300.0};
 
-	bool m_invertPaperSheets{true};
-	bool m_disableBackground{false};
-
 	int m_gridSize{10};
 
 	QColor m_xAxisColor{0xff, 0x00, 0x00, 0x9f};
 	QColor m_yAxisColor{0x00, 0xff, 0x00, 0x9f};
 
+	bool m_disableBackground{false};
 	bool m_xAxisEnabled{true};
 	bool m_yAxisEnabled{true};
 };
