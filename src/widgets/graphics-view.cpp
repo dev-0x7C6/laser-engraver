@@ -4,7 +4,7 @@
 
 GraphicsView::GraphicsView(QWidget *parent)
 		: QGraphicsView(parent) {
-	setViewport(new QGLWidget(QGLFormat(QGL::DoubleBuffer)));
+	setViewport(new QGLWidget(QGLFormat(QGL::SingleBuffer)));
 }
 
 void GraphicsView::wheelEvent(QWheelEvent *) {
