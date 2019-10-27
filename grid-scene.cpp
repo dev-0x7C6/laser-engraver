@@ -3,6 +3,10 @@
 #include <QPainter>
 #include <externals/common/qt/raii/raii-painter.hpp>
 
+namespace {
+constexpr auto inch = 25.4;
+}
+
 GridScene::GridScene(qreal x, qreal y, qreal w, qreal h)
 		: QGraphicsScene(x, y, w, h) {
 }
@@ -45,7 +49,6 @@ void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {
 
 void GridScene::drawSheet(QPainter *painter, const sheet_metrics &sheet) noexcept {
 	raii_painter _(painter);
-	constexpr auto inch = 25.4;
 	const auto iw = sheet.invert ? sheet.h : sheet.w;
 	const auto ih = sheet.invert ? sheet.w : sheet.h;
 	const auto w = (m_dpi * iw) / inch;
@@ -61,8 +64,10 @@ void GridScene::drawSheet(QPainter *painter, const sheet_metrics &sheet) noexcep
 
 void GridScene::drawGrid(QPainter *painter, const QRectF &rect) noexcept {
 	raii_painter _(painter);
-	qreal left = int(rect.left()) - (int(rect.left()) % m_gridSize);
-	qreal top = int(rect.top()) - (int(rect.top()) % m_gridSize);
+	const auto grid = static_cast<int>((m_dpi * m_gridSize) / inch);
+
+	qreal left = int(rect.left()) - (int(rect.left()) % grid);
+	qreal top = int(rect.top()) - (int(rect.top()) % grid);
 
 	QVarLengthArray<QLineF, 1024> lines;
 
@@ -72,9 +77,9 @@ void GridScene::drawGrid(QPainter *painter, const QRectF &rect) noexcept {
 	pen.setColor(color);
 	painter->setPen(pen);
 
-	for (auto x = left; x < rect.right(); x += m_gridSize)
+	for (auto x = left; x < rect.right(); x += grid)
 		lines.append(QLineF(x, rect.top(), x, rect.bottom()));
-	for (auto y = top; y < rect.bottom(); y += m_gridSize)
+	for (auto y = top; y < rect.bottom(); y += grid)
 		lines.append(QLineF(rect.left(), y, rect.right(), y));
 
 	painter->drawLines(lines.data(), lines.size());

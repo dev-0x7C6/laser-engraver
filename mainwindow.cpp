@@ -72,8 +72,15 @@ MainWindow::MainWindow(QWidget *parent)
 	object->addSeparator();
 	auto object_zoom_in_half = object->addAction("Zoom in", this, &MainWindow::zoomInObject);
 	auto object_zoom_out_half = object->addAction("Zoom out", this, &MainWindow::zoomOutObject);
-	auto remove = object->addAction("Delete", this, &MainWindow::removeItem);
 	object->addSeparator();
+	auto center_object = object->addAction("Center", [this]() {
+		if (m_selectedItem)
+			m_selectedItem->setPos(-m_selectedItem->boundingRect().width() / 2.0, -m_selectedItem->boundingRect().height() / 2.0);
+	});
+	center_object->setIcon(QIcon::fromTheme("format-justify-center"));
+	center_object->setShortcut(QKeySequence(Qt::Key::Key_C));
+	object->addSeparator();
+	auto remove = object->addAction("Delete", this, &MainWindow::removeItem);
 
 	object_zoom_in_half->setShortcut(QKeySequence(Qt::Key::Key_Plus));
 	object_zoom_out_half->setShortcut(QKeySequence(Qt::Key::Key_Minus));

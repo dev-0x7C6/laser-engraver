@@ -86,7 +86,10 @@
                  </sizepolicy>
                 </property>
                 <property name="suffix">
-                 <string> px</string>
+                 <string> mm</string>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
                 </property>
                 <property name="maximum">
                  <number>100</number>
@@ -844,9 +847,6 @@
         </property>
         <property name="dragMode">
          <enum>QGraphicsView::ScrollHandDrag</enum>
-        </property>
-        <property name="cacheMode">
-         <set>QGraphicsView::CacheNone</set>
         </property>
         <property name="viewportUpdateMode">
          <enum>QGraphicsView::FullViewportUpdate</enum>
