@@ -31,6 +31,12 @@ void GridScene::updateDpi(double dpi) {
 }
 
 void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {
+	raii_painter _(painter);
+	painter->setRenderHint(QPainter::Antialiasing);
+	painter->setRenderHint(QPainter::TextAntialiasing);
+	painter->setRenderHint(QPainter::SmoothPixmapTransform);
+	painter->setRenderHint(QPainter::HighQualityAntialiasing);
+
 	if (m_disableBackground)
 		return;
 
