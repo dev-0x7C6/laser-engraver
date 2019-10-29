@@ -20,7 +20,7 @@ void GridScene::setGridSize(int size) noexcept {
 	update();
 }
 
-void GridScene::drawSheetAreas(std::vector<sheet_metrics> &&papers) {
+void GridScene::drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers) {
 	m_papers = std::move(papers);
 	update();
 }
@@ -47,10 +47,10 @@ void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {
 		drawSheet(painter, paper);
 }
 
-void GridScene::drawSheet(QPainter *painter, const sheet_metrics &sheet) noexcept {
+void GridScene::drawSheet(QPainter *painter, const inverter<sheet::metrics> &sheet) noexcept {
 	raii_painter _(painter);
-	const auto iw = sheet.invert ? sheet.h : sheet.w;
-	const auto ih = sheet.invert ? sheet.w : sheet.h;
+	const auto iw = sheet.inverted ? sheet.value.h : sheet.value.w;
+	const auto ih = sheet.inverted ? sheet.value.w : sheet.value.h;
 	const auto w = (m_dpi * iw) / inch;
 	const auto h = (m_dpi * ih) / inch;
 	auto pen = painter->pen();
@@ -59,7 +59,7 @@ void GridScene::drawSheet(QPainter *painter, const sheet_metrics &sheet) noexcep
 	painter->setPen(pen);
 
 	painter->drawRect(-w / 2, -h / 2, w, h);
-	painter->drawText(-w / 2, h / 2 + painter->fontMetrics().ascent(), QString("%1: %2mm x %3mm (%4px x %5px)").arg(QString::fromStdString(sheet.name), QString::number(iw), QString::number(ih), QString::number(w), QString::number(h)));
+	painter->drawText(-w / 2, h / 2 + painter->fontMetrics().ascent(), QString("%1: %2mm x %3mm (%4px x %5px)").arg(QString::fromStdString(sheet.value.name), QString::number(iw), QString::number(ih), QString::number(w), QString::number(h)));
 }
 
 void GridScene::drawGrid(QPainter *painter, const QRectF &rect) noexcept {

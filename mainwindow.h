@@ -1,13 +1,14 @@
 #pragma once
 
-#include <QMainWindow>
-#include <QSettings>
-#include <QActionGroup>
-
 #include <memory>
 
-#include <src/engraver-manager.h>
+#include <QActionGroup>
+#include <QMainWindow>
+#include <QSettings>
+
 #include <src/engraver-connection.h>
+#include <src/engraver-manager.h>
+#include <src/sheets.hpp>
 
 enum class direction {
 	up,

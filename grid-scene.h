@@ -2,12 +2,7 @@
 
 #include <QGraphicsScene>
 
-struct sheet_metrics {
-	std::string name;
-	double w{};
-	double h{};
-	bool invert{false};
-};
+#include <src/sheets.hpp>
 
 class GridScene : public QGraphicsScene {
 public:
@@ -16,7 +11,7 @@ public:
 	void setDisableBackground(bool value) noexcept;
 	void setGridSize(int size) noexcept;
 
-	void drawSheetAreas(std::vector<sheet_metrics> &&papers);
+	void drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers);
 	void updateDpi(double dpi);
 
 protected:
@@ -26,10 +21,10 @@ private:
 	void drawGrid(QPainter *painter, const QRectF &rect) noexcept;
 	void drawXAxis(QPainter *painter, QRect &&scene) noexcept;
 	void drawYAxis(QPainter *painter, QRect &&scene) noexcept;
-	void drawSheet(QPainter *painter, const sheet_metrics &) noexcept;
+	void drawSheet(QPainter *painter, const inverter<sheet::metrics> &) noexcept;
 
 private:
-	std::vector<sheet_metrics> m_papers;
+	std::vector<inverter<sheet::metrics>> m_papers;
 	double m_dpi{300.0};
 
 	int m_gridSize{10};

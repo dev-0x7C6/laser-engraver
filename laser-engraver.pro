@@ -49,6 +49,7 @@ HEADERS += \
     src/select-engraver-dialog.h \
     src/semi-gcode.hpp \
     src/gcode-generator.hpp \
+    src/sheets.hpp \
     src/widgets/engraver-movement-settings-widget.h \
     src/widgets/graphics-view.h
 
