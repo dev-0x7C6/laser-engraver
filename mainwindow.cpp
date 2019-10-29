@@ -97,16 +97,17 @@ MainWindow::MainWindow(QWidget *parent)
 	m_enableIfObjectIsSelected.setEnabled(false);
 
 	auto tool = menu->addMenu("&Commands");
-	auto home = tool->addAction("Home", [this]() { go(direction::home); });
-	auto new_home = tool->addAction("Save as Home", [this]() { go(direction::new_home); });
+	auto home = tool->addAction("Home", [this]() { spindle_position.reset_home();
+		command({instruction::home{}}); });
+	auto new_home = tool->addAction("Save as Home", [this]() { command({spindle_position.reset_home(), instruction::home{}}); });
 	tool->addSeparator();
 	m_actionLaserOn = tool->addAction("Laser On", [this]() { turnLaser(true); });
 	m_actionLaserOff = tool->addAction("Laser Off", [this]() { turnLaser(false); });
 	tool->addSeparator();
-	auto go_u = tool->addAction("Go Up", [this]() { go(direction::up); });
-	auto go_d = tool->addAction("Go Down", [this]() { go(direction::down); });
-	auto go_l = tool->addAction("Go Left", [this]() { go(direction::left); });
-	auto go_r = tool->addAction("Go Right", [this]() { go(direction::right); });
+	auto go_u = tool->addAction("Go Up", [this]() { command({spindle_position.move_mm_y(-moveStep())}); });
+	auto go_d = tool->addAction("Go Down", [this]() { command({spindle_position.move_mm_y(moveStep())}); });
+	auto go_l = tool->addAction("Go Left", [this]() { command({spindle_position.move_mm_x(-moveStep())}); });
+	auto go_r = tool->addAction("Go Right", [this]() { command({spindle_position.move_mm_x(moveStep())}); });
 
 	m_actionLaserOn->setVisible(true);
 	m_actionLaserOff->setVisible(false);
@@ -327,29 +328,29 @@ void MainWindow::print() {
 		return;
 
 	if (m_ui->saveHomeAfterMove->isChecked())
-		command({position.reset_home()});
+		command({spindle_position.reset_home()});
 
 	const auto img = prepareImage();
 
-	options opts;
+	semi::options opts;
 	opts.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
 	opts.center_object = m_ui->center_object->isChecked();
 	opts.force_dwell_time = 0;
 
-	auto semi = qt_progress_task<semi_gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
-		return image_to_semi_gcode(img, opts, progress);
+	auto semi = qt_progress_task<semi::gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
+		return semi::generator::from_image(img, opts, progress);
 	});
 
 	gcode_generation_options generation_options;
 	generation_options.dpi = m_ui->dpi->value();
 
 	raii_tail_call finalize_with_safty_gcode([&]() {
-		command(generate_end_section());
-		command(position.preview_gcode());
+		command(semi::generator::finalization());
+		command(spindle_position.preview_gcode());
 	});
 
 	while (true) {
-		generate_gcode(generate_workspace_demo(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
+		generate_gcode(semi::generator::workspace_preview(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -430,7 +431,7 @@ void MainWindow::disconnectEngraver() {
 }
 
 void MainWindow::turnLaser(const bool state) {
-	command(position.set_preview_on(state));
+	command(spindle_position.set_preview_on(state));
 	m_actionLaserOn->setVisible(!state);
 	m_actionLaserOff->setVisible(state);
 }
@@ -465,21 +466,6 @@ void MainWindow::updateSheetReferences() {
 
 	m_grid->updateDpi(m_ui->dpi->value());
 	m_grid->drawSheetAreas(std::move(sheets));
-}
-
-void MainWindow::go(const direction value) {
-	const auto step = m_ui->move_step->value();
-	switch (value) {
-		case direction::up: return command({position.move_mm_y(-step)});
-		case direction::down: return command({position.move_mm_y(step)});
-		case direction::left: return command({position.move_mm_x(-step)});
-		case direction::right: return command({position.move_mm_x(step)});
-		case direction::home:
-			position.reset_home();
-			return command({instruction::home{}});
-		case direction::new_home:
-			return command({position.reset_home(), instruction::home{}});
-	}
 }
 
 void MainWindow::zoomInObject() {
@@ -524,6 +510,10 @@ void MainWindow::updateItemScale(const double value) noexcept {
 	m_ui->itemScale->setValue(value);
 }
 
-void MainWindow::command(semi_gcodes &&gcodes) {
+void MainWindow::command(semi::gcodes &&gcodes) {
 	generate_gcode(std::move(gcodes), {}, m_connection->process());
+}
+
+float MainWindow::moveStep() const noexcept {
+	return m_ui->move_step->value();
 }

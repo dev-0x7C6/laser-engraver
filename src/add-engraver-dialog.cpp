@@ -4,7 +4,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 
-Q_DECLARE_METATYPE(GcodeFlavor);
+Q_DECLARE_METATYPE(engraver::settings::gcode_flavor);
 Q_DECLARE_METATYPE(QSerialPort::BaudRate);
 Q_DECLARE_METATYPE(QSerialPort::DataBits);
 Q_DECLARE_METATYPE(QSerialPort::FlowControl);
@@ -47,7 +47,7 @@ AddEngraverDialog::AddEngraverDialog(QWidget *parent)
 	m_ui->stop_bits->addItem("1.5", QSerialPort::StopBits::OneAndHalfStop);
 	m_ui->stop_bits->addItem("2", QSerialPort::StopBits::TwoStop);
 
-	m_ui->gcode_flavor->addItem("Grbl", QVariant::fromValue(GcodeFlavor::Grbl));
+	m_ui->gcode_flavor->addItem("Grbl", QVariant::fromValue(engraver::settings::gcode_flavor::grbl));
 
 	connect(m_ui->buttons, &QDialogButtonBox::accepted, this, &AddEngraverDialog::saveResult);
 }

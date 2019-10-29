@@ -27,7 +27,7 @@ private:
 };
 }
 
-void generate_gcode(semi_gcodes &&gcodes, const gcode_generation_options &opts, const upload_instruction &instruction) {
+void generate_gcode(semi::gcodes &&gcodes, const gcode_generation_options &opts, const upload_instruction &instruction) {
 	gcode_generator visitor(opts.dpi);
 	for (auto i = 0u; i < gcodes.size(); ++i) {
 		auto &&gcode = gcodes[i];

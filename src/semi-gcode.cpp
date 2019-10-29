@@ -19,20 +19,23 @@ private:
 	type &m_progress;
 };
 
-auto center_offset(const QImage &img, const options &opts) {
+auto center_offset(const QImage &img, const semi::options &opts) {
 	return std::make_pair(static_cast<float>(opts.center_object ? img.width() / 2 : 0),
 		static_cast<float>(opts.center_object ? img.height() / 2 : 0));
 }
 
-void move_gcodes(semi_gcodes &&source, semi_gcodes &destination) {
+void move_gcodes(semi::gcodes &&source, semi::gcodes &destination) {
 	std::move(source.begin(), source.end(), std::back_inserter(destination));
 }
 
+semi::gcodes initialization() {
+	return {instruction::power{0}, instruction::home{}, instruction::wait_for_movement_finish{}, instruction::laser_on{}};
+}
 } // namespace
 
-semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &progress) {
+semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, progress_t &progress) {
 	raii_progress progress_raii(progress);
-	auto ret = generate_begin_section();
+	auto ret = initialization();
 
 	if (img.isNull())
 		return {};
@@ -71,12 +74,12 @@ semi_gcodes image_to_semi_gcode(const QImage &img, options opts, progress_t &pro
 		progress = static_cast<double>(y) / static_cast<double>(img.height());
 	}
 
-	move_gcodes(generate_end_section(), ret);
+	move_gcodes(finalization(), ret);
 	return ret;
 }
 
-semi_gcodes generate_workspace_demo(const QImage &img, options opts) {
-	auto ret = generate_begin_section();
+semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options opts) {
+	auto ret = initialization();
 
 	if (img.isNull())
 		return {};
@@ -100,14 +103,10 @@ semi_gcodes generate_workspace_demo(const QImage &img, options opts) {
 	gcode_move(0, h, 1);
 	gcode_move(0, 0, 1);
 
-	move_gcodes(generate_end_section(), ret);
+	move_gcodes(finalization(), ret);
 	return ret;
 }
 
-semi_gcodes generate_begin_section() {
-	return {instruction::power{0}, instruction::home{}, instruction::wait_for_movement_finish{}, instruction::laser_on{}};
-}
-
-semi_gcodes generate_end_section() {
+semi::gcodes semi::generator::finalization() {
 	return {instruction::power{0}, instruction::home{}, instruction::wait_for_movement_finish{}, instruction::laser_off{}};
 }

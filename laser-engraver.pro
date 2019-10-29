@@ -46,10 +46,12 @@ HEADERS += \
     src/engraver-connection.h \
     src/engraver-manager.h \
     src/engraver-settings.h \
+    src/instructions.hpp \
     src/select-engraver-dialog.h \
     src/semi-gcode.hpp \
     src/gcode-generator.hpp \
     src/sheets.hpp \
+    src/spindle-position.hpp \
     src/widgets/engraver-movement-settings-widget.h \
     src/widgets/graphics-view.h
 

@@ -5,12 +5,13 @@
 
 #include <vector>
 
-enum class GcodeFlavor {
-	Grbl
-};
-
 namespace engraver {
 namespace settings {
+
+enum class gcode_flavor {
+	grbl
+};
+
 struct movement_parameters {
 	double x_steps_per_mm{80.00};
 	double y_steps_per_mm{80.00};
