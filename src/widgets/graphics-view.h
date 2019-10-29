@@ -7,5 +7,6 @@ public:
 	GraphicsView(QWidget *parent = nullptr);
 
 protected:
-	void wheelEvent(QWheelEvent *event) final;
+	void showEvent(QShowEvent *) final;
+	void wheelEvent(QWheelEvent *) final;
 };
