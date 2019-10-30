@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 namespace sheet {
 
 enum class iso216_category_a {
@@ -15,6 +17,21 @@ enum class iso216_category_a {
 	A9,
 	A10
 };
+
+constexpr auto all_iso216_category() noexcept {
+	return std::array{
+		iso216_category_a::A0,
+		iso216_category_a::A1,
+		iso216_category_a::A2,
+		iso216_category_a::A3,
+		iso216_category_a::A4,
+		iso216_category_a::A5,
+		iso216_category_a::A6,
+		iso216_category_a::A7,
+		iso216_category_a::A8,
+		iso216_category_a::A9,
+		iso216_category_a::A10};
+}
 
 constexpr auto name(const iso216_category_a category) noexcept -> const char * {
 	switch (category) {

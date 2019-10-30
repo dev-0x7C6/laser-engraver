@@ -33,6 +33,7 @@ SOURCES += \
     src/add-engraver-dialog.cpp \
     src/engraver-connection.cpp \
     src/engraver-manager.cpp \
+    src/gui-settings.cpp \
     src/select-engraver-dialog.cpp \
     src/semi-gcode.cpp \
     src/gcode-generator.cpp \
@@ -46,6 +47,7 @@ HEADERS += \
     src/engraver-connection.h \
     src/engraver-manager.h \
     src/engraver-settings.h \
+    src/gui-settings.h \
     src/instructions.hpp \
     src/select-engraver-dialog.h \
     src/semi-gcode.hpp \

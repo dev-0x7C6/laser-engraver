@@ -11,9 +11,11 @@
 #include <src/engraver-manager.h>
 #include <src/sheets.hpp>
 #include <src/spindle-position.hpp>
+#include <src/gui-settings.h>
 
 class GridScene;
 class QGraphicsItem;
+class QCheckBox;
 
 namespace Ui {
 class MainWindow;
@@ -69,6 +71,8 @@ private:
 
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
+	QSettings m_settings;
+	std::unique_ptr<GuiSettings> m_guiSettings;
 	std::unique_ptr<EngraverConnection> m_connection;
 
 	engraver::helper::spindle_position spindle_position{};
@@ -80,7 +84,6 @@ private:
 	QAction *m_actionLaserOn{nullptr};
 	QAction *m_actionLaserOff{nullptr};
 
-	QSettings m_settings;
 	EngraverManager m_engraverManager;
 	QGraphicsItem *m_selectedItem{nullptr};
 	GridScene *m_grid{nullptr};

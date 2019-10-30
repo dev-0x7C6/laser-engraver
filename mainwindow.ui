@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1507</width>
+    <width>1200</width>
     <height>900</height>
    </rect>
   </property>
@@ -49,7 +49,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -78,7 +78,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QSpinBox" name="grid">
+               <widget class="QDoubleSpinBox" name="grid">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -88,14 +88,14 @@
                 <property name="suffix">
                  <string> mm</string>
                 </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
                 <property name="maximum">
-                 <number>100</number>
+                 <double>1000.000000000000000</double>
+                </property>
+                <property name="stepType">
+                 <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
                 </property>
                 <property name="value">
-                 <number>10</number>
+                 <double>10.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -221,14 +221,31 @@
                </widget>
               </item>
               <item>
+               <widget class="QCheckBox" name="drawA9">
+                <property name="text">
+                 <string>A9</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="drawA10">
+                <property name="text">
+                 <string>A10</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <spacer name="horizontalSpacer_3">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Minimum</enum>
+                </property>
                 <property name="sizeHint" stdset="0">
                  <size>
-                  <width>40</width>
-                  <height>20</height>
+                  <width>0</width>
+                  <height>0</height>
                  </size>
                 </property>
                </spacer>
@@ -542,7 +559,7 @@
              </layout>
             </item>
             <item>
-             <widget class="QCheckBox" name="center_object">
+             <widget class="QCheckBox" name="engraveFromCenter">
               <property name="text">
                <string>Engrave from center</string>
               </property>
@@ -920,7 +937,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1507</width>
+     <width>1200</width>
      <height>23</height>
     </rect>
    </property>

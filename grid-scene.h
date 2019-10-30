@@ -9,7 +9,7 @@ public:
 	GridScene(qreal x, qreal y, qreal w, qreal h);
 
 	void setDisableBackground(bool value) noexcept;
-	void setGridSize(int size) noexcept;
+	void setGridSize(double size) noexcept;
 
 	void drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers);
 	void updateDpi(double dpi);
@@ -27,7 +27,7 @@ private:
 	std::vector<inverter<sheet::metrics>> m_papers;
 	double m_dpi{300.0};
 
-	int m_gridSize{10};
+	double m_gridSize{10.00};
 
 	QColor m_xAxisColor{0xff, 0x00, 0x00, 0x9f};
 	QColor m_yAxisColor{0x00, 0xff, 0x00, 0x9f};

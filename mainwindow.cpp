@@ -16,6 +16,7 @@
 
 #include <grid-scene.h>
 #include <src/engraver-connection.h>
+#include <externals/common/qt/raii/raii-settings-group.hpp>
 
 using namespace std::chrono_literals;
 
@@ -35,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->setupUi(this);
 	m_ui->view->setScene(m_grid);
 
+	m_guiSettings = std::make_unique<GuiSettings>(*m_ui, m_settings);
+
 	setWindowTitle("Laser engraver");
 	setWindowIcon(QIcon::fromTheme("document-print"));
 
@@ -52,8 +55,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), m_grid, &GridScene::updateDpi);
 
-	for (auto &&checkbox : {m_ui->drawInverted, m_ui->drawA0, m_ui->drawA1, m_ui->drawA2, m_ui->drawA3, m_ui->drawA4, m_ui->drawA5, m_ui->drawA6, m_ui->drawA7, m_ui->drawA8})
-		connect(checkbox, &QCheckBox::clicked, this, &MainWindow::updateSheetReferences);
+	for (auto &&category : sheet::all_iso216_category())
+		connect(get_checkbox(*m_ui, category), &QCheckBox::clicked, this, &MainWindow::updateSheetReferences);
+
+	connect(m_ui->drawInverted, &QCheckBox::clicked, this, &MainWindow::updateSheetReferences);
 	connect(m_ui->drawCustom, &QGroupBox::clicked, this, &MainWindow::updateSheetReferences);
 	connect(m_ui->drawCustomH, qOverload<double>(&QDoubleSpinBox::valueChanged), [this](auto &&) { updateSheetReferences(); });
 	connect(m_ui->drawCustomW, qOverload<double>(&QDoubleSpinBox::valueChanged), [this](auto &&) { updateSheetReferences(); });
@@ -168,7 +173,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_ui->scale->setCurrentText("100%");
 
-	connect(m_ui->grid, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](auto &&value) {
+	connect(m_ui->grid, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](auto &&value) {
 		m_grid->setGridSize(value);
 	});
 
@@ -342,7 +347,7 @@ gcode_generation_options MainWindow::make_gcode_generation_options_from_ui() con
 semi::options MainWindow::make_semi_options_from_ui() const noexcept {
 	semi::options ret;
 	ret.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
-	ret.center_object = m_ui->center_object->isChecked();
+	ret.center_object = m_ui->engraveFromCenter->isChecked();
 	ret.force_dwell_time = 0;
 	return ret;
 }
@@ -477,15 +482,8 @@ void MainWindow::updateSheetReferences() {
 			sheets.emplace_back(inverter<sheet::metrics>{std::move(metrics), is_inverted});
 	};
 
-	emplace_if(m_ui->drawA0, sheet::make_metric(sheet::iso216_category_a::A0), is_inverted);
-	emplace_if(m_ui->drawA1, sheet::make_metric(sheet::iso216_category_a::A1), is_inverted);
-	emplace_if(m_ui->drawA2, sheet::make_metric(sheet::iso216_category_a::A2), is_inverted);
-	emplace_if(m_ui->drawA3, sheet::make_metric(sheet::iso216_category_a::A3), is_inverted);
-	emplace_if(m_ui->drawA4, sheet::make_metric(sheet::iso216_category_a::A4), is_inverted);
-	emplace_if(m_ui->drawA5, sheet::make_metric(sheet::iso216_category_a::A5), is_inverted);
-	emplace_if(m_ui->drawA6, sheet::make_metric(sheet::iso216_category_a::A6), is_inverted);
-	emplace_if(m_ui->drawA7, sheet::make_metric(sheet::iso216_category_a::A7), is_inverted);
-	emplace_if(m_ui->drawA8, sheet::make_metric(sheet::iso216_category_a::A8), is_inverted);
+	for (auto &&category : sheet::all_iso216_category())
+		emplace_if(get_checkbox(*m_ui, category), sheet::make_metric(category), is_inverted);
 
 	if (m_ui->drawCustom->isChecked())
 		sheets.push_back({{"Custom", m_ui->drawCustomW->value(), m_ui->drawCustomH->value()}});

@@ -15,7 +15,7 @@ void GridScene::setDisableBackground(bool value) noexcept {
 	m_disableBackground = value;
 }
 
-void GridScene::setGridSize(int size) noexcept {
+void GridScene::setGridSize(double size) noexcept {
 	m_gridSize = size;
 	update();
 }
