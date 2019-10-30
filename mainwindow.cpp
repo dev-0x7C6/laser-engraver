@@ -14,7 +14,6 @@
 #include <future>
 #include <thread>
 
-#include <externals/common/std/raii/raii-tail-call.hpp>
 #include <grid-scene.h>
 #include <src/engraver-connection.h>
 
@@ -46,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_actionConnectEngraver->setIcon(QIcon::fromTheme("network-wired"));
 	m_actionDisconnectEngraver->setIcon(QIcon::fromTheme("network-offline"));
 	auto print = file->addAction("&Print", this, &MainWindow::print);
+	auto preview = file->addAction("Preview", this, &MainWindow::preview);
 	auto open = file->addAction("&Open", this, &MainWindow::open);
 	file->addSeparator();
 	auto exit = file->addAction("&Close", this, &MainWindow::close);
@@ -63,6 +63,8 @@ MainWindow::MainWindow(QWidget *parent)
 	open->setIcon(QIcon::fromTheme("document-open"));
 	print->setShortcut(QKeySequence::Print);
 	print->setIcon(QIcon::fromTheme("document-print"));
+	preview->setShortcut(QKeySequence(Qt::Key::Key_P));
+	preview->setIcon(QIcon::fromTheme("document-print-preview"));
 	exit->setShortcuts(QKeySequence::Quit);
 	exit->setIcon(QIcon::fromTheme("application-exit"));
 
@@ -320,37 +322,49 @@ QImage MainWindow::prepareImage() {
 	return canvas.toImage();
 }
 
+bool MainWindow::is_connected() const noexcept {
+	return m_connection && m_connection->isOpen();
+}
+
+raii_tail_call MainWindow::safety_gcode_raii() noexcept {
+	return {[&]() {
+		command(semi::generator::finalization());
+		command(spindle_position.preview_gcode());
+	}};
+}
+
+gcode_generation_options MainWindow::make_gcode_generation_options_from_ui() const noexcept {
+	gcode_generation_options ret;
+	ret.dpi = m_ui->dpi->value();
+	return ret;
+}
+
+semi::options MainWindow::make_semi_options_from_ui() const noexcept {
+	semi::options ret;
+	ret.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
+	ret.center_object = m_ui->center_object->isChecked();
+	ret.force_dwell_time = 0;
+	return ret;
+}
+
 void MainWindow::print() {
-	if (!m_connection)
+	if (!is_connected())
 		return;
 
-	if (!m_connection->isOpen())
-		return;
+	const auto _ = safety_gcode_raii();
 
 	if (m_ui->saveHomeAfterMove->isChecked())
 		command({spindle_position.reset_home()});
 
 	const auto img = prepareImage();
-
-	semi::options opts;
-	opts.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
-	opts.center_object = m_ui->center_object->isChecked();
-	opts.force_dwell_time = 0;
+	const auto opts = make_semi_options_from_ui();
 
 	auto semi = qt_progress_task<semi::gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
 		return semi::generator::from_image(img, opts, progress);
 	});
 
-	gcode_generation_options generation_options;
-	generation_options.dpi = m_ui->dpi->value();
-
-	raii_tail_call finalize_with_safty_gcode([&]() {
-		command(semi::generator::finalization());
-		command(spindle_position.preview_gcode());
-	});
-
 	while (true) {
-		generate_gcode(semi::generator::workspace_preview(img, opts), generation_options, add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
+		generate_gcode(semi::generator::workspace_preview(img, opts), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -360,7 +374,19 @@ void MainWindow::print() {
 			return;
 	}
 
-	generate_gcode(std::move(semi), generation_options, add_dialog_layer(this, "Uploading", {}, m_connection->process()));
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, m_connection->process()));
+}
+
+void MainWindow::preview() {
+	if (!is_connected())
+		return;
+
+	const auto _ = safety_gcode_raii();
+
+	if (m_ui->saveHomeAfterMove->isChecked())
+		command({spindle_position.reset_home()});
+
+	generate_gcode(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
 }
 
 void MainWindow::connectEngraver() {

@@ -6,10 +6,11 @@
 #include <QMainWindow>
 #include <QSettings>
 
+#include <externals/common/std/raii/raii-tail-call.hpp>
 #include <src/engraver-connection.h>
 #include <src/engraver-manager.h>
-#include <src/spindle-position.hpp>
 #include <src/sheets.hpp>
+#include <src/spindle-position.hpp>
 
 class GridScene;
 class QGraphicsItem;
@@ -36,6 +37,7 @@ public:
 private:
 	void open();
 	void print();
+	void preview();
 	void connectEngraver();
 	void disconnectEngraver();
 	void turnLaser(bool on);
@@ -47,6 +49,11 @@ private:
 	void zoomOutObject();
 
 private:
+	bool is_connected() const noexcept;
+	raii_tail_call safety_gcode_raii() noexcept;
+	gcode_generation_options make_gcode_generation_options_from_ui() const noexcept;
+	semi::options make_semi_options_from_ui() const noexcept;
+
 	bool isItemSelected() const noexcept;
 
 	void itemMoveTop();
