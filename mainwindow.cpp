@@ -167,12 +167,6 @@ MainWindow::MainWindow(QWidget *parent)
 	toolbar->addAction(move_up);
 	toolbar->addAction(remove);
 
-	for (auto &&v : {10, 25, 50, 100, 200, 400, 800}) {
-		m_ui->scale->addItem(QString::number(v) + "%", v);
-	}
-
-	m_ui->scale->setCurrentText("100%");
-
 	connect(m_ui->grid, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](auto &&value) {
 		m_grid->setGridSize(value);
 	});
@@ -181,10 +175,9 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_ui->opacity, qOverload<int>(&QSpinBox::valueChanged), this, &MainWindow::updateItemOpacity);
 	connect(m_ui->itemScale, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &MainWindow::updateItemScale);
 
-	connect(m_ui->scale, qOverload<int>(&QComboBox::currentIndexChanged), [this](auto &&index) {
-		const auto v = static_cast<double>(m_ui->scale->itemData(index).toInt()) / 100.0;
+	connect(m_ui->workspaceScale, qOverload<double>(&QDoubleSpinBox::valueChanged), [this](auto &&value) {
 		m_ui->view->resetTransform();
-		m_ui->view->scale(v, v);
+		m_ui->view->scale(value, value);
 	});
 
 	connect(m_grid, &QGraphicsScene::selectionChanged, [this]() {

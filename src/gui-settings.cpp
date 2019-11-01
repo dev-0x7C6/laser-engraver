@@ -41,6 +41,7 @@ GuiSettings::GuiSettings(Ui::MainWindow &ui, QSettings &settings)
 	{
 		raii_settings_group _(settings, "viewport");
 		ui.grid->setValue(settings.value("grid_mm", 10.00).toDouble());
+		ui.workspaceScale->setValue(settings.value("scale", 1.00).toDouble());
 	}
 
 	{
@@ -66,6 +67,7 @@ GuiSettings::~GuiSettings() {
 	{
 		raii_settings_group _(settings, "viewport");
 		settings.setValue("grid_mm", ui.grid->value());
+		settings.setValue("scale", ui.workspaceScale->value());
 	}
 
 	{
