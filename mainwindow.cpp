@@ -340,7 +340,7 @@ gcode_generation_options MainWindow::make_gcode_generation_options_from_ui() con
 semi::options MainWindow::make_semi_options_from_ui() const noexcept {
 	semi::options ret;
 	ret.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
-	ret.center_object = m_ui->engraveFromCenter->isChecked();
+	ret.center_object = m_ui->engraveObjectFromCenter->isChecked();
 	ret.force_dwell_time = 0;
 	return ret;
 }
@@ -351,7 +351,7 @@ void MainWindow::print() {
 
 	const auto _ = safety_gcode_raii();
 
-	if (m_ui->saveHomeAfterMove->isChecked())
+	if (m_ui->engraveFromCurrentPosition->isChecked())
 		command({spindle_position.reset_home()});
 
 	const auto img = prepareImage();
@@ -381,7 +381,7 @@ void MainWindow::preview() {
 
 	const auto _ = safety_gcode_raii();
 
-	if (m_ui->saveHomeAfterMove->isChecked())
+	if (m_ui->engraveFromCurrentPosition->isChecked())
 		command({spindle_position.reset_home()});
 
 	generate_gcode(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));

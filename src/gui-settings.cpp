@@ -46,8 +46,8 @@ GuiSettings::GuiSettings(Ui::MainWindow &ui, QSettings &settings)
 
 	{
 		raii_settings_group _(settings, "engraver");
-		ui.engraveFromCenter->setChecked(settings.value("engrave_from_center", false).toBool());
-		ui.saveHomeAfterMove->setChecked(settings.value("save_home_after_move", true).toBool());
+		ui.engraveObjectFromCenter->setChecked(settings.value("engrave_object_from_center", false).toBool());
+		ui.engraveFromCurrentPosition->setChecked(settings.value("engrave_from_current_positon", true).toBool());
 	}
 }
 
@@ -72,7 +72,7 @@ GuiSettings::~GuiSettings() {
 
 	{
 		raii_settings_group _(settings, "engraver");
-		settings.setValue("engrave_from_center", ui.engraveFromCenter->isChecked());
-		settings.setValue("save_home_after_move", ui.saveHomeAfterMove->isChecked());
+		settings.setValue("engrave_object_from_center", ui.engraveObjectFromCenter->isChecked());
+		settings.setValue("engrave_from_current_positon", ui.engraveFromCurrentPosition->isChecked());
 	}
 }

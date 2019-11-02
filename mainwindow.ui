@@ -577,12 +577,22 @@
              </layout>
             </item>
             <item>
-             <widget class="QCheckBox" name="engraveFromCenter">
+             <widget class="QCheckBox" name="engraveFromCurrentPosition">
               <property name="text">
-               <string>Engrave from center</string>
+               <string>Engrave from current position</string>
               </property>
               <property name="checked">
                <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="engraveObjectFromCenter">
+              <property name="text">
+               <string>Center object</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -771,16 +781,6 @@
               </property>
               <property name="text">
                <string>...</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="saveHomeAfterMove">
-              <property name="text">
-               <string>Save home position after move</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
               </property>
              </widget>
             </item>
