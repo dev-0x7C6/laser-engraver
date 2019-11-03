@@ -23,6 +23,25 @@ QCheckBox *get_checkbox(Ui::MainWindow &ui, const sheet::iso216_category_a categ
 	return ui.drawA0;
 }
 
+QLabel *get_label(Ui::MainWindow &ui, const sheet::iso216_category_a category) noexcept
+{
+	switch (category) {
+		case sheet::iso216_category_a::A0: return ui.drawA0Label;
+		case sheet::iso216_category_a::A1: return ui.drawA1Label;
+		case sheet::iso216_category_a::A2: return ui.drawA2Label;
+		case sheet::iso216_category_a::A3: return ui.drawA3Label;
+		case sheet::iso216_category_a::A4: return ui.drawA4Label;
+		case sheet::iso216_category_a::A5: return ui.drawA5Label;
+		case sheet::iso216_category_a::A6: return ui.drawA6Label;
+		case sheet::iso216_category_a::A7: return ui.drawA7Label;
+		case sheet::iso216_category_a::A8: return ui.drawA8Label;
+		case sheet::iso216_category_a::A9: return ui.drawA9Label;
+		case sheet::iso216_category_a::A10: return ui.drawA10Label;
+	}
+
+	return ui.drawA0Label;
+}
+
 GuiSettings::GuiSettings(Ui::MainWindow &ui, QSettings &settings)
 		: ui(ui)
 		, settings(settings) {
@@ -76,3 +95,4 @@ GuiSettings::~GuiSettings() {
 		settings.setValue("engrave_from_current_positon", ui.engraveFromCurrentPosition->isChecked());
 	}
 }
+

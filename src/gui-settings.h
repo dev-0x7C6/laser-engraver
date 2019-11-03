@@ -5,6 +5,7 @@
 
 class QSettings;
 class QCheckBox;
+class QLabel;
 
 namespace Ui {
 class MainWindow;
@@ -20,4 +21,5 @@ private:
 	QSettings &settings;
 };
 
-QCheckBox *get_checkbox(Ui::MainWindow &ui, const sheet::iso216_category_a category) noexcept;
+QCheckBox *get_checkbox(Ui::MainWindow &, sheet::iso216_category_a) noexcept;
+QLabel *get_label(Ui::MainWindow &, sheet::iso216_category_a) noexcept;

@@ -222,6 +222,11 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_ui->applyMovementSettings, &QToolButton::clicked, this, &MainWindow::applyMovementSettings);
 
 	m_ui->outgoingGCode->append(QDateTime::currentDateTime().toString() + '\n');
+
+	for (auto &&category : sheet::all_iso216_category()) {
+		const auto metric = sheet::make_metric(category);
+		get_label(*m_ui, category)->setText(QString("%1 <font color=\"gray\">(%2 mm x %3 mm)</font>").arg(name(category), QString::number(metric.w), QString::number(metric.h)));
+	}
 }
 
 MainWindow::~MainWindow() {
