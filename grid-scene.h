@@ -2,6 +2,7 @@
 
 #include <QGraphicsScene>
 
+#include <src/dialogs/add-font-dialog.h>
 #include <src/sheets.hpp>
 
 class GridScene : public QGraphicsScene {
@@ -13,6 +14,9 @@ public:
 
 	void drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers);
 	void updateDpi(double dpi);
+
+	bool insertPixmapObject(const QString &) noexcept;
+	void insertTextObject(const TextWithFont &) noexcept;
 
 protected:
 	void drawBackground(QPainter *painter, const QRectF &rect) final;

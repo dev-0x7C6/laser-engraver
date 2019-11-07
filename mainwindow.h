@@ -37,7 +37,8 @@ public:
 	QImage prepareImage();
 
 private:
-	void open();
+	void insertPixmapObject();
+	void insertTextObject();
 	void print();
 	void preview();
 	void connectEngraver();

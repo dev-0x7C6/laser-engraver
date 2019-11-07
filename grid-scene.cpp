@@ -1,6 +1,10 @@
 #include "grid-scene.h"
 
+#include <QFile>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsTextItem>
 #include <QPainter>
+
 #include <externals/common/qt/raii/raii-painter.hpp>
 
 namespace {
@@ -28,6 +32,33 @@ void GridScene::drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers) {
 void GridScene::updateDpi(double dpi) {
 	m_dpi = dpi;
 	update();
+}
+
+bool GridScene::insertPixmapObject(const QString &path) noexcept {
+	if (!QFile::exists(path))
+		return false;
+
+	auto item = addPixmap({path});
+	item->setTransformationMode(Qt::SmoothTransformation);
+	item->setFlag(QGraphicsItem::ItemIsMovable);
+	item->setFlag(QGraphicsItem::ItemIsSelectable);
+	item->setTransformOriginPoint(item->boundingRect().width() / 2, item->boundingRect().height() / 2);
+	item->setX(item->boundingRect().width() / -2);
+	item->setY(item->boundingRect().height() / -2);
+	item->setZValue(item->topLevelItem()->zValue() + 1.0);
+
+	return true;
+}
+
+void GridScene::insertTextObject(const TextWithFont &property) noexcept {
+	auto item = addText(property.text, property.font);
+	item->setDefaultTextColor(Qt::black);
+	item->setFlag(QGraphicsItem::ItemIsMovable);
+	item->setFlag(QGraphicsItem::ItemIsSelectable);
+	item->setTransformOriginPoint(item->boundingRect().width() / 2, item->boundingRect().height() / 2);
+	item->setX(item->boundingRect().width() / -2);
+	item->setY(item->boundingRect().height() / -2);
+	item->setZValue(item->topLevelItem()->zValue() + 1.0);
 }
 
 void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {

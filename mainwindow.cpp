@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_actionDisconnectEngraver->setIcon(QIcon::fromTheme("network-offline"));
 	auto print = file->addAction("&Print", this, &MainWindow::print);
 	auto preview = file->addAction("Preview", this, &MainWindow::preview);
-	auto open = file->addAction("&Open", this, &MainWindow::open);
+	auto open = file->addAction("&Open", this, &MainWindow::insertPixmapObject);
 	file->addSeparator();
 	auto exit = file->addAction("&Close", this, &MainWindow::close);
 
@@ -72,6 +72,9 @@ MainWindow::MainWindow(QWidget *parent)
 	preview->setIcon(QIcon::fromTheme("document-print-preview"));
 	exit->setShortcuts(QKeySequence::Quit);
 	exit->setIcon(QIcon::fromTheme("application-exit"));
+
+	auto workspace = menu->addMenu("&Workspace");
+	workspace->addAction("Insert font", this, &MainWindow::insertTextObject);
 
 	auto object = menu->addMenu("&Object");
 
@@ -98,7 +101,7 @@ MainWindow::MainWindow(QWidget *parent)
 	remove->setShortcuts(QKeySequence::Delete);
 	remove->setIcon(QIcon::fromTheme("edit-delete"));
 
-	for (auto &&action : {move_up, remove, object_zoom_in_half, object_zoom_out_half})
+	for (auto &&action : {move_up, remove, object_zoom_in_half, object_zoom_out_half, center_object})
 		m_enableIfObjectIsSelected.addAction(action);
 
 	m_enableIfObjectIsSelected.setEnabled(false);
@@ -227,6 +230,8 @@ MainWindow::MainWindow(QWidget *parent)
 		const auto metric = sheet::make_metric(category);
 		get_label(*m_ui, category)->setText(QString("%1 <font color=\"gray\">(%2 mm x %3 mm)</font>").arg(name(category), QString::number(metric.w), QString::number(metric.h)));
 	}
+
+	resize(1600, 800);
 }
 
 MainWindow::~MainWindow() {
@@ -234,20 +239,18 @@ MainWindow::~MainWindow() {
 		disconnectEngraver();
 }
 
-void MainWindow::open() {
-	auto path = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp *.svg)"));
+#include <src/dialogs/add-font-dialog.h>
 
-	if (path.isEmpty())
-		return;
+void MainWindow::insertPixmapObject() {
+	m_grid->insertPixmapObject(QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp *.svg)")));
+}
 
-	auto item = m_grid->addPixmap({path});
-	item->setTransformationMode(Qt::SmoothTransformation);
-	item->setFlag(QGraphicsItem::ItemIsMovable);
-	item->setFlag(QGraphicsItem::ItemIsSelectable);
-	item->setTransformOriginPoint(item->boundingRect().width() / 2, item->boundingRect().height() / 2);
-	item->setX(item->boundingRect().width() / -2);
-	item->setY(item->boundingRect().height() / -2);
-	item->setZValue(item->topLevelItem()->zValue() + 1.0);
+void MainWindow::insertTextObject() {
+	AddFontDialog dialog;
+	dialog.exec();
+
+	if (const auto ret = dialog.result(); ret)
+		m_grid->insertTextObject(ret.value());
 }
 
 void qt_generate_progress_dialog(QString &&title, progress_t &progress) {
