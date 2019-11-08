@@ -13,7 +13,7 @@
 #include <src/spindle-position.hpp>
 #include <src/gui-settings.h>
 
-class GridScene;
+class Workspace;
 class QGraphicsItem;
 class QCheckBox;
 
@@ -37,7 +37,7 @@ public:
 	QImage prepareImage();
 
 private:
-	void insertPixmapObject();
+	void insertImageObject();
 	void insertTextObject();
 	void print();
 	void preview();
@@ -87,5 +87,5 @@ private:
 
 	EngraverManager m_engraverManager;
 	QGraphicsItem *m_selectedItem{nullptr};
-	GridScene *m_grid{nullptr};
+	Workspace *m_grid{nullptr};
 };

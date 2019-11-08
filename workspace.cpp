@@ -1,4 +1,4 @@
-#include "grid-scene.h"
+#include "src/workspace.h"
 
 #include <QFile>
 #include <QGraphicsPixmapItem>
@@ -11,57 +11,47 @@ namespace {
 constexpr auto inch = 25.4;
 }
 
-GridScene::GridScene(qreal x, qreal y, qreal w, qreal h)
+Workspace::Workspace(qreal x, qreal y, qreal w, qreal h)
 		: QGraphicsScene(x, y, w, h) {
 }
 
-void GridScene::setDisableBackground(bool value) noexcept {
+void Workspace::setDisableBackground(bool value) noexcept {
 	m_disableBackground = value;
 }
 
-void GridScene::setGridSize(double size) noexcept {
+void Workspace::setGridSize(double size) noexcept {
 	m_gridSize = size;
 	update();
 }
 
-void GridScene::drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers) {
+void Workspace::drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers) {
 	m_papers = std::move(papers);
 	update();
 }
 
-void GridScene::updateDpi(double dpi) {
+void Workspace::updateDpi(double dpi) {
 	m_dpi = dpi;
 	update();
 }
 
-bool GridScene::insertPixmapObject(const QString &path) noexcept {
+bool Workspace::insertPixmapObject(const QString &path) noexcept {
 	if (!QFile::exists(path))
 		return false;
 
 	auto item = addPixmap({path});
 	item->setTransformationMode(Qt::SmoothTransformation);
-	item->setFlag(QGraphicsItem::ItemIsMovable);
-	item->setFlag(QGraphicsItem::ItemIsSelectable);
-	item->setTransformOriginPoint(item->boundingRect().width() / 2, item->boundingRect().height() / 2);
-	item->setX(item->boundingRect().width() / -2);
-	item->setY(item->boundingRect().height() / -2);
-	item->setZValue(item->topLevelItem()->zValue() + 1.0);
+	setCommonObjectParameters(item);
 
 	return true;
 }
 
-void GridScene::insertTextObject(const TextWithFont &property) noexcept {
+void Workspace::insertTextObject(const TextWithFont &property) noexcept {
 	auto item = addText(property.text, property.font);
 	item->setDefaultTextColor(Qt::black);
-	item->setFlag(QGraphicsItem::ItemIsMovable);
-	item->setFlag(QGraphicsItem::ItemIsSelectable);
-	item->setTransformOriginPoint(item->boundingRect().width() / 2, item->boundingRect().height() / 2);
-	item->setX(item->boundingRect().width() / -2);
-	item->setY(item->boundingRect().height() / -2);
-	item->setZValue(item->topLevelItem()->zValue() + 1.0);
+	setCommonObjectParameters(item);
 }
 
-void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {
+void Workspace::drawBackground(QPainter *painter, const QRectF &rect) {
 	raii_painter _(painter);
 	painter->setRenderHint(QPainter::Antialiasing);
 	painter->setRenderHint(QPainter::TextAntialiasing);
@@ -84,7 +74,7 @@ void GridScene::drawBackground(QPainter *painter, const QRectF &rect) {
 		drawSheet(painter, paper);
 }
 
-void GridScene::drawSheet(QPainter *painter, const inverter<sheet::metrics> &sheet) noexcept {
+void Workspace::drawSheet(QPainter *painter, const inverter<sheet::metrics> &sheet) noexcept {
 	raii_painter _(painter);
 	const auto iw = sheet.inverted ? sheet.value.h : sheet.value.w;
 	const auto ih = sheet.inverted ? sheet.value.w : sheet.value.h;
@@ -99,7 +89,16 @@ void GridScene::drawSheet(QPainter *painter, const inverter<sheet::metrics> &she
 	painter->drawText(-w / 2, h / 2 + painter->fontMetrics().ascent(), QString("%1: %2mm x %3mm (%4px x %5px)").arg(QString::fromStdString(sheet.value.name), QString::number(iw), QString::number(ih), QString::number(w), QString::number(h)));
 }
 
-void GridScene::drawGrid(QPainter *painter, const QRectF &rect) noexcept {
+void Workspace::setCommonObjectParameters(QGraphicsItem *item) {
+	item->setFlag(QGraphicsItem::ItemIsMovable);
+	item->setFlag(QGraphicsItem::ItemIsSelectable);
+	item->setTransformOriginPoint(item->boundingRect().width() / 2, item->boundingRect().height() / 2);
+	item->setX(item->boundingRect().width() / -2);
+	item->setY(item->boundingRect().height() / -2);
+	item->setZValue(item->topLevelItem()->zValue() + 1.0);
+}
+
+void Workspace::drawGrid(QPainter *painter, const QRectF &rect) noexcept {
 	raii_painter _(painter);
 	const auto grid = static_cast<int>((m_dpi * m_gridSize) / inch);
 
@@ -122,13 +121,13 @@ void GridScene::drawGrid(QPainter *painter, const QRectF &rect) noexcept {
 	painter->drawLines(lines.data(), lines.size());
 }
 
-void GridScene::drawXAxis(QPainter *painter, QRect &&scene) noexcept {
+void Workspace::drawXAxis(QPainter *painter, QRect &&scene) noexcept {
 	raii_painter _(painter);
 	painter->setPen(m_xAxisColor);
 	painter->drawLine(scene.left(), 0, scene.right(), 0);
 }
 
-void GridScene::drawYAxis(QPainter *painter, QRect &&scene) noexcept {
+void Workspace::drawYAxis(QPainter *painter, QRect &&scene) noexcept {
 	raii_painter _(painter);
 	painter->setPen(m_yAxisColor);
 	painter->drawLine(0, scene.top(), 0, scene.bottom());

@@ -29,7 +29,6 @@ QMAKE_CXXFLAGS += -std=c++17
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    grid-scene.cpp \
     src/add-engraver-dialog.cpp \
     src/dialogs/add-font-dialog.cpp \
     src/engraver-connection.cpp \
@@ -39,11 +38,11 @@ SOURCES += \
     src/semi-gcode.cpp \
     src/gcode-generator.cpp \
     src/widgets/engraver-movement-settings-widget.cpp \
-    src/widgets/graphics-view.cpp
+    src/widgets/graphics-view.cpp \
+    workspace.cpp
 
 HEADERS += \
         mainwindow.h \
-    grid-scene.h \
     src/add-engraver-dialog.h \
     src/dialogs/add-font-dialog.h \
     src/engraver-connection.h \
@@ -57,7 +56,8 @@ HEADERS += \
     src/sheets.hpp \
     src/spindle-position.hpp \
     src/widgets/engraver-movement-settings-widget.h \
-    src/widgets/graphics-view.h
+    src/widgets/graphics-view.h \
+    src/workspace.h
 
 FORMS += \
         mainwindow.ui \

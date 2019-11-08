@@ -5,9 +5,9 @@
 #include <src/dialogs/add-font-dialog.h>
 #include <src/sheets.hpp>
 
-class GridScene : public QGraphicsScene {
+class Workspace : public QGraphicsScene {
 public:
-	GridScene(qreal x, qreal y, qreal w, qreal h);
+	Workspace(qreal x, qreal y, qreal w, qreal h);
 
 	void setDisableBackground(bool value) noexcept;
 	void setGridSize(double size) noexcept;
@@ -26,6 +26,7 @@ private:
 	void drawXAxis(QPainter *painter, QRect &&scene) noexcept;
 	void drawYAxis(QPainter *painter, QRect &&scene) noexcept;
 	void drawSheet(QPainter *painter, const inverter<sheet::metrics> &) noexcept;
+	void setCommonObjectParameters(QGraphicsItem *);
 
 private:
 	std::vector<inverter<sheet::metrics>> m_papers;

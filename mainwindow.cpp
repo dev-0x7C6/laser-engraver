@@ -14,9 +14,10 @@
 #include <future>
 #include <thread>
 
-#include <grid-scene.h>
-#include <src/engraver-connection.h>
 #include <externals/common/qt/raii/raii-settings-group.hpp>
+#include <src/dialogs/add-font-dialog.h>
+#include <src/engraver-connection.h>
+#include <src/workspace.h>
 
 using namespace std::chrono_literals;
 
@@ -32,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
 		, m_ui(std::make_unique<Ui::MainWindow>())
 		, m_settings("Laser", "Engraver")
 		, m_engraverManager(m_settings, this)
-		, m_grid(new GridScene(-grid_size, -grid_size, grid_size * 2, grid_size * 2)) {
+		, m_grid(new Workspace(-grid_size, -grid_size, grid_size * 2, grid_size * 2)) {
 	m_ui->setupUi(this);
 	m_ui->view->setScene(m_grid);
 
@@ -49,11 +50,11 @@ MainWindow::MainWindow(QWidget *parent)
 	m_actionDisconnectEngraver->setIcon(QIcon::fromTheme("network-offline"));
 	auto print = file->addAction("&Print", this, &MainWindow::print);
 	auto preview = file->addAction("Preview", this, &MainWindow::preview);
-	auto open = file->addAction("&Open", this, &MainWindow::insertPixmapObject);
+	auto open = file->addAction("&Open", this, &MainWindow::insertImageObject);
 	file->addSeparator();
 	auto exit = file->addAction("&Close", this, &MainWindow::close);
 
-	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), m_grid, &GridScene::updateDpi);
+	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), m_grid, &Workspace::updateDpi);
 
 	for (auto &&category : sheet::all_iso216_category())
 		connect(get_checkbox(*m_ui, category), &QCheckBox::clicked, this, &MainWindow::updateSheetReferences);
@@ -74,7 +75,10 @@ MainWindow::MainWindow(QWidget *parent)
 	exit->setIcon(QIcon::fromTheme("application-exit"));
 
 	auto workspace = menu->addMenu("&Workspace");
-	workspace->addAction("Insert font", this, &MainWindow::insertTextObject);
+	auto insert_font = workspace->addAction("Insert font", this, &MainWindow::insertTextObject);
+	auto insert_image = workspace->addAction("Insert image", this, &MainWindow::insertImageObject);
+	insert_font->setIcon(QIcon::fromTheme("font-x-generic"));
+	insert_image->setIcon(QIcon::fromTheme("image-x-generic"));
 
 	auto object = menu->addMenu("&Object");
 
@@ -239,9 +243,7 @@ MainWindow::~MainWindow() {
 		disconnectEngraver();
 }
 
-#include <src/dialogs/add-font-dialog.h>
-
-void MainWindow::insertPixmapObject() {
+void MainWindow::insertImageObject() {
 	m_grid->insertPixmapObject(QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp *.svg)")));
 }
 
