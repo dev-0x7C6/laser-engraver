@@ -15,7 +15,7 @@
 #include <thread>
 
 #include <externals/common/qt/raii/raii-settings-group.hpp>
-#include <src/dialogs/add-font-dialog.h>
+#include <src/dialogs/font-dialog.h>
 #include <src/engraver-connection.h>
 #include <src/workspace.h>
 
@@ -248,7 +248,7 @@ void MainWindow::insertImageObject() {
 }
 
 void MainWindow::insertTextObject() {
-	AddFontDialog dialog;
+	FontDialog dialog;
 	dialog.exec();
 
 	if (const auto ret = dialog.result(); ret)

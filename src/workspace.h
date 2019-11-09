@@ -2,7 +2,7 @@
 
 #include <QGraphicsScene>
 
-#include <src/dialogs/add-font-dialog.h>
+#include <src/dialogs/font-dialog.h>
 #include <src/sheets.hpp>
 
 class Workspace : public QGraphicsScene {

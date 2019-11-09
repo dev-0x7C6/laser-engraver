@@ -30,7 +30,7 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     src/add-engraver-dialog.cpp \
-    src/dialogs/add-font-dialog.cpp \
+    src/dialogs/font-dialog.cpp \
     src/engraver-connection.cpp \
     src/engraver-manager.cpp \
     src/gui-settings.cpp \
@@ -44,7 +44,7 @@ SOURCES += \
 HEADERS += \
         mainwindow.h \
     src/add-engraver-dialog.h \
-    src/dialogs/add-font-dialog.h \
+    src/dialogs/font-dialog.h \
     src/engraver-connection.h \
     src/engraver-manager.h \
     src/engraver-settings.h \
@@ -62,7 +62,7 @@ HEADERS += \
 FORMS += \
         mainwindow.ui \
         src/add-engraver-dialog.ui \
-        src/dialogs/add-font-dialog.ui \
+        src/dialogs/font-dialog.ui \
         src/select-engraver-dialog.ui \
         src/widgets/engraver-movement-settings-widget.ui
 

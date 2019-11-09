@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace Ui {
-class AddFontDialog;
+class FontDialog;
 }
 
 struct TextWithFont {
@@ -13,11 +13,11 @@ struct TextWithFont {
 	QFont font;
 };
 
-class AddFontDialog : public QDialog {
+class FontDialog : public QDialog {
 	Q_OBJECT
 public:
-	explicit AddFontDialog(QWidget *parent = nullptr);
-	~AddFontDialog();
+	explicit FontDialog(QWidget *parent = nullptr);
+	~FontDialog();
 
 	auto result() const noexcept { return m_result; }
 
@@ -25,6 +25,6 @@ private:
 	void updateFont(QFont font);
 
 private:
-	std::unique_ptr<Ui::AddFontDialog> m_ui;
+	std::unique_ptr<Ui::FontDialog> m_ui;
 	std::optional<TextWithFont> m_result;
 };
