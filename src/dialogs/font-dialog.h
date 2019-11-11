@@ -22,7 +22,7 @@ public:
 	auto result() const noexcept { return m_result; }
 
 private:
-	void updateFont(QFont font);
+	void updateFont();
 
 private:
 	std::unique_ptr<Ui::FontDialog> m_ui;
