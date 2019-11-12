@@ -8,6 +8,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 7)
+set(VERSION_PATCH 0)
+
 find_package(Qt5 COMPONENTS Core Gui Widgets SerialPort REQUIRED)
 find_package(Threads)
 
