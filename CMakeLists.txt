@@ -10,7 +10,7 @@ set(CMAKE_AUTORCC ON)
 
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 7)
-set(VERSION_PATCH 0)
+set(VERSION_PATCH 1)
 
 find_package(Qt5 COMPONENTS Core Gui Widgets SerialPort REQUIRED)
 find_package(Threads)
