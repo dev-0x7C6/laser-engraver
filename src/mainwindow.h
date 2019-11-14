@@ -46,6 +46,7 @@ private:
 	void turnLaser(bool on);
 	void applyMovementSettings();
 	void updateSheetReferences();
+	void editLabelObject();
 
 private:
 	void zoomInObject();

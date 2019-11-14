@@ -20,6 +20,13 @@ FontDialog::FontDialog(QWidget *parent)
 	connect(m_ui->italic, &QToolButton::toggled, [this](auto &&) { updateFont(); });
 }
 
+FontDialog::FontDialog(const QFont &font, const QString &text, QWidget *parent)
+		: FontDialog(parent) {
+	m_ui->textEdit->setFont(font);
+	m_ui->textEdit->setPlainText(text);
+	updateFont();
+}
+
 void FontDialog::updateFont() {
 	auto font = m_ui->textEdit->font();
 	font.setPixelSize(m_ui->size->value());

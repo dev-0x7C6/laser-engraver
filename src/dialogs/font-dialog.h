@@ -17,6 +17,8 @@ class FontDialog : public QDialog {
 	Q_OBJECT
 public:
 	explicit FontDialog(QWidget *parent = nullptr);
+	explicit FontDialog(const QFont &font, const QString &text, QWidget *parent = nullptr);
+
 	~FontDialog();
 
 	auto result() const noexcept { return m_result; }

@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
+#include <QGraphicsTextItem>
 #include <QGraphicsScene>
 #include <QMessageBox>
 #include <QProgressDialog>
@@ -95,6 +96,7 @@ MainWindow::MainWindow(QWidget *parent)
 	center_object->setShortcut(QKeySequence(Qt::Key::Key_C));
 	object->addSeparator();
 	auto remove = object->addAction("Delete", this, &MainWindow::removeItem);
+	auto edit_label = object->addAction("Edit label", this, &MainWindow::editLabelObject);
 
 	object_zoom_in_half->setShortcut(QKeySequence(Qt::Key::Key_Plus));
 	object_zoom_out_half->setShortcut(QKeySequence(Qt::Key::Key_Minus));
@@ -105,7 +107,7 @@ MainWindow::MainWindow(QWidget *parent)
 	remove->setShortcuts(QKeySequence::Delete);
 	remove->setIcon(QIcon::fromTheme("edit-delete"));
 
-	for (auto &&action : {move_up, remove, object_zoom_in_half, object_zoom_out_half, center_object})
+	for (auto &&action : {move_up, remove, object_zoom_in_half, object_zoom_out_half, center_object, edit_label})
 		m_enableIfObjectIsSelected.addAction(action);
 
 	m_enableIfObjectIsSelected.setEnabled(false);
@@ -253,6 +255,24 @@ void MainWindow::insertTextObject() {
 
 	if (const auto ret = dialog.result(); ret)
 		m_grid->insertTextObject(ret.value());
+}
+
+void MainWindow::editLabelObject() {
+	if (!m_selectedItem)
+		return;
+
+	auto text = dynamic_cast<QGraphicsTextItem *>(m_selectedItem);
+
+	if (!text)
+		return;
+
+	FontDialog dialog(text->font(), text->toPlainText());
+	dialog.exec();
+
+	if (const auto ret = dialog.result(); ret) {
+		text->setFont(ret->font);
+		text->setPlainText(ret->text);
+	}
 }
 
 void qt_generate_progress_dialog(QString &&title, progress_t &progress) {
