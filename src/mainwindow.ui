@@ -45,8 +45,11 @@
          <height>0</height>
         </size>
        </property>
+       <property name="tabPosition">
+        <enum>QTabWidget::West</enum>
+       </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -291,8 +294,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>606</width>
-                 <height>287</height>
+                 <width>604</width>
+                 <height>298</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -568,6 +571,26 @@
           </widget>
          </item>
          <item>
+          <spacer name="verticalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_4">
+        <attribute name="title">
+         <string>Object</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_12">
+         <item>
           <widget class="QGroupBox" name="itemGroup">
            <property name="title">
             <string>Selected object</string>
@@ -735,7 +758,7 @@
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_4">
+          <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -1140,7 +1163,7 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
