@@ -38,6 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->setupUi(this);
 	m_ui->view->setScene(m_grid);
 
+	m_ui->objectList->setModel(m_grid->model());
+
 	m_guiSettings = std::make_unique<GuiSettings>(*m_ui, m_settings);
 
 	setWindowTitle("Laser engraver");

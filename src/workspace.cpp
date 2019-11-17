@@ -12,7 +12,8 @@ constexpr auto inch = 25.4;
 }
 
 Workspace::Workspace(qreal x, qreal y, qreal w, qreal h)
-		: QGraphicsScene(x, y, w, h) {
+		: QGraphicsScene(x, y, w, h)
+		, m_model(std::make_unique<graphical::model>()) {
 }
 
 void Workspace::setDisableBackground(bool value) noexcept {
@@ -42,6 +43,14 @@ bool Workspace::insertPixmapObject(const QString &path) noexcept {
 	item->setTransformationMode(Qt::SmoothTransformation);
 	setCommonObjectParameters(item);
 
+	graphical::object::properties properties;
+	properties.item = item;
+	properties.name = path;
+	properties.order = item->zValue();
+	properties.flavor = graphical::object::type::image;
+
+	m_model->insertObject(std::move(properties));
+
 	return true;
 }
 
@@ -49,6 +58,18 @@ void Workspace::insertTextObject(const TextWithFont &property) noexcept {
 	auto item = addText(property.text, property.font);
 	item->setDefaultTextColor(Qt::black);
 	setCommonObjectParameters(item);
+
+	graphical::object::properties properties;
+	properties.item = item;
+	properties.name = property.text;
+	properties.order = item->zValue();
+	properties.flavor = graphical::object::type::font;
+
+	m_model->insertObject(std::move(properties));
+}
+
+graphical::model *Workspace::model() {
+	return m_model.get();
 }
 
 void Workspace::drawBackground(QPainter *painter, const QRectF &rect) {

@@ -3,6 +3,7 @@
 #include <QGraphicsScene>
 
 #include <src/dialogs/font-dialog.h>
+#include <src/models/graphical-object-model.h>
 #include <src/sheets.hpp>
 
 class Workspace : public QGraphicsScene {
@@ -18,6 +19,8 @@ public:
 	bool insertPixmapObject(const QString &) noexcept;
 	void insertTextObject(const TextWithFont &) noexcept;
 
+	graphical::model *model();
+
 protected:
 	void drawBackground(QPainter *painter, const QRectF &rect) final;
 
@@ -29,6 +32,7 @@ private:
 	void setCommonObjectParameters(QGraphicsItem *);
 
 private:
+	std::unique_ptr<graphical::model> m_model;
 	std::vector<inverter<sheet::metrics>> m_papers;
 	double m_dpi{300.0};
 

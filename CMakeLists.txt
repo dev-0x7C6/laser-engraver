@@ -38,6 +38,8 @@ set(sources
         src/mainwindow.cpp
         src/mainwindow.h
         src/mainwindow.ui
+        src/models/graphical-object-model.cpp
+        src/models/graphical-object-model.h
         src/select-engraver-dialog.cpp
         src/select-engraver-dialog.h
         src/select-engraver-dialog.ui
