@@ -18,6 +18,7 @@ public:
 
 	bool insertPixmapObject(const QString &) noexcept;
 	void insertTextObject(const TextWithFont &) noexcept;
+	void remove(QGraphicsItem *item) noexcept;
 
 	graphical::model *model();
 

@@ -40,6 +40,12 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_ui->objectList->setModel(m_grid->model());
 
+	connect(m_ui->objectList, &QListView::clicked, [this, model{m_grid->model()}](const QModelIndex &index) {
+		m_grid->clearSelection();
+		auto &&properties = model->value(index);
+		properties.item->setSelected(true);
+	});
+
 	m_guiSettings = std::make_unique<GuiSettings>(*m_ui, m_settings);
 
 	setWindowTitle("Laser engraver");
@@ -541,7 +547,7 @@ void MainWindow::itemMoveTop() {
 }
 
 void MainWindow::removeItem() {
-	delete m_selectedItem;
+	m_grid->remove(m_selectedItem);
 }
 
 void MainWindow::updateItemAngle(const int value) {

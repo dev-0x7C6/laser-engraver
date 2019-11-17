@@ -3,6 +3,8 @@
 #include <QGraphicsItem>
 #include <QIcon>
 
+#include <algorithm>
+
 void graphical::model::insertObject(graphical::object::properties &&properties) {
 	beginInsertRows({}, m_list.size(), m_list.size() + 1);
 	m_list.emplace_back(std::move(properties));
@@ -10,10 +12,13 @@ void graphical::model::insertObject(graphical::object::properties &&properties) 
 }
 
 void graphical::model::removeObject(QGraphicsItem *id) {
-	m_list.erase(std::remove_if(m_list.begin(),
-					 m_list.end(),
-					 [id](auto &&value) -> bool { return value.item == id; }),
-		m_list.end());
+	if (auto it = std::find_if(m_list.cbegin(), m_list.cend(), [id](auto &&value) -> bool { return value.item == id; }); it != m_list.end()) {
+		removeRows(std::distance(m_list.cbegin(), it), 1, {});
+	}
+}
+
+graphical::object::properties graphical::model::value(const QModelIndex &index) const noexcept {
+	return m_list[index.row()];
 }
 
 int graphical::model::rowCount(const QModelIndex &) const {
@@ -39,4 +44,11 @@ QVariant graphical::model::data(const QModelIndex &index, int role) const {
 	}
 
 	return {};
+}
+
+bool graphical::model::removeRows(int row, int count, const QModelIndex &parent) {
+	beginRemoveRows({}, row, row + count - 1);
+	m_list.erase(m_list.begin() + row);
+	endRemoveRows();
+	return true;
 }

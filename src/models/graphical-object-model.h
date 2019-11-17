@@ -28,9 +28,12 @@ public:
 	void insertObject(graphical::object::properties &&properties);
 	void removeObject(QGraphicsItem *id);
 
+	graphical::object::properties value(const QModelIndex &index) const noexcept;
+
 private:
 	int rowCount(const QModelIndex &parent) const final;
 	QVariant data(const QModelIndex &index, int role) const final;
+	bool removeRows(int row, int count, const QModelIndex &parent) final;
 
 	std::vector<graphical::object::properties> m_list;
 };

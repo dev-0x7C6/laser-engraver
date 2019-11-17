@@ -68,6 +68,11 @@ void Workspace::insertTextObject(const TextWithFont &property) noexcept {
 	m_model->insertObject(std::move(properties));
 }
 
+void Workspace::remove(QGraphicsItem *item) noexcept {
+	m_model->removeObject(item);
+	delete item;
+}
+
 graphical::model *Workspace::model() {
 	return m_model.get();
 }
