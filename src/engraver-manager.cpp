@@ -1,7 +1,7 @@
 #include "engraver-manager.h"
 
 #include <src/select-engraver-dialog.h>
-#include <src/add-engraver-dialog.h>
+#include <src/dialogs/add-engraver-dialog.h>
 #include <externals/common/qt/raii/raii-settings-group.hpp>
 
 EngraverManager::EngraverManager(QSettings &settings, QWidget *parent)
