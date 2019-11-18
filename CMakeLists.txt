@@ -16,9 +16,9 @@ find_package(Qt5 COMPONENTS Core Gui Widgets SerialPort REQUIRED)
 find_package(Threads)
 
 set(sources
-        src/add-engraver-dialog.cpp
-        src/add-engraver-dialog.h
-        src/add-engraver-dialog.ui
+        src/dialogs/add-engraver-dialog.cpp
+        src/dialogs/add-engraver-dialog.h
+        src/dialogs/add-engraver-dialog.ui
         src/dialogs/font-dialog.cpp
         src/dialogs/font-dialog.h
         src/dialogs/font-dialog.ui
