@@ -12,7 +12,7 @@ jobs:
       with:
         submodules: recursive
     - name: install qt
-      uses: jurplel/install-qt-action@v1
+      uses: jurplel/install-qt-action@v2
     - name: install opengl
       run: sudo apt-get install mesa-common-dev libglu1-mesa-dev ninja-build -y
     - name: cmake
