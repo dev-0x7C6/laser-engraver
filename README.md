@@ -8,7 +8,7 @@ Works fine on Linux, but isn't feature complete.
 
 ### Compilation and installation
 ```console
-user@workspace # git clone https://github.com/dev-0x7C6/laser-engraver.git
+user@workspace # git clone --recurse-submodules https://github.com/dev-0x7C6/laser-engraver.git
 user@workspace # cd laser-engraver
 user@workspace # cmake . -DCMAKE_INSTALL_PREFIX=/usr
 user@workspace # make -j8
