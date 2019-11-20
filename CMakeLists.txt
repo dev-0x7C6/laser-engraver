@@ -40,6 +40,8 @@ set(sources
         src/mainwindow.ui
         src/models/graphical-object-model.cpp
         src/models/graphical-object-model.h
+        src/qt-wrappers.cpp
+        src/qt-wrappers.h
         src/select-engraver-dialog.cpp
         src/select-engraver-dialog.h
         src/select-engraver-dialog.ui

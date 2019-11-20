@@ -4,20 +4,17 @@
 #include <QDateTime>
 #include <QFileDialog>
 #include <QGraphicsPixmapItem>
-#include <QGraphicsTextItem>
 #include <QGraphicsScene>
+#include <QGraphicsTextItem>
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QScrollBar>
 #include <QTimer>
 
-#include <chrono>
-#include <future>
-#include <thread>
-
 #include <externals/common/qt/raii/raii-settings-group.hpp>
 #include <src/dialogs/font-dialog.h>
 #include <src/engraver-connection.h>
+#include <src/qt-wrappers.h>
 #include <src/workspace.h>
 
 using namespace std::chrono_literals;
@@ -281,39 +278,6 @@ void MainWindow::editLabelObject() {
 		text->setFont(ret->font);
 		text->setPlainText(ret->text);
 	}
-}
-
-void qt_generate_progress_dialog(QString &&title, progress_t &progress) {
-	QProgressDialog dialog;
-	QTimer timer;
-	QObject::connect(&timer, &QTimer::timeout, &dialog, [&dialog, &progress]() {
-		dialog.setValue(static_cast<int>(progress * 1000.0));
-	});
-
-	dialog.setLabelText(title);
-	dialog.setMinimum(0);
-	dialog.setMaximum(1000);
-	dialog.setCancelButton(nullptr);
-	timer.start(5ms);
-	dialog.exec();
-}
-
-template <typename return_type>
-return_type qt_progress_task(QString &&title, std::function<return_type(progress_t &)> &&callable) {
-	progress_t progress{};
-	auto task = std::packaged_task<return_type()>([callable{std::move(callable)}, &progress]() {
-		return callable(progress);
-	});
-
-	auto result = task.get_future();
-
-	std::thread thread(std::move(task));
-
-	qt_generate_progress_dialog(std::move(title), progress);
-	result.wait();
-	thread.join();
-
-	return result.get();
 }
 
 upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
