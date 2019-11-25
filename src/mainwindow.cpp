@@ -88,14 +88,20 @@ MainWindow::MainWindow(QWidget *parent)
 
 	auto object = menu->addMenu("&Object");
 
-	auto move_up = object->addAction("Move Up", this, &MainWindow::itemMoveTop);
+	auto move_up = object->addAction("Move Up", this, [this]() {
+		m_selectedItem->setZValue(m_selectedItem->topLevelItem()->zValue() + 1.0);
+	});
+
+	auto move_down = object->addAction("Move Down", this, [this]() {
+		m_selectedItem->setZValue(m_selectedItem->topLevelItem()->zValue() - 1.0);
+	});
+
 	object->addSeparator();
 	auto object_zoom_in_half = object->addAction("Zoom in", this, &MainWindow::zoomInObject);
 	auto object_zoom_out_half = object->addAction("Zoom out", this, &MainWindow::zoomOutObject);
 	object->addSeparator();
 	auto center_object = object->addAction("Center", [this]() {
-		if (m_selectedItem)
-			m_selectedItem->setPos(-m_selectedItem->boundingRect().width() / 2.0, -m_selectedItem->boundingRect().height() / 2.0);
+		m_selectedItem->setPos(-m_selectedItem->boundingRect().width() / 2.0, -m_selectedItem->boundingRect().height() / 2.0);
 	});
 	center_object->setIcon(QIcon::fromTheme("format-justify-center"));
 	center_object->setShortcut(QKeySequence(Qt::Key::Key_C));
@@ -108,11 +114,13 @@ MainWindow::MainWindow(QWidget *parent)
 	object_zoom_in_half->setIcon(QIcon::fromTheme("zoom-in"));
 	object_zoom_out_half->setIcon(QIcon::fromTheme("zoom-out"));
 	move_up->setShortcut(QKeySequence::Forward);
-	move_up->setIcon(QIcon::fromTheme("go-top"));
+	move_up->setIcon(QIcon::fromTheme("go-up"));
+	move_down->setShortcut(QKeySequence::Back);
+	move_down->setIcon(QIcon::fromTheme("go-down"));
 	remove->setShortcuts(QKeySequence::Delete);
 	remove->setIcon(QIcon::fromTheme("edit-delete"));
 
-	for (auto &&action : {move_up, remove, object_zoom_in_half, object_zoom_out_half, center_object, edit_label})
+	for (auto &&action : {move_up, move_down, remove, object_zoom_in_half, object_zoom_out_half, center_object, edit_label})
 		m_enableIfObjectIsSelected.addAction(action);
 
 	m_enableIfObjectIsSelected.setEnabled(false);
@@ -503,11 +511,6 @@ void MainWindow::zoomOutObject() {
 
 bool MainWindow::isItemSelected() const noexcept {
 	return m_selectedItem != nullptr;
-}
-
-void MainWindow::itemMoveTop() {
-	if (m_selectedItem)
-		m_selectedItem->setZValue(m_selectedItem->topLevelItem()->zValue() + 1.0);
 }
 
 void MainWindow::removeItem() {

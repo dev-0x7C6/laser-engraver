@@ -59,8 +59,6 @@ private:
 	semi::options make_semi_options_from_ui() const noexcept;
 
 	bool isItemSelected() const noexcept;
-
-	void itemMoveTop();
 	void removeItem();
 
 	void updateItemAngle(int value);
