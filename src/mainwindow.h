@@ -60,6 +60,7 @@ private:
 
 	bool isItemSelected() const noexcept;
 	void removeItem();
+	void append_log(const QString &log);
 
 	void updateItemAngle(int value);
 	void updateItemOpacity(int value);
@@ -83,6 +84,7 @@ private:
 	QAction *m_actionDisconnectEngraver{nullptr};
 	QAction *m_actionLaserOn{nullptr};
 	QAction *m_actionLaserOff{nullptr};
+	int m_append_log_count{0};
 
 	EngraverManager m_engraverManager;
 	QGraphicsItem *m_selectedItem{nullptr};

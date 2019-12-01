@@ -420,17 +420,8 @@ void MainWindow::connectEngraver() {
 	progress.show();
 
 	auto connection = std::make_unique<EngraverConnection>(engraver.value());
-	connect(connection.get(), &EngraverConnection::gcodeSended, this, [this](auto &&line) {
-		m_ui->outgoingGCode->append(line);
-		auto scroll = m_ui->outgoingGCode->verticalScrollBar();
-		scroll->setValue(scroll->maximum());
-	});
-
-	connect(connection.get(), &EngraverConnection::gcodeReceived, this, [this](auto &&line) {
-		m_ui->outgoingGCode->append(line);
-		auto scroll = m_ui->outgoingGCode->verticalScrollBar();
-		scroll->setValue(scroll->maximum());
-	});
+	connect(connection.get(), &EngraverConnection::gcodeSended, this, &MainWindow::append_log);
+	connect(connection.get(), &EngraverConnection::gcodeReceived, this, &MainWindow::append_log);
 
 	connect(m_ui->gcodeToSend, &QLineEdit::returnPressed, [this]() {
 		if (m_connection && m_connection->isOpen()) {
@@ -515,6 +506,17 @@ bool MainWindow::isItemSelected() const noexcept {
 
 void MainWindow::removeItem() {
 	m_grid->remove(m_selectedItem);
+}
+
+void MainWindow::append_log(const QString &line) {
+	if (++m_append_log_count >= 1000) {
+		m_ui->outgoingGCode->clear();
+		m_append_log_count = 0;
+	}
+
+	m_ui->outgoingGCode->append(line);
+	auto scroll = m_ui->outgoingGCode->verticalScrollBar();
+	scroll->setValue(scroll->maximum());
 }
 
 void MainWindow::updateItemAngle(const int value) {
