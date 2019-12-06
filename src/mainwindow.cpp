@@ -207,8 +207,6 @@ MainWindow::MainWindow(QWidget *parent)
 		const auto metric = sheet::make_metric(category);
 		get_label(*m_ui, category)->setText(QString("%1 <font color=\"gray\">(%2 mm x %3 mm)</font>").arg(name(category), QString::number(metric.w), QString::number(metric.h)));
 	}
-
-	resize(1600, 800);
 }
 
 MainWindow::~MainWindow() {

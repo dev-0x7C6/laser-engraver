@@ -2,13 +2,21 @@
 
 GraphicsView::GraphicsView(QWidget *parent)
 		: QGraphicsView(parent) {
-}
-
-void GraphicsView::showEvent(QShowEvent *) {
-	//setViewport(new QGLWidget(QGLFormat(QGL::SingleBuffer))); //moved to showEvent because of strange random artefacts
 	setViewportUpdateMode(QGraphicsView::ViewportUpdateMode::MinimalViewportUpdate);
-	centerOn(0.0, 0.0);
 }
 
-void GraphicsView::wheelEvent(QWheelEvent *) {
+void GraphicsView::resizeEvent(QResizeEvent *event) {
+	center();
+	QGraphicsView::resizeEvent(event);
+}
+
+void GraphicsView::showEvent(QShowEvent *event) {
+	center();
+	QGraphicsView::showEvent(event);
+}
+
+void GraphicsView::wheelEvent(QWheelEvent *) {} //eat event
+
+void GraphicsView::center() {
+	centerOn(0.0, 0.0);
 }

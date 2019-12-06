@@ -7,6 +7,10 @@ public:
 	GraphicsView(QWidget *parent = nullptr);
 
 protected:
+	void resizeEvent(QResizeEvent *) final;
 	void showEvent(QShowEvent *) final;
 	void wheelEvent(QWheelEvent *) final;
+
+private:
+	void center();
 };
