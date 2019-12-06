@@ -38,6 +38,7 @@ public:
 
 private:
 	void toggleFullscreen();
+	void toggleSpindle();
 
 	void insertImageObject();
 	void insertTextObject();
@@ -45,12 +46,15 @@ private:
 	void preview();
 	void connectEngraver();
 	void disconnectEngraver();
-	void turnLaser(bool on);
 	void applyMovementSettings();
 	void updateSheetReferences();
 	void editLabelObject();
 
 private:
+	void itemMoveUp();
+	void itemMoveDown();
+	void itemCenter();
+
 	void zoomInObject();
 	void zoomOutObject();
 
@@ -84,8 +88,7 @@ private:
 	QActionGroup m_enableIfObjectIsSelected{nullptr};
 	QAction *m_actionConnectEngraver{nullptr};
 	QAction *m_actionDisconnectEngraver{nullptr};
-	QAction *m_actionLaserOn{nullptr};
-	QAction *m_actionLaserOff{nullptr};
+	QAction *m_actionLaserState{nullptr};
 	int m_append_log_count{0};
 
 	EngraverManager m_engraverManager;
