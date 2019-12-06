@@ -50,6 +50,10 @@ upload_instruction EngraverConnection::process() {
 	};
 }
 
+void EngraverConnection::process_safe_gcode() {
+	generate_gcode(semi::generator::finalization(), {}, process());
+}
+
 void EngraverConnection::updateEngraverParameters(const engraver::settings::movement_parameters &parameters) {
 	const auto callable = process();
 	callable("$100=" + std::to_string(parameters.x_steps_per_mm), {});

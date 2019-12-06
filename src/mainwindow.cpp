@@ -312,7 +312,7 @@ bool MainWindow::is_connected() const noexcept {
 
 raii_tail_call MainWindow::safety_gcode_raii() noexcept {
 	return {[&]() {
-		command(semi::generator::finalization());
+		m_connection->process_safe_gcode();
 		toggleSpindle();
 	}};
 }
@@ -335,7 +335,7 @@ void MainWindow::print() {
 	if (!is_connected())
 		return;
 
-	const auto _ = safety_gcode_raii();
+	const auto _{safety_gcode_raii()};
 
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
@@ -502,8 +502,4 @@ void MainWindow::updateItemOpacity(const int value) {
 void MainWindow::updateItemScale(const double value) noexcept {
 	m_selectedItem->setScale(value);
 	m_ui->itemScale->setValue(value);
-}
-
-void MainWindow::command(semi::gcodes &&gcodes) {
-	generate_gcode(std::move(gcodes), {}, m_connection->process());
 }

@@ -12,6 +12,7 @@ public:
 
 	bool isOpen() const noexcept;
 	upload_instruction process();
+	void process_safe_gcode();
 
 	void updateEngraverParameters(const engraver::settings::movement_parameters &parameters);
 

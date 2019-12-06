@@ -72,8 +72,6 @@ private:
 	void updateItemOpacity(int value);
 	void updateItemScale(double value) noexcept;
 
-	void command(semi::gcodes &&gcodes);
-
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
 	QSettings m_settings;
