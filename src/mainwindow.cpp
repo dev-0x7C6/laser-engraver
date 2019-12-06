@@ -168,6 +168,9 @@ MainWindow::MainWindow(QWidget *parent)
 	m_enableIfEngraverConnected.setEnabled(false);
 	m_actionDisconnectEngraver->setVisible(false);
 
+	auto window = menu->addMenu("&Window");
+	window->addAction(QIcon::fromTheme("view-fullscreen"), "Fullscreen", this, &MainWindow::toggleFullscreen, QKeySequence(Qt::Key_F11));
+
 	auto machine = menu->addMenu("&Settings");
 	auto add_engraver = machine->addAction("Add engraver", &m_engraverManager, &EngraverManager::addEngraver);
 	auto remove_engraver = machine->addAction("Remove engraver", &m_engraverManager, &EngraverManager::removeEngraver);
@@ -328,6 +331,13 @@ QImage MainWindow::prepareImage() {
 	m_grid->render(&painter, canvas.rect(), m_grid->itemsBoundingRect());
 	m_grid->setDisableBackground(false);
 	return canvas.toImage();
+}
+
+void MainWindow::toggleFullscreen() {
+	if (isFullScreen())
+		showNormal();
+	else
+		showFullScreen();
 }
 
 bool MainWindow::is_connected() const noexcept {

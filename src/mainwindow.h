@@ -37,6 +37,8 @@ public:
 	QImage prepareImage();
 
 private:
+	void toggleFullscreen();
+
 	void insertImageObject();
 	void insertTextObject();
 	void print();
