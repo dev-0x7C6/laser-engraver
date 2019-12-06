@@ -134,6 +134,9 @@ MainWindow::MainWindow(QWidget *parent)
 		remove_engraver->setEnabled(m_engraverManager.atLeastOneEngraverAvailable());
 	});
 
+	auto help = menu->addMenu("&Help");
+	help->addAction(QIcon::fromTheme("help-about"), "About Qt", &QApplication::aboutQt);
+
 	auto toolbar = m_ui->tool;
 	toolbar->addAction(open);
 	toolbar->addAction(m_actionConnectEngraver);
