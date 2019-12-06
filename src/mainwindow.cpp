@@ -122,6 +122,7 @@ MainWindow::MainWindow(QWidget *parent)
 		m_enableIfEngraverConnected.addAction(action);
 
 	m_enableIfEngraverConnected.setEnabled(false);
+	m_enableIfEngraverConnected.setExclusive(false);
 	m_actionDisconnectEngraver->setVisible(false);
 
 	auto window = menu->addMenu("&Window");

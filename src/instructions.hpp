@@ -1,6 +1,7 @@
 #pragma once
 
 #include <externals/common/types.hpp>
+#include <optional>
 
 namespace instruction {
 
@@ -20,7 +21,7 @@ struct dwell {
 struct move_dpi {
 	float x;
 	float y;
-	u16 power;
+	std::optional<u8> power;
 };
 
 struct move_mm {

@@ -54,11 +54,12 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 	for (auto y = 0; y < img.height(); ++y) {
 		for (auto px = 0; px < img.width(); ++px) {
 			const auto x = ((y % 2) == 0) ? px : img.width() - px - 1;
-			const auto pwr = 1.0 - QColor::fromRgb(img.pixel(x, y)).lightnessF();
+			const auto color = QColor::fromRgb(img.pixel(x, y));
+			const auto pwr = std::min(255, static_cast<int>(color.black() * opts.power_multiplier));
 
-			if (pwr != 0.0) {
+			if (pwr != 0) {
 				gcode_move(x, y, 0);
-				encode(instruction::power{static_cast<i16>(255 * (pwr * opts.power_multiplier))});
+				encode(instruction::power{pwr});
 				if (opts.force_dwell_time)
 					encode(instruction::dwell{opts.force_dwell_time.value()});
 				schedule_power_off = true;

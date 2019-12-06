@@ -1,16 +1,14 @@
-project(laser-engraver-toolkit)
 cmake_minimum_required(VERSION 3.12)
 
-set(CMAKE_CXX_STANDARD 17)
+project(laser-engraver-toolkit)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-
-set(VERSION_MAJOR 0)
-set(VERSION_MINOR 7)
-set(VERSION_PATCH 1)
 
 find_package(Qt5 COMPONENTS Core Gui Widgets SerialPort REQUIRED)
 find_package(Threads)

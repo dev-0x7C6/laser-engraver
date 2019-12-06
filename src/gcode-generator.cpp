@@ -16,7 +16,10 @@ public:
 	std::string operator()(const instruction::set_home_position) const noexcept { return "G92 X0 Y0 Z0"; }
 	std::string operator()(const instruction::laser_off) const noexcept { return "M5"; }
 	std::string operator()(const instruction::laser_on) const noexcept { return "M3"; }
-	std::string operator()(const instruction::move_dpi v) const noexcept { return "G0 X" + std::to_string(static_cast<double>(v.x) / m_precision) + " Y" + std::to_string(static_cast<double>(v.y) / m_precision) + " S" + std::to_string(v.power); }
+	std::string operator()(const instruction::move_dpi v) const noexcept { return "G0 X" +
+		std::to_string(static_cast<double>(v.x) / m_precision) + " Y" +
+		std::to_string(static_cast<double>(v.y) / m_precision) +
+		(v.power.has_value() ? (" S" + std::to_string(v.power.value())) : std::string{}); }
 	std::string operator()(const instruction::move_mm v) const noexcept { return "G0 X" + std::to_string(v.x) + " Y" + std::to_string(v.y); }
 	std::string operator()(const instruction::power v) const noexcept { return "S" + std::to_string(v.duty); }
 	std::string operator()(const std::monostate) const noexcept { return {}; }
