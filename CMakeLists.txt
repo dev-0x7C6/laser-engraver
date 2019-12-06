@@ -25,6 +25,8 @@ set(sources
         src/engraver-manager.cpp
         src/engraver-manager.h
         src/engraver-settings.h
+        src/engraver/spindle/manager.cpp
+        src/engraver/spindle/manager.h
         src/gcode-generator.cpp
         src/gcode-generator.hpp
         src/gui-settings.cpp

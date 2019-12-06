@@ -30,12 +30,14 @@ MainWindow::MainWindow(QWidget *parent)
 		: QMainWindow(parent)
 		, m_ui(std::make_unique<Ui::MainWindow>())
 		, m_settings("Laser", "Engraver")
+		, m_spindle(m_connection)
 		, m_engraverManager(m_settings, this)
 		, m_grid(new Workspace(-grid_size, -grid_size, grid_size * 2, grid_size * 2)) {
 	m_ui->setupUi(this);
 	m_ui->view->setScene(m_grid);
-
 	m_ui->objectList->setModel(m_grid->model());
+
+	m_spindle.set_move_distance_provider([this]() { return m_ui->move_step->value(); });
 
 	connect(m_ui->objectList, &QListView::clicked, [this, model{m_grid->model()}](const QModelIndex &index) {
 		m_grid->clearSelection();
@@ -92,24 +94,19 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_enableIfObjectIsSelected.setEnabled(false);
 
+	using namespace engraver;
+
 	auto tool = menu->addMenu("&Commands");
-	auto home = tool->addAction(
-		QIcon::fromTheme("go-home"), "Home", [this]() { spindle_position.reset_home();
-		command({instruction::home{}}); }, QKeySequence(Qt::Key::Key_H));
-	auto new_home = tool->addAction(
-		QIcon::fromTheme("go-home"), "Save as Home", [this]() { command({spindle_position.reset_home(), instruction::home{}}); }, QKeySequence(Qt::Key::Key_S));
+	auto home = tool->addAction(QIcon::fromTheme("go-home"), "Home", &m_spindle, &spindle::manager::home, QKeySequence(Qt::Key::Key_H));
+	auto new_home = tool->addAction(QIcon::fromTheme("go-home"), "Save as Home", &m_spindle, &spindle::manager::home_and_save, QKeySequence(Qt::Key::Key_S));
 	tool->addSeparator();
 	m_actionLaserState = tool->addAction(
 		"Laser preview", this, &MainWindow::toggleSpindle, QKeySequence(Qt::Key::Key_Space));
 	tool->addSeparator();
-	auto go_u = tool->addAction(
-		QIcon::fromTheme("go-up"), "Go Up", [this]() { command({spindle_position.move_mm_y(-moveStep())}); }, QKeySequence(Qt::Key::Key_Up));
-	auto go_d = tool->addAction(
-		QIcon::fromTheme("go-down"), "Go Down", [this]() { command({spindle_position.move_mm_y(moveStep())}); }, QKeySequence(Qt::Key::Key_Down));
-	auto go_l = tool->addAction(
-		QIcon::fromTheme("go-previous"), "Go Left", [this]() { command({spindle_position.move_mm_x(-moveStep())}); }, QKeySequence(Qt::Key::Key_Left));
-	auto go_r = tool->addAction(
-		QIcon::fromTheme("go-next"), "Go Right", [this]() { command({spindle_position.move_mm_x(moveStep())}); }, QKeySequence(Qt::Key::Key_Right));
+	auto go_u = tool->addAction(QIcon::fromTheme("go-up"), "Go Up", &m_spindle, &spindle::manager::move_up, QKeySequence(Qt::Key::Key_Up));
+	auto go_d = tool->addAction(QIcon::fromTheme("go-down"), "Go Down", &m_spindle, &spindle::manager::move_down, QKeySequence(Qt::Key::Key_Down));
+	auto go_l = tool->addAction(QIcon::fromTheme("go-previous"), "Go Left", &m_spindle, &spindle::manager::move_left, QKeySequence(Qt::Key::Key_Left));
+	auto go_r = tool->addAction(QIcon::fromTheme("go-next"), "Go Right", &m_spindle, &spindle::manager::move_right, QKeySequence(Qt::Key::Key_Right));
 
 	m_actionLaserState->setCheckable(true);
 	m_ui->turnLaserOn->setDefaultAction(m_actionLaserState);
@@ -300,13 +297,13 @@ QImage MainWindow::prepareImage() {
 
 void MainWindow::toggleFullscreen() {
 	if (isFullScreen())
-		showNormal();
+		showMaximized();
 	else
 		showFullScreen();
 }
 
 void MainWindow::toggleSpindle() {
-	command(spindle_position.set_preview_on(m_actionLaserState->isChecked()));
+	m_spindle.set_preview_mode(m_actionLaserState->isChecked());
 }
 
 bool MainWindow::is_connected() const noexcept {
@@ -316,7 +313,7 @@ bool MainWindow::is_connected() const noexcept {
 raii_tail_call MainWindow::safety_gcode_raii() noexcept {
 	return {[&]() {
 		command(semi::generator::finalization());
-		command(spindle_position.preview_gcode());
+		toggleSpindle();
 	}};
 }
 
@@ -341,7 +338,7 @@ void MainWindow::print() {
 	const auto _ = safety_gcode_raii();
 
 	if (m_ui->engraveFromCurrentPosition->isChecked())
-		command({spindle_position.reset_home()});
+		m_spindle.reset_home();
 
 	const auto img = prepareImage();
 	const auto opts = make_semi_options_from_ui();
@@ -371,7 +368,7 @@ void MainWindow::preview() {
 	const auto _ = safety_gcode_raii();
 
 	if (m_ui->engraveFromCurrentPosition->isChecked())
-		command({spindle_position.reset_home()});
+		m_spindle.reset_home();
 
 	generate_gcode(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
 }
@@ -509,8 +506,4 @@ void MainWindow::updateItemScale(const double value) noexcept {
 
 void MainWindow::command(semi::gcodes &&gcodes) {
 	generate_gcode(std::move(gcodes), {}, m_connection->process());
-}
-
-float MainWindow::moveStep() const noexcept {
-	return m_ui->move_step->value();
 }

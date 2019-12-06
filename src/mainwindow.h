@@ -9,9 +9,9 @@
 #include <externals/common/std/raii/raii-tail-call.hpp>
 #include <src/engraver-connection.h>
 #include <src/engraver-manager.h>
-#include <src/sheets.hpp>
-#include <src/spindle-position.hpp>
+#include <src/engraver/spindle/manager.h>
 #include <src/gui-settings.h>
+#include <src/sheets.hpp>
 
 class Workspace;
 class QGraphicsItem;
@@ -74,15 +74,13 @@ private:
 
 	void command(semi::gcodes &&gcodes);
 
-	float moveStep() const noexcept;
-
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
 	QSettings m_settings;
 	std::unique_ptr<GuiSettings> m_guiSettings;
 	std::unique_ptr<EngraverConnection> m_connection;
 
-	engraver::helper::spindle_position spindle_position{};
+	engraver::spindle::manager m_spindle;
 
 	QActionGroup m_enableIfEngraverConnected{nullptr};
 	QActionGroup m_enableIfObjectIsSelected{nullptr};

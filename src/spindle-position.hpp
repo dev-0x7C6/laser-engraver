@@ -35,7 +35,7 @@ struct spindle_position {
 	}
 
 private:
-	bool is_preview_on_state{false};
+	u64 is_preview_on_state{false};
 };
 } // namespace helper
 } // namespace engraver
