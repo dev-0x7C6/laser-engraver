@@ -60,7 +60,6 @@ set(sources
 )
 
 add_executable(laser-engraver-toolkit ${sources})
-install(TARGETS laser-engraver-toolkit DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/)
 target_compile_definitions(laser-engraver-toolkit PRIVATE QT_DEPRECATED_WARNINGS)
 target_compile_definitions(laser-engraver-toolkit PRIVATE QT_DISABLE_DEPRECATED_BEFORE=0x060000)
 
@@ -70,4 +69,6 @@ target_link_libraries(laser-engraver-toolkit PRIVATE
     Qt5::SerialPort
     Threads::Threads
 )
+
+install(TARGETS laser-engraver-toolkit RUNTIME DESTINATION bin)
 
