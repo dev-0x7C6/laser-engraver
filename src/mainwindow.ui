@@ -1114,11 +1114,7 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QTextBrowser" name="outgoingGCode">
-           <property name="acceptRichText">
-            <bool>false</bool>
-           </property>
-          </widget>
+          <widget class="QListView" name="logView"/>
          </item>
          <item>
           <widget class="Line" name="line">

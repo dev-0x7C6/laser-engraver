@@ -29,6 +29,7 @@ constexpr auto scale_zoom_out_step = 1.00 - scale_zoom_step;
 MainWindow::MainWindow(QWidget *parent)
 		: QMainWindow(parent)
 		, m_ui(std::make_unique<Ui::MainWindow>())
+		, m_log(std::make_unique<log::model>())
 		, m_settings("Laser", "Engraver")
 		, m_spindle(m_connection)
 		, m_engraverManager(m_settings, this)
@@ -36,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->setupUi(this);
 	m_ui->view->setScene(m_grid);
 	m_ui->objectList->setModel(m_grid->model());
+	m_ui->logView->setModel(m_log.get());
 
 	m_spindle.set_move_distance_provider([this]() { return m_ui->move_step->value(); });
 
@@ -78,15 +80,15 @@ MainWindow::MainWindow(QWidget *parent)
 	workspace->addAction(QIcon::fromTheme("image-x-generic"), "Insert image", this, &MainWindow::insertImageObject);
 
 	auto object = menu->addMenu("&Object");
-	auto move_up = object->addAction(QIcon::fromTheme("go-up"), "Move Up", this, &MainWindow::itemMoveUp, QKeySequence::Forward);
-	auto move_down = object->addAction(QIcon::fromTheme("go-down"), "Move Down", this, &MainWindow::itemMoveUp, QKeySequence::Back);
+	auto move_up = object->addAction(QIcon::fromTheme("go-up"), "Move Up", m_grid, &Workspace::selected_object_move_up, QKeySequence::Forward);
+	auto move_down = object->addAction(QIcon::fromTheme("go-down"), "Move Down", m_grid, &Workspace::selected_object_move_down, QKeySequence::Back);
 	object->addSeparator();
 	auto object_zoom_in_half = object->addAction(QIcon::fromTheme("zoom-in"), "Zoom in", this, &MainWindow::zoomInObject, QKeySequence(Qt::Key::Key_Plus));
 	auto object_zoom_out_half = object->addAction(QIcon::fromTheme("zoom-out"), "Zoom out", this, &MainWindow::zoomOutObject, QKeySequence(Qt::Key::Key_Minus));
 	object->addSeparator();
-	auto center_object = object->addAction(QIcon::fromTheme("format-justify-center"), "Center", this, &MainWindow::itemCenter, QKeySequence(Qt::Key::Key_C));
+	auto center_object = object->addAction(QIcon::fromTheme("format-justify-center"), "Center", m_grid, &Workspace::selected_object_center, QKeySequence(Qt::Key::Key_C));
 	object->addSeparator();
-	auto remove = object->addAction(QIcon::fromTheme("edit-delete"), "Delete", this, &MainWindow::removeItem, QKeySequence::Delete);
+	auto remove = object->addAction(QIcon::fromTheme("edit-delete"), "Delete", m_grid, &Workspace::selected_object_remove, QKeySequence::Delete);
 	auto edit_label = object->addAction("Edit label", this, &MainWindow::editLabelObject);
 
 	for (auto &&action : {move_up, move_down, remove, object_zoom_in_half, object_zoom_out_half, center_object, edit_label})
@@ -115,7 +117,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_ui->moveToolGroupBox->setEnabled(false);
 	m_ui->movementSettingsGroupBox->setEnabled(false);
 
-	for (auto &&action : {home, go_u, go_d, go_l, go_r, print, new_home, m_actionLaserState})
+	for (auto &&action : {home, go_u, go_d, go_l, go_r, new_home, m_actionLaserState})
 		m_enableIfEngraverConnected.addAction(action);
 
 	m_enableIfEngraverConnected.setEnabled(false);
@@ -160,22 +162,15 @@ MainWindow::MainWindow(QWidget *parent)
 		m_ui->view->scale(value, value);
 	});
 
-	connect(m_grid, &QGraphicsScene::selectionChanged, [this]() {
-		auto list = m_grid->selectedItems();
-		const auto enabled = !list.isEmpty();
-
-		m_ui->itemGroup->setEnabled(enabled);
-		m_enableIfObjectIsSelected.setEnabled(enabled);
-
-		if (!enabled) {
-			m_selectedItem = nullptr;
+	connect(m_grid, qOverload<bool>(&Workspace::objectSelectionChanged), &m_enableIfObjectIsSelected, &QActionGroup::setEnabled);
+	connect(m_grid, qOverload<bool>(&Workspace::objectSelectionChanged), m_ui->itemGroup, &QGroupBox::setEnabled);
+	connect(m_grid, qOverload<QGraphicsItem *>(&Workspace::objectSelectionChanged), [this](auto &&item) {
+		if (item != nullptr)
 			return;
-		}
 
-		m_selectedItem = list.first();
-		updateItemAngle(static_cast<int>(m_selectedItem->rotation()));
-		updateItemOpacity(static_cast<int>(m_selectedItem->opacity() * 100.0));
-		updateItemScale(m_selectedItem->scale());
+		updateItemAngle(static_cast<int>(item->rotation()));
+		updateItemOpacity(static_cast<int>(item->opacity() * 100.0));
+		updateItemScale(item->scale());
 	});
 
 	auto timer = new QTimer(this);
@@ -201,8 +196,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(m_ui->applyMovementSettings, &QToolButton::clicked, this, &MainWindow::applyMovementSettings);
 
-	m_ui->outgoingGCode->append(QDateTime::currentDateTime().toString() + '\n');
-
 	for (auto &&category : sheet::all_iso216_category()) {
 		const auto metric = sheet::make_metric(category);
 		get_label(*m_ui, category)->setText(QString("%1 <font color=\"gray\">(%2 mm x %3 mm)</font>").arg(name(category), QString::number(metric.w), QString::number(metric.h)));
@@ -226,11 +219,26 @@ void MainWindow::insertTextObject() {
 		m_grid->insertTextObject(ret.value());
 }
 
+bool MainWindow::prepare() {
+	if (m_grid->model()->is_empty()) {
+		QMessageBox::warning(this, "Warning", "Workspace is empty, operation aborted.", QMessageBox::Ok);
+		return false;
+	}
+
+	if (!is_connected()) {
+		connectEngraver();
+		if (!is_connected())
+			return false;
+	}
+
+	return true;
+}
+
 void MainWindow::editLabelObject() {
-	if (!m_selectedItem)
+	if (!m_grid->selected_object())
 		return;
 
-	auto text = dynamic_cast<QGraphicsTextItem *>(m_selectedItem);
+	auto text = dynamic_cast<QGraphicsTextItem *>(m_grid->selected_object());
 
 	if (!text)
 		return;
@@ -244,19 +252,11 @@ void MainWindow::editLabelObject() {
 	}
 }
 
-void MainWindow::itemMoveUp() {
-	m_selectedItem->setZValue(m_selectedItem->topLevelItem()->zValue() + 1.0);
+[[nodiscard]] bool ask_about_cancel(QWidget *parent) {
+	return QMessageBox::question(parent, "Question", "Do you want to cancel process?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
 }
 
-void MainWindow::itemMoveDown() {
-	m_selectedItem->setZValue(m_selectedItem->topLevelItem()->zValue() - 1.0);
-}
-
-void MainWindow::itemCenter() {
-	m_selectedItem->setPos(-m_selectedItem->boundingRect().width() / 2.0, -m_selectedItem->boundingRect().height() / 2.0);
-}
-
-upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
+[[nodiscard]] upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
 	auto dialog = new QProgressDialog(parent);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
 	dialog->setAutoClose(true);
@@ -276,8 +276,12 @@ upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const
 			dialog->setLabelText("GCODE: " + QString::fromStdString(instruction));
 
 		if (dialog->wasCanceled()) {
-			dialog->close();
-			return upload_instruction_ret::cancel;
+			if (ask_about_cancel(dialog->parentWidget())) {
+				dialog->close();
+				return upload_instruction_ret::cancel;
+			}
+
+			dialog->reset();
 		}
 
 		QApplication::processEvents(QEventLoop::AllEvents, 1);
@@ -335,7 +339,7 @@ semi::options MainWindow::make_semi_options_from_ui() const noexcept {
 }
 
 void MainWindow::print() {
-	if (!is_connected())
+	if (!prepare())
 		return;
 
 	const auto _{safety_gcode_raii()};
@@ -365,7 +369,7 @@ void MainWindow::print() {
 }
 
 void MainWindow::preview() {
-	if (!is_connected())
+	if (!prepare())
 		return;
 
 	const auto _ = safety_gcode_raii();
@@ -460,49 +464,35 @@ void MainWindow::updateSheetReferences() {
 }
 
 void MainWindow::zoomInObject() {
-	if (const auto value = m_selectedItem->scale() * scale_zoom_in_step; m_ui->itemScale->maximum() > value) {
-		m_selectedItem->setScale(value);
+	if (const auto value = m_grid->selected_object()->scale() * scale_zoom_in_step; m_ui->itemScale->maximum() > value) {
+		m_grid->selected_object()->setScale(value);
 		m_ui->itemScale->setValue(value);
 	}
 }
 
 void MainWindow::zoomOutObject() {
-	if (const auto value = m_selectedItem->scale() * scale_zoom_out_step; m_ui->itemScale->minimum() < value) {
-		m_selectedItem->setScale(value);
+	if (const auto value = m_grid->selected_object()->scale() * scale_zoom_out_step; m_ui->itemScale->minimum() < value) {
+		m_grid->selected_object()->setScale(value);
 		m_ui->itemScale->setValue(value);
 	}
 }
 
-bool MainWindow::isItemSelected() const noexcept {
-	return m_selectedItem != nullptr;
-}
-
-void MainWindow::removeItem() {
-	m_grid->remove(m_selectedItem);
-}
-
-void MainWindow::append_log(const QString &line) {
-	if (++m_append_log_count >= 1000) {
-		m_ui->outgoingGCode->clear();
-		m_append_log_count = 0;
-	}
-
-	m_ui->outgoingGCode->append(line);
-	auto scroll = m_ui->outgoingGCode->verticalScrollBar();
-	scroll->setValue(scroll->maximum());
+void MainWindow::append_log(QString line) {
+	m_log->insert(std::move(line), QDateTime::currentDateTime());
+	m_ui->logView->scrollTo(m_log->index(m_log->rowCount({}) - 1));
 }
 
 void MainWindow::updateItemAngle(const int value) {
-	m_selectedItem->setRotation(value);
+	m_grid->selected_object()->setRotation(value);
 	m_ui->angle->setValue(value);
 }
 
 void MainWindow::updateItemOpacity(const int value) {
-	m_selectedItem->setOpacity(static_cast<double>(value) / 100.0);
+	m_grid->selected_object()->setOpacity(static_cast<double>(value) / 100.0);
 	m_ui->opacity->setValue(value);
 }
 
 void MainWindow::updateItemScale(const double value) noexcept {
-	m_selectedItem->setScale(value);
+	m_grid->selected_object()->setScale(value);
 	m_ui->itemScale->setValue(value);
 }

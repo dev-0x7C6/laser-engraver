@@ -30,6 +30,8 @@ public:
 
 	graphical::object::properties value(const QModelIndex &index) const noexcept;
 
+	bool is_empty() const noexcept;
+
 private:
 	int rowCount(const QModelIndex &parent) const final;
 	QVariant data(const QModelIndex &index, int role) const final;

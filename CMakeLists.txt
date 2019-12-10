@@ -34,6 +34,8 @@ set(sources
         src/gui-settings.h
         src/gui-settings.h
         src/instructions.hpp
+        src/log/model.cpp
+        src/log/model.h
         src/main.cpp
         src/mainwindow.cpp
         src/mainwindow.h

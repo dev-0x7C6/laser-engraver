@@ -21,6 +21,10 @@ graphical::object::properties graphical::model::value(const QModelIndex &index) 
 	return m_list[index.row()];
 }
 
+bool graphical::model::is_empty() const noexcept {
+	return rowCount({}) == 0;
+}
+
 int graphical::model::rowCount(const QModelIndex &) const {
 	return m_list.size();
 }

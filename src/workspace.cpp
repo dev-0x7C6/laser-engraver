@@ -14,6 +14,16 @@ constexpr auto inch = 25.4;
 Workspace::Workspace(qreal x, qreal y, qreal w, qreal h)
 		: QGraphicsScene(x, y, w, h)
 		, m_model(std::make_unique<graphical::model>()) {
+	connect(this, &QGraphicsScene::selectionChanged, [this]() {
+		auto list = selectedItems();
+		const auto enabled = !list.isEmpty();
+
+		if (enabled)
+			m_selected_object = list.first();
+
+		emit objectSelectionChanged(enabled);
+		emit objectSelectionChanged(m_selected_object);
+	});
 }
 
 void Workspace::setDisableBackground(bool value) noexcept {
@@ -69,12 +79,36 @@ void Workspace::insertTextObject(const TextWithFont &property) noexcept {
 }
 
 void Workspace::remove(QGraphicsItem *item) noexcept {
+	if (m_selected_object == item) {
+		m_selected_object = nullptr;
+	}
+
 	m_model->removeObject(item);
 	delete item;
 }
 
+void Workspace::selected_object_move_up() {
+	selected_object()->setZValue(selected_object()->topLevelItem()->zValue() + 1.0);
+}
+
+void Workspace::selected_object_move_down() {
+	selected_object()->setZValue(selected_object()->topLevelItem()->zValue() - 1.0);
+}
+
+void Workspace::selected_object_center() {
+	selected_object()->setPos(-selected_object()->boundingRect().width() / 2.0, -selected_object()->boundingRect().height() / 2.0);
+}
+
+void Workspace::selected_object_remove() {
+	removeItem(selected_object());
+}
+
 graphical::model *Workspace::model() {
 	return m_model.get();
+}
+
+QGraphicsItem *Workspace::selected_object() {
+	return m_selected_object;
 }
 
 void Workspace::drawBackground(QPainter *painter, const QRectF &rect) {

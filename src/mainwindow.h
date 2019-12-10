@@ -11,6 +11,7 @@
 #include <src/engraver-manager.h>
 #include <src/engraver/spindle/manager.h>
 #include <src/gui-settings.h>
+#include <src/log/model.h>
 #include <src/sheets.hpp>
 
 class Workspace;
@@ -42,6 +43,8 @@ private:
 
 	void insertImageObject();
 	void insertTextObject();
+
+	[[nodiscard]] bool prepare();
 	void print();
 	void preview();
 	void connectEngraver();
@@ -51,10 +54,6 @@ private:
 	void editLabelObject();
 
 private:
-	void itemMoveUp();
-	void itemMoveDown();
-	void itemCenter();
-
 	void zoomInObject();
 	void zoomOutObject();
 
@@ -64,9 +63,7 @@ private:
 	gcode_generation_options make_gcode_generation_options_from_ui() const noexcept;
 	semi::options make_semi_options_from_ui() const noexcept;
 
-	bool isItemSelected() const noexcept;
-	void removeItem();
-	void append_log(const QString &log);
+	void append_log(QString log);
 
 	void updateItemAngle(int value);
 	void updateItemOpacity(int value);
@@ -74,6 +71,7 @@ private:
 
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
+	std::unique_ptr<log::model> m_log;
 	QSettings m_settings;
 	std::unique_ptr<GuiSettings> m_guiSettings;
 	std::unique_ptr<EngraverConnection> m_connection;
@@ -88,6 +86,5 @@ private:
 	int m_append_log_count{0};
 
 	EngraverManager m_engraverManager;
-	QGraphicsItem *m_selectedItem{nullptr};
 	Workspace *m_grid{nullptr};
 };
