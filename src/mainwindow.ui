@@ -43,7 +43,7 @@
         <enum>QTabWidget::West</enum>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -841,7 +841,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>Spindle power: </string>
+                 <string>Laser power: </string>
                 </property>
                </widget>
               </item>
@@ -857,7 +857,7 @@
                  <string> %</string>
                 </property>
                 <property name="minimum">
-                 <number>5</number>
+                 <number>1</number>
                 </property>
                 <property name="maximum">
                  <number>100</number>

@@ -47,8 +47,6 @@ MainWindow::MainWindow(QWidget *parent)
 		properties.item->setSelected(true);
 	});
 
-	m_guiSettings = std::make_unique<GuiSettings>(*m_ui, m_settings);
-
 	setWindowTitle("Laser engraver");
 	setWindowIcon(QIcon::fromTheme("document-print"));
 
@@ -200,6 +198,8 @@ MainWindow::MainWindow(QWidget *parent)
 		const auto metric = sheet::make_metric(category);
 		get_label(*m_ui, category)->setText(QString("%1 <font color=\"gray\">(%2 mm x %3 mm)</font>").arg(name(category), QString::number(metric.w), QString::number(metric.h)));
 	}
+
+	m_guiSettings = std::make_unique<GuiSettings>(*m_ui, m_settings);
 }
 
 MainWindow::~MainWindow() {
