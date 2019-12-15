@@ -32,6 +32,8 @@ public:
 
 	bool is_empty() const noexcept;
 
+	const auto &values() const noexcept { return m_list; }
+
 private:
 	int rowCount(const QModelIndex &parent) const final;
 	QVariant data(const QModelIndex &index, int role) const final;

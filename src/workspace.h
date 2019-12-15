@@ -23,6 +23,8 @@ public:
 
 	void selected_object_move_up();
 	void selected_object_move_down();
+	void selected_object_raise_to_top();
+	void selected_object_lower_to_bottom();
 	void selected_object_center();
 	void selected_object_remove();
 

@@ -80,6 +80,9 @@ MainWindow::MainWindow(QWidget *parent)
 	auto object = menu->addMenu("&Object");
 	auto move_up = object->addAction(QIcon::fromTheme("go-up"), "Move Up", m_grid, &Workspace::selected_object_move_up, QKeySequence::Forward);
 	auto move_down = object->addAction(QIcon::fromTheme("go-down"), "Move Down", m_grid, &Workspace::selected_object_move_down, QKeySequence::Back);
+	auto move_top = object->addAction(QIcon::fromTheme("go-top"), "Raise to Top", m_grid, &Workspace::selected_object_raise_to_top, QKeySequence(Qt::Key::Key_Home));
+	auto move_bottom = object->addAction(QIcon::fromTheme("go-bottom"), "Lower to Bottom", m_grid, &Workspace::selected_object_lower_to_bottom, QKeySequence(Qt::Key::Key_End));
+
 	object->addSeparator();
 	auto object_zoom_in_half = object->addAction(QIcon::fromTheme("zoom-in"), "Zoom in", this, &MainWindow::zoomInObject, QKeySequence(Qt::Key::Key_Plus));
 	auto object_zoom_out_half = object->addAction(QIcon::fromTheme("zoom-out"), "Zoom out", this, &MainWindow::zoomOutObject, QKeySequence(Qt::Key::Key_Minus));

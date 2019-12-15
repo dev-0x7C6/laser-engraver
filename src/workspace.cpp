@@ -7,6 +7,8 @@
 
 #include <externals/common/qt/raii/raii-painter.hpp>
 
+#include <algorithm>
+
 namespace {
 constexpr auto inch = 25.4;
 }
@@ -93,6 +95,18 @@ void Workspace::selected_object_move_up() {
 
 void Workspace::selected_object_move_down() {
 	selected_object()->setZValue(selected_object()->topLevelItem()->zValue() - 1.0);
+}
+
+void Workspace::selected_object_raise_to_top() {
+	auto &&objects = m_model->values();
+	if (auto ret = std::max_element(objects.cbegin(), objects.cend(), [](auto &&a, auto &&b) { return a.item->topLevelItem()->zValue() > b.item->topLevelItem()->zValue(); }); ret != objects.end())
+		selected_object()->topLevelItem()->setZValue(ret->item->topLevelItem()->zValue() + 10.0);
+}
+
+void Workspace::selected_object_lower_to_bottom() {
+	auto &&objects = m_model->values();
+	if (auto ret = std::min_element(objects.cbegin(), objects.cend(), [](auto &&a, auto &&b) { return a.item->topLevelItem()->zValue() > b.item->topLevelItem()->zValue(); }); ret != objects.end())
+		selected_object()->topLevelItem()->setZValue(ret->item->topLevelItem()->zValue() - 10.0);
 }
 
 void Workspace::selected_object_center() {
