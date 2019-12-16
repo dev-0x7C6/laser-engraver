@@ -92,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
 	auto remove = object->addAction(QIcon::fromTheme("edit-delete"), "Delete", m_grid, &Workspace::selected_object_remove, QKeySequence::Delete);
 	auto edit_label = object->addAction("Edit label", this, &MainWindow::editLabelObject);
 
-	for (auto &&action : {move_up, move_down, remove, object_zoom_in_half, object_zoom_out_half, center_object, edit_label})
+	for (auto &&action : {move_up, move_down, move_top, move_bottom, remove, object_zoom_in_half, object_zoom_out_half, center_object, edit_label})
 		m_enableIfObjectIsSelected.addAction(action);
 
 	m_enableIfObjectIsSelected.setEnabled(false);
