@@ -130,7 +130,6 @@ void Workspace::drawBackground(QPainter *painter, const QRectF &rect) {
 	painter->setRenderHint(QPainter::Antialiasing);
 	painter->setRenderHint(QPainter::TextAntialiasing);
 	painter->setRenderHint(QPainter::SmoothPixmapTransform);
-	painter->setRenderHint(QPainter::HighQualityAntialiasing);
 
 	if (m_disableBackground)
 		return;
