@@ -42,7 +42,16 @@ void Workspace::drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers) {
 	update();
 }
 
-void Workspace::updateDpi(double dpi) {
+void Workspace::updateDpi(double dpi, bool scaleObjectWithDpi) {
+	if (scaleObjectWithDpi) {
+		const auto factor = dpi / m_dpi;
+
+		for (auto &&val : model()->values()) {
+			auto item = val.item;
+			item->setScale(item->scale() * factor);
+		}
+	}
+
 	m_dpi = dpi;
 	update();
 }

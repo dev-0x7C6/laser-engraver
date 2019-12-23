@@ -62,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
 	file->addSeparator();
 	file->addAction(QIcon::fromTheme("application-exit"), "&Close", this, &MainWindow::close, QKeySequence::Quit);
 
-	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), m_grid, &Workspace::updateDpi);
+	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), this, [this](auto &&value) { m_grid->updateDpi(value, m_ui->scaleObjectsWithDpi->isChecked()); });
 
 	for (auto &&category : sheet::all_iso216_category())
 		connect(get_checkbox(*m_ui, category), &QCheckBox::clicked, this, &MainWindow::updateSheetReferences);
@@ -462,7 +462,7 @@ void MainWindow::updateSheetReferences() {
 	if (m_ui->drawCustom->isChecked())
 		sheets.push_back({{"Custom", m_ui->drawCustomW->value(), m_ui->drawCustomH->value()}});
 
-	m_grid->updateDpi(m_ui->dpi->value());
+	m_grid->updateDpi(m_ui->dpi->value(), m_ui->scaleObjectsWithDpi->isChecked());
 	m_grid->drawSheetAreas(std::move(sheets));
 }
 

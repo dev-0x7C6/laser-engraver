@@ -15,7 +15,7 @@ public:
 	void setGridSize(double size) noexcept;
 
 	void drawSheetAreas(std::vector<inverter<sheet::metrics>> &&papers);
-	void updateDpi(double dpi);
+	void updateDpi(double dpi, bool scaleObjectWithDpi);
 
 	bool insertPixmapObject(const QString &) noexcept;
 	void insertTextObject(const TextWithFont &) noexcept;

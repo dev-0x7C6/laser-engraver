@@ -52,6 +52,7 @@ constexpr auto WORKSPACE_CUSTOM_REFERENCE_CHECKED = false;
 constexpr auto WORKSPACE_DPI = 150;
 constexpr auto WORKSPACE_GRID_MM = 10.00;
 constexpr auto WORKSPACE_SCALE = 1.00;
+constexpr auto WORKSPACE_SCALE_OBJECTS_WITH_DPI = false;
 
 constexpr auto LASER_POWER = 100;
 } // namespace defaults
@@ -79,6 +80,7 @@ GuiSettings::GuiSettings(Ui::MainWindow &ui, QSettings &settings)
 		ui.dpi->setValue(settings.value("dpi", WORKSPACE_DPI).toInt());
 		ui.grid->setValue(settings.value("grid_mm", WORKSPACE_GRID_MM).toDouble());
 		ui.workspaceScale->setValue(settings.value("scale", WORKSPACE_SCALE).toDouble());
+		ui.scaleObjectsWithDpi->setChecked(settings.value("scale_objects_with_dpi", WORKSPACE_SCALE_OBJECTS_WITH_DPI).toBool());
 	}
 
 	{
@@ -111,6 +113,7 @@ GuiSettings::~GuiSettings() {
 		settings.setValue("dpi", ui.dpi->value());
 		settings.setValue("grid_mm", ui.grid->value());
 		settings.setValue("scale", ui.workspaceScale->value());
+		settings.setValue("scale_objects_with_dpi", ui.scaleObjectsWithDpi->isChecked());
 	}
 
 	{
