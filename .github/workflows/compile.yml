@@ -1,4 +1,4 @@
-name: CMake build test
+name: Continuous integration
 
 on: [push]
 
