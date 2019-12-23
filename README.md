@@ -1,4 +1,6 @@
 # Laser Engraver Toolkit
+![](https://github.com/dev-0x7C6/laser-engraver/workflows/Continuous%20integration/badge.svg)
+
 Graphical toolkit that allow you todo basic engraving.
 
 ![](https://devwork.space/wp-content/uploads/2019/11/laser-engraver-preview.png)
