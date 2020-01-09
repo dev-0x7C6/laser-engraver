@@ -123,7 +123,9 @@ void Workspace::selected_object_center() {
 }
 
 void Workspace::selected_object_remove() {
-	removeItem(selected_object());
+	auto object = selected_object();
+	model()->removeObject(object);
+	removeItem(object);
 }
 
 graphical::model *Workspace::model() {
