@@ -9,9 +9,7 @@
 
 #include <algorithm>
 
-namespace {
-constexpr auto inch = 25.4;
-}
+#include <src/utils.hpp>
 
 Workspace::Workspace(qreal x, qreal y, qreal w, qreal h)
 		: QGraphicsScene(x, y, w, h)
@@ -162,8 +160,11 @@ void Workspace::drawSheet(QPainter *painter, const inverter<sheet::metrics> &she
 	raii_painter _(painter);
 	const auto iw = sheet.inverted ? sheet.value.h : sheet.value.w;
 	const auto ih = sheet.inverted ? sheet.value.w : sheet.value.h;
-	const auto w = (m_dpi * iw) / inch;
-	const auto h = (m_dpi * ih) / inch;
+
+	const auto precision = calculate_precision(m_dpi);
+	const auto w = multiply(precision, iw);
+	const auto h = multiply(precision, ih);
+
 	auto pen = painter->pen();
 	pen.setStyle(Qt::PenStyle::DashLine);
 	pen.setColor(Qt::white);
@@ -184,7 +185,8 @@ void Workspace::setCommonObjectParameters(QGraphicsItem *item) {
 
 void Workspace::drawGrid(QPainter *painter, const QRectF &rect) noexcept {
 	raii_painter _(painter);
-	const auto grid = static_cast<int>((m_dpi * m_gridSize) / inch);
+	const auto precision = calculate_precision(m_dpi);
+	const auto grid = multiply<int>(precision, m_gridSize);
 
 	qreal left = int(rect.left()) - (int(rect.left()) % grid);
 	qreal top = int(rect.top()) - (int(rect.top()) % grid);

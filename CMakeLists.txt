@@ -51,6 +51,7 @@ set(sources
         src/semi-gcode.hpp
         src/sheets.hpp
         src/spindle-position.hpp
+        src/utils.hpp
         src/widgets/engraver-movement-settings-widget.cpp
         src/widgets/engraver-movement-settings-widget.h
         src/widgets/engraver-movement-settings-widget.ui

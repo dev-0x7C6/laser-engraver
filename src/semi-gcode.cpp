@@ -2,6 +2,8 @@
 
 #include <QImage>
 
+#include <src/utils.hpp>
+
 namespace {
 template <typename type>
 class raii_progress {
@@ -72,7 +74,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 		}
 		encode(instruction::power{0});
 
-		progress = static_cast<double>(y) / static_cast<double>(img.height());
+		progress = divide(y, img.height());
 	}
 
 	move_gcodes(finalization(), ret);

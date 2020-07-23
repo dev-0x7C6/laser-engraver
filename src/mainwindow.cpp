@@ -17,6 +17,8 @@
 #include <src/qt-wrappers.h>
 #include <src/workspace.h>
 
+#include <src/utils.hpp>
+
 using namespace std::chrono_literals;
 
 namespace {
@@ -335,7 +337,7 @@ gcode_generation_options MainWindow::make_gcode_generation_options_from_ui() con
 
 semi::options MainWindow::make_semi_options_from_ui() const noexcept {
 	semi::options ret;
-	ret.power_multiplier = static_cast<double>(m_ui->laser_pwr->value()) / static_cast<double>(m_ui->laser_pwr->maximum());
+	ret.power_multiplier = divide(m_ui->laser_pwr->value(), m_ui->laser_pwr->maximum());
 	ret.center_object = m_ui->engraveObjectFromCenter->isChecked();
 	ret.force_dwell_time = 0;
 	return ret;
@@ -491,7 +493,7 @@ void MainWindow::updateItemAngle(const int value) {
 }
 
 void MainWindow::updateItemOpacity(const int value) {
-	m_grid->selected_object()->setOpacity(static_cast<double>(value) / 100.0);
+	m_grid->selected_object()->setOpacity(divide(value, 100.0));
 	m_ui->opacity->setValue(value);
 }
 

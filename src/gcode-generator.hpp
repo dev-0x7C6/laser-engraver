@@ -9,7 +9,7 @@ enum class upload_instruction_ret {
 };
 
 struct gcode_generation_options {
-	double dpi{150};
+	double dpi{150.0};
 };
 
 using upload_instruction = std::function<upload_instruction_ret(std::string &&gcode, double)>;
