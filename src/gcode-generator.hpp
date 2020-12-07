@@ -2,6 +2,7 @@
 
 #include <src/semi-gcode.hpp>
 #include <functional>
+#include <string>
 
 enum class upload_instruction_ret {
 	keep_going,

@@ -1,5 +1,7 @@
 #include "gcode-generator.hpp"
 
+#include <string>
+
 #include <src/utils.hpp>
 
 namespace {
