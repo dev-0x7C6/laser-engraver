@@ -10,11 +10,11 @@ Works fine on Linux, but isn't feature complete.
 
 ### Compilation and installation
 ```console
-user@workspace # git clone --recurse-submodules https://github.com/dev-0x7C6/laser-engraver.git
-user@workspace # cd laser-engraver
-user@workspace # cmake . -DCMAKE_INSTALL_PREFIX=/usr
-user@workspace # make -j8
-root@workspace # make install
+user@host # git clone --recurse-submodules https://github.com/dev-0x7C6/laser-engraver.git
+user@host # cd laser-engraver
+user@host # cmake . -DCMAKE_INSTALL_PREFIX=/usr
+user@host # make -j$(nproc)
+root@host # make install
 ```
 ### Gentoo ebuild
 Ebuild for can be found in my overlay repository (https://github.com/dev-0x7C6/dev1990-overlay)
