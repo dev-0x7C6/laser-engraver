@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QScrollBar>
+#include <QTextStream>
 #include <QTimer>
 
 #include <externals/common/qt/raii/raii-settings-group.hpp>
@@ -60,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_actionDisconnectEngraver->setIcon(QIcon::fromTheme("network-offline"));
 	auto print = file->addAction(QIcon::fromTheme("document-print"), "&Print", this, &MainWindow::print, QKeySequence::Print);
 	file->addAction(QIcon::fromTheme("document-print-preview"), "Preview", this, &MainWindow::preview, QKeySequence(Qt::Key::Key_P));
+	file->addAction(QIcon::fromTheme("document-save"), "&Save As", this, &MainWindow::saveAs, QKeySequence::SaveAs);
 	auto open = file->addAction(QIcon::fromTheme("document-open"), "&Open", this, &MainWindow::insertImageObject, QKeySequence::Open);
 	file->addSeparator();
 	file->addAction(QIcon::fromTheme("application-exit"), "&Close", this, &MainWindow::close, QKeySequence::Quit);
@@ -261,6 +263,8 @@ void MainWindow::editLabelObject() {
 	return QMessageBox::question(parent, "Question", "Do you want to cancel process?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
 }
 
+#include <QDebug>
+
 [[nodiscard]] upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
 	auto dialog = new QProgressDialog(parent);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
@@ -274,10 +278,14 @@ void MainWindow::editLabelObject() {
 	dialog->setModal(true);
 	dialog->show();
 
-	return [dialog, interpreter{std::move(interpreter)}, show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
+	auto timer_update = new QTimer(dialog);
+	timer_update->setInterval(16ms);
+	timer_update->start();
+
+	return [timer_update, dialog, interpreter{std::move(interpreter)}, show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
 		dialog->setValue(static_cast<int>(progress * 10000));
 
-		if (show_gcode)
+		if (show_gcode && timer_update->remainingTimeAsDuration() == 0ms)
 			dialog->setLabelText("GCODE: " + QString::fromStdString(instruction));
 
 		if (dialog->wasCanceled()) {
@@ -289,7 +297,7 @@ void MainWindow::editLabelObject() {
 			dialog->reset();
 		}
 
-		QApplication::processEvents(QEventLoop::AllEvents, 1);
+		QApplication::processEvents(QEventLoop::AllEvents, 0);
 		return interpreter(std::move(instruction), progress);
 	};
 }
@@ -370,7 +378,47 @@ void MainWindow::print() {
 			return;
 	}
 
-	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, m_connection->process()));
+	QFile file(QDir::homePath() + QDir::separator() + "output.gcode");
+	file.open(QIODevice::ReadWrite);
+	QDataStream out(&file);
+	std::function<upload_instruction_ret(std::string &&, double)> print_to_file = [&out](std::string &&gcode, double) -> upload_instruction_ret {
+		out << QString::fromStdString(gcode);
+		return upload_instruction_ret::keep_going;
+	};
+
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, print_to_file));
+}
+
+void MainWindow::saveAs() {
+	if (m_grid->model()->is_empty()) {
+		QMessageBox::warning(this, "Warning", "Workspace is empty, operation aborted.", QMessageBox::Ok);
+		return;
+	}
+
+	if (m_ui->engraveFromCurrentPosition->isChecked())
+		m_spindle.reset_home();
+
+	const auto img = prepareImage();
+	const auto opts = make_semi_options_from_ui();
+
+	auto semi = qt_progress_task<semi::gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
+		return semi::generator::from_image(img, opts, progress);
+	});
+
+	auto file_path = QFileDialog::getSaveFileName(this, tr("Save to gcode file"), QDir::homePath(), "(*.gcode) GCode Files");
+
+	if (file_path.isEmpty())
+		return;
+
+	QFile file(file_path);
+	file.open(QIODevice::ReadWrite);
+	QTextStream out(&file);
+	std::function<upload_instruction_ret(std::string &&, double)> print_to_file = [&out](std::string &&gcode, double) -> upload_instruction_ret {
+		out << QString::fromStdString(gcode) << "\n";
+		return upload_instruction_ret::keep_going;
+	};
+
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, print_to_file));
 }
 
 void MainWindow::preview() {

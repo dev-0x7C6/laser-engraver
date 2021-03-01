@@ -19,14 +19,14 @@ struct dwell {
 };
 
 struct move_dpi {
-	float x;
-	float y;
+	std::optional<float> x;
+	std::optional<float> y;
 	std::optional<u8> power;
 };
 
 struct move_mm {
-	float x;
-	float y;
+	std::optional<float> x;
+	std::optional<float> y;
 };
 
 struct power {

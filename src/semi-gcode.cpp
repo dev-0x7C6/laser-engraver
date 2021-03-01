@@ -48,19 +48,23 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 	auto schedule_power_off{false};
 
-	auto gcode_move = [&, offsets{center_offset(img, opts)}](const float x, const float y, const u16 pwr) {
+	auto gcode_move = [&, offsets{center_offset(img, opts)}](const std::optional<float> x, const std::optional<float> y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		encode(instruction::move_dpi{x - x_offset, y - y_offset, pwr});
+		encode(instruction::move_dpi{
+			x ? std::optional<float>(x.value() - x_offset) : std::nullopt,
+			y ? std::optional<float>(y.value() - y_offset) : std::nullopt,
+			pwr});
 	};
 
 	for (auto y = 0; y < img.height(); ++y) {
+		gcode_move({}, y, 0);
 		for (auto px = 0; px < img.width(); ++px) {
 			const auto x = ((y % 2) == 0) ? px : img.width() - px - 1;
 			const auto color = QColor::fromRgb(img.pixel(x, y));
 			const auto pwr = std::min(255, static_cast<int>(color.black() * opts.power_multiplier));
 
 			if (pwr != 0) {
-				gcode_move(x, y, 0);
+				gcode_move(x, {}, 0);
 				encode(instruction::power{pwr});
 				if (opts.force_dwell_time)
 					encode(instruction::dwell{opts.force_dwell_time.value()});

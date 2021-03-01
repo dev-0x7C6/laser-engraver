@@ -53,6 +53,8 @@ private:
 	void updateSheetReferences();
 	void editLabelObject();
 
+	void saveAs();
+
 private:
 	void zoomInObject();
 	void zoomOutObject();
