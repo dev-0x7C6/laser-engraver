@@ -263,8 +263,6 @@ void MainWindow::editLabelObject() {
 	return QMessageBox::question(parent, "Question", "Do you want to cancel process?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
 }
 
-#include <QDebug>
-
 [[nodiscard]] upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
 	auto dialog = new QProgressDialog(parent);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
@@ -278,15 +276,16 @@ void MainWindow::editLabelObject() {
 	dialog->setModal(true);
 	dialog->show();
 
-	auto timer_update = new QTimer(dialog);
-	timer_update->setInterval(16ms);
-	timer_update->start();
+	auto timer = new QElapsedTimerObject(dialog);
+	timer->elapsed.start();
 
-	return [timer_update, dialog, interpreter{std::move(interpreter)}, show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
+	return [timer, dialog, interpreter{std::move(interpreter)}, show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
 		dialog->setValue(static_cast<int>(progress * 10000));
 
-		if (show_gcode && timer_update->remainingTimeAsDuration() == 0ms)
+		if (show_gcode && timer->elapsed.hasExpired(16)) {
 			dialog->setLabelText("GCODE: " + QString::fromStdString(instruction));
+			timer->elapsed.restart();
+		}
 
 		if (dialog->wasCanceled()) {
 			if (ask_about_cancel(dialog->parentWidget())) {
