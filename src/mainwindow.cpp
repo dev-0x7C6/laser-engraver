@@ -227,11 +227,11 @@ void MainWindow::insertTextObject() {
 }
 
 bool MainWindow::prepare() {
-    if (!is_scene_ready())
-        return false;
+	if (!is_scene_ready())
+		return false;
 
-    if (!is_connection_ready())
-        return false;
+	if (!is_connection_ready())
+		return false;
 
 	return true;
 }
@@ -254,12 +254,8 @@ void MainWindow::editLabelObject() {
 	}
 }
 
-[[nodiscard]] bool ask_about_cancel(QWidget *parent) {
-	return QMessageBox::question(parent, "Question", "Do you want to cancel process?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
-}
-
 [[nodiscard]] upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
-    auto dialog = new QProgressDialog(parent);
+	auto dialog = new QProgressDialog(parent);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
 	dialog->setAutoClose(true);
 	dialog->setAutoReset(true);
@@ -283,7 +279,7 @@ void MainWindow::editLabelObject() {
 		}
 
 		if (dialog->wasCanceled()) {
-			if (ask_about_cancel(dialog->parentWidget())) {
+			if (dialogs::ask_about_cancel(dialog->parentWidget())) {
 				dialog->close();
 				return upload_instruction_ret::cancel;
 			}
@@ -345,26 +341,24 @@ semi::options MainWindow::make_semi_options_from_ui() const noexcept {
 	return ret;
 }
 
-bool MainWindow::check_empty_scene() {
-    if (m_grid->model()->is_empty()) {
-        dialogs::dialog_empty_workspace(this);
-        return false;
-    }
+bool MainWindow::is_scene_ready() {
+	if (m_grid->model()->is_empty()) {
+		dialogs::warn_empty_workspace(this);
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
-bool MainWindow::is_connection_ready()
-{
-    if (!is_connected()) {
-        connectEngraver();
-        if (!is_connected())
-            return false;
-    }
+bool MainWindow::is_connection_ready() {
+	if (!is_connected()) {
+		connectEngraver();
+		if (!is_connected())
+			return false;
+	}
 
-    return true;
+	return true;
 }
-
 
 void MainWindow::print() {
 	if (!prepare())
@@ -393,12 +387,12 @@ void MainWindow::print() {
 			return;
 	}
 
-    generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, m_connection->process()));
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, m_connection->process()));
 }
 
 void MainWindow::saveAs() {
-    if (!is_scene_ready())
-        return;
+	if (!is_scene_ready())
+		return;
 
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
@@ -423,7 +417,7 @@ void MainWindow::saveAs() {
 		return upload_instruction_ret::keep_going;
 	};
 
-    generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, print_to_file));
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, print_to_file));
 }
 
 void MainWindow::preview() {

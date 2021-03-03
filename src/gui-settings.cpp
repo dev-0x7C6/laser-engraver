@@ -23,8 +23,7 @@ QCheckBox *get_checkbox(Ui::MainWindow &ui, const sheet::iso216_category_a categ
 	return ui.drawA0;
 }
 
-QLabel *get_label(Ui::MainWindow &ui, const sheet::iso216_category_a category) noexcept
-{
+QLabel *get_label(Ui::MainWindow &ui, const sheet::iso216_category_a category) noexcept {
 	switch (category) {
 		case sheet::iso216_category_a::A0: return ui.drawA0Label;
 		case sheet::iso216_category_a::A1: return ui.drawA1Label;
@@ -127,4 +126,3 @@ GuiSettings::~GuiSettings() {
 		settings.setValue("power", ui.laser_pwr->value());
 	}
 }
-
