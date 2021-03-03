@@ -13,12 +13,12 @@
 #include <QTimer>
 
 #include <externals/common/qt/raii/raii-settings-group.hpp>
+#include <src/dialogs/dialogs.hpp>
 #include <src/dialogs/font-dialog.h>
 #include <src/engraver-connection.h>
 #include <src/qt-wrappers.h>
-#include <src/workspace.h>
-
 #include <src/utils.hpp>
+#include <src/workspace.h>
 
 using namespace std::chrono_literals;
 
@@ -227,16 +227,11 @@ void MainWindow::insertTextObject() {
 }
 
 bool MainWindow::prepare() {
-	if (m_grid->model()->is_empty()) {
-		QMessageBox::warning(this, "Warning", "Workspace is empty, operation aborted.", QMessageBox::Ok);
-		return false;
-	}
+    if (!is_scene_ready())
+        return false;
 
-	if (!is_connected()) {
-		connectEngraver();
-		if (!is_connected())
-			return false;
-	}
+    if (!is_connection_ready())
+        return false;
 
 	return true;
 }
@@ -264,7 +259,7 @@ void MainWindow::editLabelObject() {
 }
 
 [[nodiscard]] upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
-	auto dialog = new QProgressDialog(parent);
+    auto dialog = new QProgressDialog(parent);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
 	dialog->setAutoClose(true);
 	dialog->setAutoReset(true);
@@ -350,6 +345,27 @@ semi::options MainWindow::make_semi_options_from_ui() const noexcept {
 	return ret;
 }
 
+bool MainWindow::check_empty_scene() {
+    if (m_grid->model()->is_empty()) {
+        dialogs::dialog_empty_workspace(this);
+        return false;
+    }
+
+    return true;
+}
+
+bool MainWindow::is_connection_ready()
+{
+    if (!is_connected()) {
+        connectEngraver();
+        if (!is_connected())
+            return false;
+    }
+
+    return true;
+}
+
+
 void MainWindow::print() {
 	if (!prepare())
 		return;
@@ -377,22 +393,12 @@ void MainWindow::print() {
 			return;
 	}
 
-	QFile file(QDir::homePath() + QDir::separator() + "output.gcode");
-	file.open(QIODevice::ReadWrite);
-	QDataStream out(&file);
-	std::function<upload_instruction_ret(std::string &&, double)> print_to_file = [&out](std::string &&gcode, double) -> upload_instruction_ret {
-		out << QString::fromStdString(gcode);
-		return upload_instruction_ret::keep_going;
-	};
-
-	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, print_to_file));
+    generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, m_connection->process()));
 }
 
 void MainWindow::saveAs() {
-	if (m_grid->model()->is_empty()) {
-		QMessageBox::warning(this, "Warning", "Workspace is empty, operation aborted.", QMessageBox::Ok);
-		return;
-	}
+    if (!is_scene_ready())
+        return;
 
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
@@ -417,7 +423,7 @@ void MainWindow::saveAs() {
 		return upload_instruction_ret::keep_going;
 	};
 
-	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, print_to_file));
+    generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, print_to_file));
 }
 
 void MainWindow::preview() {

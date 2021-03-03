@@ -20,6 +20,8 @@ set(sources
         src/dialogs/font-dialog.cpp
         src/dialogs/font-dialog.h
         src/dialogs/font-dialog.ui
+        src/dialogs/dialogs.hpp
+        src/dialogs/dialogs.cpp
         src/engraver-connection.cpp
         src/engraver-connection.h
         src/engraver-manager.cpp

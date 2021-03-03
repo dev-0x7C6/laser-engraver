@@ -67,6 +67,11 @@ private:
 
 	void saveAs();
 
+
+private:
+    bool is_scene_ready();
+    bool is_connection_ready();
+
 private:
 	void zoomInObject();
 	void zoomOutObject();
