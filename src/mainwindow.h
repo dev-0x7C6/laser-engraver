@@ -23,17 +23,6 @@ namespace Ui {
 class MainWindow;
 }
 
-class QElapsedTimerObject : public QObject {
-	Q_OBJECT
-public:
-	QElapsedTimerObject(QObject *parent)
-			: QObject(parent) {}
-
-	~QElapsedTimerObject() = default;
-
-	QElapsedTimer elapsed;
-};
-
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 

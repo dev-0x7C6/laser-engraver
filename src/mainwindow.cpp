@@ -254,7 +254,7 @@ void MainWindow::editLabelObject() {
 	}
 }
 
-[[nodiscard]] upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction interpreter) {
+[[nodiscard]] upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction &&interpreter) {
 	auto dialog = new QProgressDialog(parent);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
 	dialog->setAutoClose(true);
@@ -267,15 +267,15 @@ void MainWindow::editLabelObject() {
 	dialog->setModal(true);
 	dialog->show();
 
-	auto timer = new QElapsedTimerObject(dialog);
-	timer->elapsed.start();
+	auto elapsed = std::make_unique<QElapsedTimer>();
+	elapsed->start();
 
-	return [timer, dialog, interpreter{std::move(interpreter)}, show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
+	return [elapsed{std::shared_ptr(std::move(elapsed))}, dialog, interpreter{std::move(interpreter)}, show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
 		dialog->setValue(static_cast<int>(progress * 10000));
 
-		if (show_gcode && timer->elapsed.hasExpired(16)) {
+		if (show_gcode && elapsed->hasExpired(16)) {
 			dialog->setLabelText("GCODE: " + QString::fromStdString(instruction));
-			timer->elapsed.restart();
+			elapsed->restart();
 		}
 
 		if (dialog->wasCanceled()) {
@@ -417,7 +417,7 @@ void MainWindow::saveAs() {
 		return upload_instruction_ret::keep_going;
 	};
 
-	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, print_to_file));
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, std::move(print_to_file)));
 }
 
 void MainWindow::preview() {
