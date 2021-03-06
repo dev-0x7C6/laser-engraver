@@ -254,11 +254,8 @@ void MainWindow::editLabelObject() {
 	}
 }
 
-[[nodiscard]] upload_instruction add_dialog_layer(QWidget *parent, const QString &title, const QString &text, upload_instruction &&interpreter) {
-	auto dialog = new QProgressDialog(parent);
-	dialog->setAttribute(Qt::WA_DeleteOnClose);
-	dialog->setAutoClose(true);
-	dialog->setAutoReset(true);
+[[nodiscard]] upload_instruction add_dialog_layer(const QString &title, const QString &text, upload_instruction &&interpreter) {
+	auto dialog = std::make_unique<QProgressDialog>(nullptr);
 	dialog->setWindowTitle(title);
 	dialog->setLabelText(text);
 	dialog->setRange(0, 10000);
@@ -270,7 +267,10 @@ void MainWindow::editLabelObject() {
 	auto elapsed = std::make_unique<QElapsedTimer>();
 	elapsed->start();
 
-	return [elapsed{std::shared_ptr(std::move(elapsed))}, dialog, interpreter{std::move(interpreter)}, show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
+	return [elapsed{std::shared_ptr(std::move(elapsed))},
+			   dialog{std::shared_ptr(std::move(dialog))},
+			   interpreter{std::move(interpreter)},
+			   show_gcode{text.isEmpty()}](std::string &&instruction, double progress) -> upload_instruction_ret {
 		dialog->setValue(static_cast<int>(progress * 10000));
 
 		if (show_gcode && elapsed->hasExpired(16)) {
@@ -279,10 +279,8 @@ void MainWindow::editLabelObject() {
 		}
 
 		if (dialog->wasCanceled()) {
-			if (dialogs::ask_about_cancel(dialog->parentWidget())) {
-				dialog->close();
+			if (dialogs::ask_about_cancel(dialog->parentWidget()))
 				return upload_instruction_ret::cancel;
-			}
 
 			dialog->reset();
 		}
@@ -377,7 +375,7 @@ void MainWindow::print() {
 	});
 
 	while (true) {
-		generate_gcode(semi::generator::workspace_preview(img, opts), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
+		generate_gcode(semi::generator::workspace_preview(img, opts), make_gcode_generation_options_from_ui(), add_dialog_layer("Workspace", "Please inspect workspace coordinates", m_connection->process()));
 		const auto response = QMessageBox::question(this, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
 
 		if (QMessageBox::No == response)
@@ -387,7 +385,7 @@ void MainWindow::print() {
 			return;
 	}
 
-	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, m_connection->process()));
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer("Uploading", {}, m_connection->process()));
 }
 
 void MainWindow::saveAs() {
@@ -417,7 +415,7 @@ void MainWindow::saveAs() {
 		return upload_instruction_ret::keep_going;
 	};
 
-	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Uploading", {}, std::move(print_to_file)));
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), add_dialog_layer("Uploading", {}, std::move(print_to_file)));
 }
 
 void MainWindow::preview() {
@@ -429,7 +427,7 @@ void MainWindow::preview() {
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
 
-	generate_gcode(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), add_dialog_layer(this, "Workspace", "Please inspect workspace coordinates", m_connection->process()));
+	generate_gcode(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), add_dialog_layer("Workspace", "Please inspect workspace coordinates", m_connection->process()));
 }
 
 void MainWindow::connectEngraver() {
