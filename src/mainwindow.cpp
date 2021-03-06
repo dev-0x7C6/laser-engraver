@@ -380,14 +380,12 @@ void MainWindow::saveAs() {
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
 
-	auto semi = generateSemiGCodeFromImage(prepareImage());
-
 	auto file_path = QFileDialog::getSaveFileName(this, tr("Save to gcode file"), QDir::homePath(), "(*.gcode) GCode Files");
 
 	if (file_path.isEmpty())
 		return;
 
-	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Uploading", {}, targetFile(file_path)));
+	generate_gcode(generateSemiGCodeFromImage(prepareImage()), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Uploading", {}, targetFile(file_path)));
 }
 
 void MainWindow::preview() {
