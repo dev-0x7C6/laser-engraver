@@ -340,7 +340,7 @@ void MainWindow::print() {
 	auto target = [this]() { return m_connection->process(); };
 
 	while (true) {
-		generate_gcode(semi::generator::workspace_preview(image, semi_opts), gen_opts, dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", target()));
+		generate::gcode(semi::generator::workspace_preview(image, semi_opts), gen_opts, dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", target()));
 		const auto response = dialogs::ask_repeat_workspace_preview(this);
 
 		if (QMessageBox::No == response)
@@ -350,7 +350,7 @@ void MainWindow::print() {
 			return;
 	}
 
-	generate_gcode(std::move(semi), gen_opts, dialogs::add_dialog_layer("Uploading", {}, target()));
+	generate::gcode(std::move(semi), gen_opts, dialogs::add_dialog_layer("Uploading", {}, target()));
 }
 
 
@@ -360,7 +360,7 @@ void MainWindow::saveAs() {
 
 	dialogs::ask_gcode_file(this, [this](QString &&path) -> void {
 		auto upload = dialogs::add_dialog_layer("Uploading", {}, upload::to_file(std::move(path)));
-		generate_gcode(generateSemiGCodeFromImage(prepareImage()), make_gcode_generation_options_from_ui(), std::move(upload));
+		generate::gcode(generateSemiGCodeFromImage(prepareImage()), make_gcode_generation_options_from_ui(), std::move(upload));
 	});
 }
 
@@ -373,7 +373,7 @@ void MainWindow::preview() {
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
 
-	generate_gcode(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", m_connection->process()));
+	generate::gcode(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", m_connection->process()));
 }
 
 void MainWindow::connectEngraver() {

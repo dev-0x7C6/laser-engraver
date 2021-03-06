@@ -15,4 +15,6 @@ struct gcode_generation_options {
 
 using upload_instruction = std::function<upload_instruction_ret(std::string &&gcode, double)>;
 
-void generate_gcode(semi::gcodes &&gcodes, const gcode_generation_options &opts, const upload_instruction &instruction);
+namespace generate {
+void gcode(semi::gcodes &&gcodes, const gcode_generation_options &opts, const upload_instruction &instruction);
+}
