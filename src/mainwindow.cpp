@@ -9,7 +9,6 @@
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QScrollBar>
-#include <QTextStream>
 #include <QTimer>
 
 #include <externals/common/qt/raii/raii-settings-group.hpp>
@@ -17,6 +16,7 @@
 #include <src/dialogs/font-dialog.h>
 #include <src/engraver-connection.h>
 #include <src/qt-wrappers.h>
+#include <src/upload-strategy.hpp>
 #include <src/utils.hpp>
 #include <src/workspace.h>
 
@@ -353,23 +353,14 @@ void MainWindow::print() {
 	generate_gcode(std::move(semi), gen_opts, dialogs::add_dialog_layer("Uploading", {}, target()));
 }
 
-auto MainWindow::targetFile(const QString &path) -> upload_instruction {
-	auto file = std::make_unique<QFile>(path);
-	file->open(QIODevice::ReadWrite);
-	auto out = std::make_unique<QTextStream>(file.get());
-	return [file{std::shared_ptr(std::move(file))},
-			   out(std::shared_ptr{std::move(out)})](std::string &&gcode, double) -> upload_instruction_ret {
-		(*out) << QString::fromStdString(gcode) << "\n";
-		return upload_instruction_ret::keep_going;
-	};
-}
 
 void MainWindow::saveAs() {
 	if (!is_scene_ready())
 		return;
 
 	dialogs::ask_gcode_file(this, [this](QString &&path) -> void {
-		generate_gcode(generateSemiGCodeFromImage(prepareImage()), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Uploading", {}, targetFile(path)));
+		auto upload = dialogs::add_dialog_layer("Uploading", {}, upload::to_file(std::move(path)));
+		generate_gcode(generateSemiGCodeFromImage(prepareImage()), make_gcode_generation_options_from_ui(), std::move(upload));
 	});
 }
 

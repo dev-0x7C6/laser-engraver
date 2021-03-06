@@ -17,11 +17,11 @@ set(sources
         src/dialogs/add-engraver-dialog.cpp
         src/dialogs/add-engraver-dialog.h
         src/dialogs/add-engraver-dialog.ui
+        src/dialogs/dialogs.cpp
+        src/dialogs/dialogs.hpp
         src/dialogs/font-dialog.cpp
         src/dialogs/font-dialog.h
         src/dialogs/font-dialog.ui
-        src/dialogs/dialogs.hpp
-        src/dialogs/dialogs.cpp
         src/engraver-connection.cpp
         src/engraver-connection.h
         src/engraver-manager.cpp
@@ -53,6 +53,8 @@ set(sources
         src/semi-gcode.hpp
         src/sheets.hpp
         src/spindle-position.hpp
+        src/upload-strategy.cpp
+        src/upload-strategy.hpp
         src/utils.hpp
         src/widgets/engraver-movement-settings-widget.cpp
         src/widgets/engraver-movement-settings-widget.h
