@@ -323,7 +323,7 @@ bool MainWindow::is_connection_ready() {
 	return true;
 }
 
-auto MainWindow::generateSemiGcodeFromImage(const QImage &image) -> semi::gcodes {
+auto MainWindow::generateSemiGCodeFromImage(const QImage &image) -> semi::gcodes {
 	const auto opts = make_semi_options_from_ui();
 
 	return qt_progress_task<semi::gcodes>(tr("Generating semi-gcode for post processing"), [image{std::move(image)}, opts](progress_t &progress) {
@@ -344,7 +344,7 @@ void MainWindow::print() {
 	const auto semi_opts = make_semi_options_from_ui();
 	const auto gen_opts = make_gcode_generation_options_from_ui();
 
-	auto semi = generateSemiGcodeFromImage(image);
+	auto semi = generateSemiGCodeFromImage(image);
 
 	auto target = [this]() { return m_connection->process(); };
 
@@ -369,7 +369,7 @@ void MainWindow::saveAs() {
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
 
-	auto semi = generateSemiGcodeFromImage(prepareImage());
+	auto semi = generateSemiGCodeFromImage(prepareImage());
 
 	auto file_path = QFileDialog::getSaveFileName(this, tr("Save to gcode file"), QDir::homePath(), "(*.gcode) GCode Files");
 
