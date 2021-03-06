@@ -323,6 +323,14 @@ bool MainWindow::is_connection_ready() {
 	return true;
 }
 
+auto MainWindow::generateSemiGcodeFromImage(const QImage &image) -> semi::gcodes {
+	const auto opts = make_semi_options_from_ui();
+
+	return qt_progress_task<semi::gcodes>(tr("Generating semi-gcode for post processing"), [image{std::move(image)}, opts](progress_t &progress) {
+		return semi::generator::from_image(image, opts, progress);
+	});
+}
+
 void MainWindow::print() {
 	if (!prepare())
 		return;
@@ -332,18 +340,16 @@ void MainWindow::print() {
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
 
-	const auto img = prepareImage();
+	const auto image = prepareImage();
 	const auto semi_opts = make_semi_options_from_ui();
 	const auto gen_opts = make_gcode_generation_options_from_ui();
 
-	auto semi = qt_progress_task<semi::gcodes>(tr("Generating semi-gcode for post processing"), [&img, semi_opts](progress_t &progress) {
-		return semi::generator::from_image(img, semi_opts, progress);
-	});
+	auto semi = generateSemiGcodeFromImage(image);
 
 	auto target = [this]() { return m_connection->process(); };
 
 	while (true) {
-		generate_gcode(semi::generator::workspace_preview(img, semi_opts), gen_opts, dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", target()));
+		generate_gcode(semi::generator::workspace_preview(image, semi_opts), gen_opts, dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", target()));
 		const auto response = dialogs::ask_repeat_workspace_preview(this);
 
 		if (QMessageBox::No == response)
@@ -363,12 +369,7 @@ void MainWindow::saveAs() {
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
 
-	const auto img = prepareImage();
-	const auto opts = make_semi_options_from_ui();
-
-	auto semi = qt_progress_task<semi::gcodes>(tr("Generating semi-gcode for post processing"), [&img, opts](progress_t &progress) {
-		return semi::generator::from_image(img, opts, progress);
-	});
+	auto semi = generateSemiGcodeFromImage(prepareImage());
 
 	auto file_path = QFileDialog::getSaveFileName(this, tr("Save to gcode file"), QDir::homePath(), "(*.gcode) GCode Files");
 
