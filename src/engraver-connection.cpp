@@ -51,7 +51,7 @@ upload_instruction EngraverConnection::process() {
 }
 
 void EngraverConnection::process_safe_gcode() {
-	generate::gcode(semi::generator::finalization(), {}, process());
+	gcode::transform(semi::generator::finalization(), {}, process());
 }
 
 void EngraverConnection::updateEngraverParameters(const engraver::settings::movement_parameters &parameters) {

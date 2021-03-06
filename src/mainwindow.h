@@ -56,8 +56,6 @@ private:
 
 	void saveAs();
 
-	auto generateSemiGCodeFromImage(const QImage &image) -> semi::gcodes;
-
 private:
 	bool is_scene_ready();
 	bool is_connection_ready();

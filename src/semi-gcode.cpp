@@ -58,9 +58,9 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 	for (auto y = 0; y < img.height(); ++y) {
 		gcode_move({}, y, 0);
-		for (auto px = 0; px < img.width(); ++px) {
-			const auto x = ((y % 2) == 0) ? px : img.width() - px - 1;
-			const auto color = QColor::fromRgb(img.pixel(x, y));
+		for (auto x = 0; x < img.width(); ++x) {
+			const auto px = ((y % 2) == 0) ? x : img.width() - x - 1;
+			const auto color = QColor::fromRgb(img.pixel(px, y));
 			const auto pwr = std::min(255, static_cast<int>(color.black() * opts.power_multiplier));
 
 			if (pwr != 0) {

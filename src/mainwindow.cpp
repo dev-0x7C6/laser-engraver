@@ -314,14 +314,6 @@ bool MainWindow::is_connection_ready() {
 	return true;
 }
 
-auto MainWindow::generateSemiGCodeFromImage(const QImage &image) -> semi::gcodes {
-	const auto opts = make_semi_options_from_ui();
-
-	return qt_progress_task<semi::gcodes>(tr("Generating semi-gcode for post processing"), [image{std::move(image)}, opts](progress_t &progress) {
-		return semi::generator::from_image(image, opts, progress);
-	});
-}
-
 void MainWindow::print() {
 	if (!prepare())
 		return;
@@ -335,12 +327,12 @@ void MainWindow::print() {
 	const auto semi_opts = make_semi_options_from_ui();
 	const auto gen_opts = make_gcode_generation_options_from_ui();
 
-	auto semi = generateSemiGCodeFromImage(image);
+	auto semi = semi::generator::qt::from_image(image, semi_opts);
 
 	auto target = [this]() { return m_connection->process(); };
 
 	while (true) {
-		generate::gcode(semi::generator::workspace_preview(image, semi_opts), gen_opts, dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", target()));
+		gcode::transform(semi::generator::workspace_preview(image, semi_opts), gen_opts, dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", target()));
 		const auto response = dialogs::ask_repeat_workspace_preview(this);
 
 		if (QMessageBox::No == response)
@@ -350,7 +342,7 @@ void MainWindow::print() {
 			return;
 	}
 
-	generate::gcode(std::move(semi), gen_opts, dialogs::add_dialog_layer("Uploading", {}, target()));
+	gcode::transform(std::move(semi), gen_opts, dialogs::add_dialog_layer("Uploading", {}, target()));
 }
 
 
@@ -360,7 +352,8 @@ void MainWindow::saveAs() {
 
 	dialogs::ask_gcode_file(this, [this](QString &&path) -> void {
 		auto upload = dialogs::add_dialog_layer("Uploading", {}, upload::to_file(std::move(path)));
-		generate::gcode(generateSemiGCodeFromImage(prepareImage()), make_gcode_generation_options_from_ui(), std::move(upload));
+		auto semi = semi::generator::qt::from_image(prepareImage(), make_semi_options_from_ui());
+		gcode::transform(std::move(semi), make_gcode_generation_options_from_ui(), std::move(upload));
 	});
 }
 
@@ -373,7 +366,7 @@ void MainWindow::preview() {
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
 
-	generate::gcode(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", m_connection->process()));
+	gcode::transform(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", m_connection->process()));
 }
 
 void MainWindow::connectEngraver() {

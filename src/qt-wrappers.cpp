@@ -4,6 +4,8 @@
 #include <QString>
 #include <QTimer>
 
+#include <src/semi-gcode.hpp>
+
 using namespace std::chrono_literals;
 
 void qt_generate_progress_dialog(QString &&title, progress_t &progress) {
@@ -19,4 +21,10 @@ void qt_generate_progress_dialog(QString &&title, progress_t &progress) {
 	dialog.setCancelButton(nullptr);
 	timer.start(5ms);
 	dialog.exec();
+}
+
+auto semi::generator::qt::from_image(const QImage &image, semi::options opts) -> semi::gcodes {
+	return qt_progress_task<semi::gcodes>(QObject::tr("Generating semi-gcode for post processing"), [&image, opts{std::move(opts)}](progress_t &progress) {
+		return semi::generator::from_image(image, opts, progress);
+	});
 }

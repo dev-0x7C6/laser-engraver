@@ -58,5 +58,5 @@ float manager::calculate_move_distance() {
 }
 
 void manager::process(semi::gcodes &&gcodes) {
-	generate::gcode(std::move(gcodes), {}, m_connection->process());
+	gcode::transform(std::move(gcodes), {}, m_connection->process());
 }

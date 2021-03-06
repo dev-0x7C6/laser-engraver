@@ -27,3 +27,11 @@ return_type qt_progress_task(QString &&title, std::function<return_type(progress
 
 	return result.get();
 }
+
+namespace semi {
+namespace generator {
+namespace qt {
+[[nodiscard]] auto from_image(const QImage &, semi::options opts) -> semi::gcodes;
+}
+} // namespace generator
+} // namespace semi
