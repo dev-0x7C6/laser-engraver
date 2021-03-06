@@ -57,6 +57,7 @@ private:
 	void saveAs();
 
 	auto generateSemiGCodeFromImage(const QImage &image) -> semi::gcodes;
+	auto targetFile(const QString &path) -> upload_instruction;
 
 private:
 	bool is_scene_ready();

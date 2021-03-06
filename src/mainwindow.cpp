@@ -362,6 +362,17 @@ void MainWindow::print() {
 	generate_gcode(std::move(semi), gen_opts, dialogs::add_dialog_layer("Uploading", {}, target()));
 }
 
+auto MainWindow::targetFile(const QString &path) -> upload_instruction {
+	auto file = std::make_unique<QFile>(path);
+	file->open(QIODevice::ReadWrite);
+	auto out = std::make_unique<QTextStream>(file.get());
+	return [file{std::shared_ptr(std::move(file))},
+			   out(std::shared_ptr{std::move(out)})](std::string &&gcode, double) -> upload_instruction_ret {
+		(*out) << QString::fromStdString(gcode) << "\n";
+		return upload_instruction_ret::keep_going;
+	};
+}
+
 void MainWindow::saveAs() {
 	if (!is_scene_ready())
 		return;
@@ -376,15 +387,7 @@ void MainWindow::saveAs() {
 	if (file_path.isEmpty())
 		return;
 
-	QFile file(file_path);
-	file.open(QIODevice::ReadWrite);
-	QTextStream out(&file);
-	std::function<upload_instruction_ret(std::string &&, double)> print_to_file = [&out](std::string &&gcode, double) -> upload_instruction_ret {
-		out << QString::fromStdString(gcode) << "\n";
-		return upload_instruction_ret::keep_going;
-	};
-
-	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Uploading", {}, std::move(print_to_file)));
+	generate_gcode(std::move(semi), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Uploading", {}, targetFile(file_path)));
 }
 
 void MainWindow::preview() {
