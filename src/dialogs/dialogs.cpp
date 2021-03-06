@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QElapsedTimer>
+#include <QFileDialog>
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QWidget>
@@ -54,6 +55,13 @@ upload_instruction add_dialog_layer(const QString &title, const QString &text, u
 		QApplication::processEvents(QEventLoop::AllEvents, 0);
 		return interpreter(std::move(instruction), progress);
 	};
+}
+
+auto ask_gcode_file(QWidget *parent, std::function<void(QString &&path)> &&save) -> void {
+	auto path = QFileDialog::getSaveFileName(parent, QObject::tr("Save to gcode file"), QDir::homePath(), "(*.gcode) GCode Files");
+
+	if (!path.isEmpty())
+		save(std::move(path));
 }
 
 } // namespace dialogs
