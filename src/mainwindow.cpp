@@ -320,7 +320,8 @@ bool MainWindow::is_connected() const noexcept {
 
 raii_tail_call MainWindow::safety_gcode_raii() noexcept {
 	return {[&]() {
-		m_connection->process_safe_gcode();
+		if (is_connected())
+			m_connection->process_safe_gcode();
 		toggleSpindle();
 	}};
 }
