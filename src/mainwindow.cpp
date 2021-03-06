@@ -255,16 +255,7 @@ void MainWindow::editLabelObject() {
 }
 
 QImage MainWindow::prepareImage() {
-	auto rect = m_grid->itemsBoundingRect().toRect();
-	rect.moveTopLeft({0, 0});
-	QPixmap canvas(rect.width(), rect.height());
-	canvas.fill(Qt::white);
-	QPainter painter(&canvas);
-	m_grid->clearSelection();
-	m_grid->setDisableBackground(true);
-	m_grid->render(&painter, canvas.rect(), m_grid->itemsBoundingRect());
-	m_grid->setDisableBackground(false);
-	return canvas.toImage();
+	return m_grid->renderPixmap().toImage();
 }
 
 void MainWindow::toggleFullscreen() {

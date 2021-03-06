@@ -23,7 +23,7 @@ namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow {
+class MainWindow final : public QMainWindow {
 	Q_OBJECT
 
 public:
@@ -34,9 +34,9 @@ public:
 	MainWindow &operator=(const MainWindow &) = delete;
 	MainWindow &operator=(MainWindow &&) = delete;
 
-	~MainWindow() final;
+	~MainWindow();
 
-	QImage prepareImage();
+	[[nodiscard]] auto prepareImage() -> QImage;
 
 private:
 	void toggleFullscreen();

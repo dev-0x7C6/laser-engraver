@@ -134,6 +134,19 @@ QGraphicsItem *Workspace::selected_object() {
 	return m_selected_object;
 }
 
+QPixmap Workspace::renderPixmap() {
+	auto rect = itemsBoundingRect().toRect();
+	rect.moveTopLeft({0, 0});
+	QPixmap canvas(rect.width(), rect.height());
+	canvas.fill(Qt::white);
+	QPainter painter(&canvas);
+	clearSelection();
+	setDisableBackground(true);
+	render(&painter, canvas.rect(), itemsBoundingRect());
+	setDisableBackground(false);
+	return canvas;
+}
+
 void Workspace::drawBackground(QPainter *painter, const QRectF &rect) {
 	raii_painter _(painter);
 	painter->setRenderHint(QPainter::Antialiasing);

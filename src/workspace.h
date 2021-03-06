@@ -31,6 +31,8 @@ public:
 	graphical::model *model();
 	QGraphicsItem *selected_object();
 
+	auto renderPixmap() -> QPixmap;
+
 protected:
 	void drawBackground(QPainter *painter, const QRectF &rect) final;
 
