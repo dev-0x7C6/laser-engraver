@@ -8,7 +8,8 @@
 
 enum class upload_instruction_ret {
 	keep_going,
-	cancel
+	cancel,
+	timeout,
 };
 
 struct gcode_generation_options {
@@ -66,6 +67,8 @@ void transform(semi::gcodes &&gcodes, const gcode_generation_options &opts, cons
 			case upload_instruction_ret::keep_going:
 				break;
 			case upload_instruction_ret::cancel:
+				return;
+			case upload_instruction_ret::timeout:
 				return;
 		}
 	}

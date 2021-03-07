@@ -5,16 +5,18 @@
 
 #include <QObject>
 
+#include <chrono>
+
 class EngraverConnection : public QObject {
 	Q_OBJECT
 public:
 	EngraverConnection(const engraver::settings::configuration &settings);
 
 	bool isOpen() const noexcept;
-	upload_instruction process();
+	auto process(std::chrono::milliseconds timeout = std::chrono::seconds(60)) -> upload_instruction;
 	void process_safe_gcode();
 
-	void updateEngraverParameters(const engraver::settings::movement_parameters &parameters);
+	bool updateEngraverParameters(const engraver::settings::movement_parameters &parameters);
 
 	const auto &name() const noexcept { return m_name; }
 
