@@ -380,16 +380,7 @@ void MainWindow::connectEngraver() {
 	if (!engraver)
 		return;
 
-	QProgressDialog progress(this);
-	progress.setWindowIcon(QIcon::fromTheme("network-wired"));
-	progress.setWindowTitle("Connect with Engraver");
-	progress.setLabelText("Connecting...");
-	progress.setMinimumWidth(400);
-	progress.setRange(0, 0);
-	progress.setValue(0);
-	progress.setCancelButton(nullptr);
-	progress.setModal(true);
-	progress.show();
+	auto dialog = dialogs::wait_connect_engraver();
 
 	auto connection = std::make_unique<EngraverConnection>(engraver.value());
 	connect(connection.get(), &EngraverConnection::gcodeSended, this, &MainWindow::append_log);

@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QElapsedTimer>
 #include <QFileDialog>
+#include <QIcon>
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QWidget>
@@ -19,6 +20,20 @@ bool ask_about_cancel(QWidget *parent) {
 
 int ask_repeat_workspace_preview(QWidget *parent) {
 	return QMessageBox::question(parent, "Question", "Do you want to repeat workspace inspection?", QMessageBox::No | QMessageBox::Cancel | QMessageBox::Retry);
+}
+
+auto wait_connect_engraver() -> std::unique_ptr<QProgressDialog> {
+	auto progress = std::make_unique<QProgressDialog>();
+	progress->setWindowIcon(QIcon::fromTheme("network-wired"));
+	progress->setWindowTitle(QObject::tr("Connect with Engraver"));
+	progress->setLabelText(QObject::tr("Connecting..."));
+	progress->setMinimumWidth(400);
+	progress->setRange(0, 0);
+	progress->setValue(0);
+	progress->setCancelButton(nullptr);
+	progress->setModal(true);
+	progress->show();
+	return progress;
 }
 
 upload_instruction add_dialog_layer(const QString &title, const QString &text, upload_instruction &&interpreter) {
