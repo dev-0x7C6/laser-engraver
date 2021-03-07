@@ -59,17 +59,24 @@ private:
 
 } // namespace generator
 
+constexpr auto MAX_REPEAT_COUNT_PER_INSTRUCTION = 3;
+
 template <generator::generator_type type = generator::grbl>
 void transform(semi::gcodes &&gcodes, const gcode_generation_options &opts, const upload_instruction &instruction) {
 	type generator(opts.dpi);
 	for (auto index = 0; auto &&gcode : gcodes) {
-		switch (instruction(std::visit(generator, gcode), divide(++index, gcodes.size()))) {
-			case upload_instruction_ret::keep_going:
-				break;
-			case upload_instruction_ret::cancel:
-				return;
-			case upload_instruction_ret::timeout:
-				return;
+		auto repeats = MAX_REPEAT_COUNT_PER_INSTRUCTION;
+		for (auto ret = instruction(std::visit(generator, gcode), divide(++index, gcodes.size())); ret != upload_instruction_ret::keep_going;) {
+			switch (ret) {
+				case upload_instruction_ret::keep_going:
+					break;
+				case upload_instruction_ret::timeout:
+					if (repeats-- == 0)
+						return;
+					continue;
+				case upload_instruction_ret::cancel:
+					return;
+			}
 		}
 	}
 }
