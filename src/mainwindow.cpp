@@ -281,13 +281,14 @@ raii_tail_call MainWindow::safety_gcode_raii() noexcept {
 	}};
 }
 
-gcode_generation_options MainWindow::make_gcode_generation_options_from_ui() const noexcept {
-	gcode_generation_options ret;
+auto MainWindow::gcode_opts_from_ui() const noexcept -> gcode::options {
+	gcode::options ret;
 	ret.dpi = m_ui->dpi->value();
+	ret.retry_cnt = 3;
 	return ret;
 }
 
-semi::options MainWindow::make_semi_options_from_ui() const noexcept {
+auto MainWindow::semi_opts_from_ui() const noexcept -> semi::options {
 	semi::options ret;
 	ret.power_multiplier = divide(m_ui->laser_pwr->value(), m_ui->laser_pwr->maximum());
 	ret.center_object = m_ui->engraveObjectFromCenter->isChecked();
@@ -324,8 +325,8 @@ void MainWindow::print() {
 		m_spindle.reset_home();
 
 	const auto image = prepareImage();
-	const auto semi_opts = make_semi_options_from_ui();
-	const auto gen_opts = make_gcode_generation_options_from_ui();
+	const auto semi_opts = semi_opts_from_ui();
+	const auto gen_opts = gcode_opts_from_ui();
 
 	auto semi = semi::generator::qt::from_image(image, semi_opts);
 
@@ -352,8 +353,8 @@ void MainWindow::saveAs() {
 
 	dialogs::ask_gcode_file(this, [this](QString &&path) -> void {
 		auto upload = dialogs::add_dialog_layer("Uploading", {}, upload::to_file(std::move(path)));
-		auto semi = semi::generator::qt::from_image(prepareImage(), make_semi_options_from_ui());
-		gcode::transform(std::move(semi), make_gcode_generation_options_from_ui(), std::move(upload));
+		auto semi = semi::generator::qt::from_image(prepareImage(), semi_opts_from_ui());
+		gcode::transform(std::move(semi), gcode_opts_from_ui(), std::move(upload));
 	});
 }
 
@@ -366,7 +367,7 @@ void MainWindow::preview() {
 	if (m_ui->engraveFromCurrentPosition->isChecked())
 		m_spindle.reset_home();
 
-	gcode::transform(semi::generator::workspace_preview(prepareImage(), make_semi_options_from_ui()), make_gcode_generation_options_from_ui(), dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", m_connection->process()));
+	gcode::transform(semi::generator::workspace_preview(prepareImage(), semi_opts_from_ui()), gcode_opts_from_ui(), dialogs::add_dialog_layer("Workspace", "Please inspect workspace coordinates", m_connection->process()));
 }
 
 void MainWindow::connectEngraver() {

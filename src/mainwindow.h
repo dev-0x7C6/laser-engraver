@@ -67,8 +67,8 @@ private:
 private:
 	bool is_connected() const noexcept;
 	raii_tail_call safety_gcode_raii() noexcept;
-	gcode_generation_options make_gcode_generation_options_from_ui() const noexcept;
-	semi::options make_semi_options_from_ui() const noexcept;
+	auto gcode_opts_from_ui() const noexcept -> gcode::options;
+	auto semi_opts_from_ui() const noexcept -> semi::options;
 
 	void append_log(QString log);
 

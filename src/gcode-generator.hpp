@@ -12,13 +12,15 @@ enum class upload_instruction_ret {
 	timeout,
 };
 
-struct gcode_generation_options {
-	double dpi{150.0};
-};
 
 using upload_instruction = std::function<upload_instruction_ret(std::string &&gcode, double)>;
 
 namespace gcode {
+
+struct options {
+	double dpi{150.0};
+	int retry_cnt{3};
+};
 
 namespace generator {
 
@@ -59,13 +61,12 @@ private:
 
 } // namespace generator
 
-constexpr auto MAX_REPEAT_COUNT_PER_INSTRUCTION = 3;
-
 template <generator::generator_type type = generator::grbl>
-void transform(semi::gcodes &&gcodes, const gcode_generation_options &opts, const upload_instruction &instruction) {
+void transform(semi::gcodes &&gcodes, const options &opts, const upload_instruction &instruction) {
 	type generator(opts.dpi);
+	const auto retry_cnt = opts.retry_cnt;
 	for (auto index = 0; auto &&gcode : gcodes) {
-		auto repeats = MAX_REPEAT_COUNT_PER_INSTRUCTION;
+		auto repeats = retry_cnt;
 		for (auto ret = instruction(std::visit(generator, gcode), divide(++index, gcodes.size())); ret != upload_instruction_ret::keep_going;) {
 			switch (ret) {
 				case upload_instruction_ret::keep_going:
