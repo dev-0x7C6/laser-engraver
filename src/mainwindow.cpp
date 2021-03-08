@@ -215,15 +215,11 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::insertImageObject() {
-	m_grid->insertPixmapObject(QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::homePath(), tr("Image Files (*.png *.jpg *.bmp *.svg)")));
+	m_grid->insertPixmapObject(dialogs::ask_open_image(this));
 }
 
 void MainWindow::insertTextObject() {
-	FontDialog dialog;
-	dialog.exec();
-
-	if (const auto ret = dialog.result(); ret)
-		m_grid->insertTextObject(ret.value());
+	dialogs::ask_font_object(this, [this](auto &&val) { m_grid->insertTextObject(val); });
 }
 
 bool MainWindow::prepare() {
@@ -345,7 +341,6 @@ void MainWindow::print() {
 
 	gcode::transform(std::move(semi), gen_opts, dialogs::add_dialog_layer("Uploading", {}, target()));
 }
-
 
 void MainWindow::saveAs() {
 	if (!is_scene_ready())

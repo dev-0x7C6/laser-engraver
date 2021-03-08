@@ -36,6 +36,17 @@ auto wait_connect_engraver() -> std::unique_ptr<QProgressDialog> {
 	return progress;
 }
 
+auto ask_open_image(QWidget *parent) -> QString {
+	return QFileDialog::getOpenFileName(parent, QObject::tr("Open Image"), QDir::homePath(), QObject::tr("Image Files (*.png *.jpg *.bmp *.svg)"));
+}
+
+auto ask_font_object(QWidget *, std::function<void(TextWithFont)> &&callable) -> void {
+	FontDialog dialog;
+	dialog.exec();
+	if (dialog.result().has_value())
+		callable(dialog.result().value());
+}
+
 upload_instruction add_dialog_layer(const QString &title, const QString &text, upload_instruction &&interpreter) {
 	auto dialog = std::make_unique<QProgressDialog>(nullptr);
 	dialog->setWindowTitle(title);
