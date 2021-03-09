@@ -65,10 +65,11 @@ private:
 	void zoomOutObject();
 
 private:
-	bool is_connected() const noexcept;
-	raii_tail_call safety_gcode_raii() noexcept;
-	auto gcode_opts_from_ui() const noexcept -> gcode::options;
-	auto semi_opts_from_ui() const noexcept -> semi::options;
+	[[nodiscard]] auto is_connected() const noexcept -> bool;
+
+	[[nodiscard]] auto gcode_opts_from_ui() const noexcept -> gcode::options;
+	[[nodiscard]] auto safety_gcode_raii() noexcept -> raii_tail_call;
+	[[nodiscard]] auto semi_opts_from_ui() const noexcept -> semi::options;
 
 	void append_log(QString log);
 

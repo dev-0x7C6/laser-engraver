@@ -265,11 +265,11 @@ void MainWindow::toggleSpindle() {
 	m_spindle.set_preview_mode(m_actionLaserState->isChecked());
 }
 
-bool MainWindow::is_connected() const noexcept {
+auto MainWindow::is_connected() const noexcept -> bool {
 	return m_connection && m_connection->isOpen();
 }
 
-raii_tail_call MainWindow::safety_gcode_raii() noexcept {
+auto MainWindow::safety_gcode_raii() noexcept -> raii_tail_call {
 	return {[&]() {
 		if (is_connected())
 			m_connection->process_safe_gcode();
@@ -292,7 +292,7 @@ auto MainWindow::semi_opts_from_ui() const noexcept -> semi::options {
 	return ret;
 }
 
-bool MainWindow::is_scene_ready() {
+auto MainWindow::is_scene_ready() -> bool {
 	if (m_grid->model()->is_empty()) {
 		dialogs::warn_empty_workspace(this);
 		return false;
@@ -301,7 +301,7 @@ bool MainWindow::is_scene_ready() {
 	return true;
 }
 
-bool MainWindow::is_connection_ready() {
+auto MainWindow::is_connection_ready() -> bool {
 	if (!is_connected()) {
 		connectEngraver();
 		if (!is_connected())
