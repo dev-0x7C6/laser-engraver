@@ -28,7 +28,7 @@ FontDialog::FontDialog(const QFont &font, const QString &text, QWidget *parent)
 }
 
 void FontDialog::updateFont() {
-	auto font = m_ui->textEdit->font();
+	auto font = m_ui->font->currentFont();
 	font.setPixelSize(m_ui->size->value());
 	font.setBold(m_ui->bold->isChecked());
 	font.setItalic(m_ui->italic->isChecked());
