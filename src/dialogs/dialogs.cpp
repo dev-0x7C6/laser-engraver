@@ -40,8 +40,8 @@ auto ask_open_image(QWidget *parent) -> QString {
 	return QFileDialog::getOpenFileName(parent, QObject::tr("Open Image"), QDir::homePath(), QObject::tr("Image Files (*.png *.jpg *.bmp *.svg)"));
 }
 
-auto ask_font_object(QWidget *, std::function<void(TextWithFont)> &&callable) -> void {
-	FontDialog dialog;
+auto ask_font_object(QWidget *, std::function<void(TextWithFont)> &&callable, std::optional<TextWithFont> content) -> void {
+	FontDialog dialog(content);
 	dialog.exec();
 	if (dialog.result().has_value())
 		callable(dialog.result().value());

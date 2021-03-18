@@ -15,7 +15,7 @@ namespace dialogs {
 [[nodiscard]] auto ask_open_image(QWidget *parent) -> QString;
 [[nodiscard]] auto ask_repeat_workspace_preview(QWidget *parent) -> int;
 [[nodiscard]] auto wait_connect_engraver() -> std::unique_ptr<QProgressDialog>;
-auto ask_font_object(QWidget *parent, std::function<void(TextWithFont)> &&) -> void;
+auto ask_font_object(QWidget *parent, std::function<void(TextWithFont)> &&, std::optional<TextWithFont> content = {}) -> void;
 auto ask_gcode_file(QWidget *parent, std::function<void(QString &&path)> &&) -> void;
 auto warn_empty_workspace(QWidget *) -> void;
 } // namespace dialogs

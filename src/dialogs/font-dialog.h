@@ -3,12 +3,18 @@
 #include <QDialog>
 
 #include <memory>
+#include <optional>
 
 namespace Ui {
 class FontDialog;
 }
 
 struct TextWithFont {
+	TextWithFont() = default;
+	TextWithFont(const QString &text, const QFont &font)
+			: text(text)
+			, font(font) {}
+
 	QString text;
 	QFont font;
 };
@@ -16,15 +22,14 @@ struct TextWithFont {
 class FontDialog : public QDialog {
 	Q_OBJECT
 public:
-	explicit FontDialog(QWidget *parent = nullptr);
-	explicit FontDialog(const QFont &font, const QString &text, QWidget *parent = nullptr);
-
+	explicit FontDialog(std::optional<TextWithFont> content = {}, QWidget *parent = nullptr);
 	~FontDialog();
 
 	auto result() const noexcept { return m_result; }
 
 private:
-	void updateFont();
+	void updateFromContent(const TextWithFont &content);
+	void selectedFontFromCombo();
 
 private:
 	std::unique_ptr<Ui::FontDialog> m_ui;

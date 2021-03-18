@@ -13,7 +13,6 @@
 
 #include <externals/common/qt/raii/raii-settings-group.hpp>
 #include <src/dialogs/dialogs.hpp>
-#include <src/dialogs/font-dialog.h>
 #include <src/engraver-connection.h>
 #include <src/qt-wrappers.h>
 #include <src/upload-strategy.hpp>
@@ -233,21 +232,13 @@ bool MainWindow::prepare() {
 }
 
 void MainWindow::editLabelObject() {
-	if (!m_grid->selected_object())
-		return;
-
-	auto text = dynamic_cast<QGraphicsTextItem *>(m_grid->selected_object());
-
-	if (!text)
-		return;
-
-	FontDialog dialog(text->font(), text->toPlainText());
-	dialog.exec();
-
-	if (const auto ret = dialog.result(); ret) {
-		text->setFont(ret->font);
-		text->setPlainText(ret->text);
-	}
+	if (auto text = dynamic_cast<QGraphicsTextItem *>(m_grid->selected_object()); text)
+		dialogs::ask_font_object(
+			this, [text](auto &&value) {
+				text->setFont(value.font);
+				text->setPlainText(value.text);
+			},
+			TextWithFont(text->toPlainText(), text->font()));
 }
 
 QImage MainWindow::prepareImage() {
