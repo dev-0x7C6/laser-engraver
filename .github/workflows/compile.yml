@@ -18,6 +18,6 @@ jobs:
     - name: install opengl
       run: sudo apt-get install mesa-common-dev libglu1-mesa-dev ninja-build -y
     - name: cmake
-      run: CC="gcc-10" CXX="g++-10" cmake -GNinja  .
+      run: CC="gcc-10" CXX="g++-10" cmake -GNinja -DTESTS=OFF -DBENCHMARKS=OFF .
     - name: ninja 
       run: CC="gcc-10" CXX="g++-10" ninja
