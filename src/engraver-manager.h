@@ -12,7 +12,7 @@ public:
 	~EngraverManager();
 
 	void addEngraver();
-	std::optional<engraver::settings::configuration> selectEngraver();
+	auto selectEngraver() -> engraver::settings::optional_configuration;
 	void removeEngraver();
 
 	void update(const QString &name, const engraver::settings::movement_parameters &parameters);

@@ -22,6 +22,6 @@ private:
 	void saveResult();
 
 private:
-	std::optional<engraver::settings::configuration> m_result;
+	engraver::settings::optional_configuration m_result;
 	std::unique_ptr<Ui::AddPrinterDialog> m_ui;
 };

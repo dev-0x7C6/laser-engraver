@@ -20,5 +20,5 @@ public:
 
 private:
 	std::unique_ptr<Ui::SelectEngraverDialog> m_ui;
-	std::optional<engraver::settings::configuration> m_selectedEngraver;
+	engraver::settings::optional_configuration m_selectedEngraver;
 };

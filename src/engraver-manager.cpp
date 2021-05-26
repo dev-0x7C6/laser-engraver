@@ -32,7 +32,7 @@ void EngraverManager::addEngraver() {
 	}
 }
 
-std::optional<engraver::settings::configuration> EngraverManager::selectEngraver() {
+engraver::settings::optional_configuration EngraverManager::selectEngraver() {
 	SelectEngraverDialog dialog(m_configurations, m_parent);
 	dialog.exec();
 	return dialog.result();

@@ -3,6 +3,7 @@
 #include <QSerialPort>
 #include <QSettings>
 
+#include <optional>
 #include <vector>
 
 namespace engraver {
@@ -39,6 +40,8 @@ struct configuration {
 	engraver::settings::serial_parameters serial_params;
 	engraver::settings::movement_parameters movement_params;
 };
+
+using optional_configuration = std::optional<configuration>;
 
 inline auto load(QSettings &handle) {
 	configuration ret;
