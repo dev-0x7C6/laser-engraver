@@ -1,6 +1,6 @@
 #include "model.h"
 
-using namespace log;
+using namespace logs;
 
 namespace {
 constexpr auto MAXIMUM_MESSAGE_COUNT = 32;

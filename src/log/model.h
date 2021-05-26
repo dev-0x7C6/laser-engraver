@@ -4,7 +4,7 @@
 #include <QList>
 #include <QDateTime>
 
-namespace log {
+namespace logs {
 
 struct message {
 	QString text;
@@ -24,4 +24,4 @@ private:
 	QList<message> m_logs;
 };
 
-} // namespace log
+} // namespace logs

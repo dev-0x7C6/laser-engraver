@@ -79,7 +79,7 @@ private:
 
 private:
 	std::unique_ptr<Ui::MainWindow> m_ui;
-	std::unique_ptr<log::model> m_log;
+	std::unique_ptr<logs::model> m_log;
 	QSettings m_settings;
 	std::unique_ptr<GuiSettings> m_guiSettings;
 	std::unique_ptr<EngraverConnection> m_connection;

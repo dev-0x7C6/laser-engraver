@@ -31,7 +31,7 @@ constexpr auto scale_zoom_out_step = 1.00 - scale_zoom_step;
 MainWindow::MainWindow(QWidget *parent)
 		: QMainWindow(parent)
 		, m_ui(std::make_unique<Ui::MainWindow>())
-		, m_log(std::make_unique<log::model>())
+		, m_log(std::make_unique<logs::model>())
 		, m_settings("Laser", "Engraver")
 		, m_spindle(m_connection)
 		, m_engraverManager(m_settings, this)
