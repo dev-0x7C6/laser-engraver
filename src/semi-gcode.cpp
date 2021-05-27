@@ -85,6 +85,56 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 	return ret;
 }
 
+struct coordinate {
+	std::optional<float> x;
+	std::optional<float> y;
+};
+
+struct coordinates {
+	coordinate current;
+	coordinate begin_move;
+};
+
+semi::gcodes semi::generator::optimize_treshold_max(semi::gcodes &&gcodes) {
+	coordinates coordinate;
+	std::optional<i32> pwr;
+	auto laser_on_state{false};
+
+	auto ret = initialization();
+
+	for (auto &&gcode : gcodes) {
+		if (std::holds_alternative<instruction::power>(gcode))
+			pwr = std::get<instruction::power>(gcode).duty;
+
+		if (std::holds_alternative<instruction::move_dpi>(gcode)) {
+			const auto value = std::get<instruction::move_dpi>(gcode);
+			coordinate.current.x = value.x;
+			coordinate.current.y = value.y;
+		}
+
+		if (pwr.value_or(0) > 0) {
+			if (!coordinate.begin_move.x.has_value())
+				coordinate.begin_move.x = coordinate.current.x;
+
+			if (!coordinate.begin_move.y.has_value())
+				coordinate.begin_move.y = coordinate.current.y;
+		} else {
+			if (coordinate.begin_move.x.has_value() &&
+				coordinate.begin_move.y.has_value()) {
+				ret.emplace_back(instruction::move_dpi{coordinate.begin_move.x.value(),
+					coordinate.begin_move.y.value(), 0});
+				ret.emplace_back(instruction::move_dpi{coordinate.current.x.value(),
+					coordinate.current.y.value(), 255});
+				coordinate.begin_move.x.reset();
+				coordinate.begin_move.y.reset();
+			}
+		}
+	}
+
+	move_gcodes(finalization(), ret);
+	return ret;
+}
+
 semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options opts) {
 	auto ret = initialization();
 

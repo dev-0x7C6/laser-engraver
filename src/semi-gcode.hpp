@@ -26,6 +26,7 @@ using gcodes = std::vector<gcode>;
 
 namespace generator {
 semi::gcodes from_image(const QImage &img, semi::options, progress_t &);
+semi::gcodes optimize_treshold_max(semi::gcodes &&);
 semi::gcodes workspace_preview(const QImage &img, semi::options);
 semi::gcodes finalization();
 } // namespace generator
