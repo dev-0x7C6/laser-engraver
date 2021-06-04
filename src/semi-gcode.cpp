@@ -108,8 +108,14 @@ semi::gcodes semi::generator::optimize_treshold_max(semi::gcodes &&gcodes) {
 
 		if (std::holds_alternative<instruction::move_dpi>(gcode)) {
 			const auto value = std::get<instruction::move_dpi>(gcode);
-			coordinate.current.x = value.x;
-			coordinate.current.y = value.y;
+			if (value.x.has_value())
+				coordinate.current.x = value.x.value();
+
+			if (value.y.has_value())
+				coordinate.current.y = value.y.value();
+
+			//if (value.power.has_value())
+				//pwr = value.power;
 		}
 
 		if (pwr.value_or(0) > 0) {
