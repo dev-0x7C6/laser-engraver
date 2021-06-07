@@ -61,7 +61,9 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 		for (auto x = 0; x < img.width(); ++x) {
 			const auto px = ((y % 2) == 0) ? x : img.width() - x - 1;
 			const auto color = QColor::fromRgb(img.pixel(px, y));
-			const auto pwr = std::min(255, static_cast<int>(color.black() * opts.power_multiplier));
+
+			auto c = filters::black_and_white_treshold_filter(opts.filters, color.black());
+			const auto pwr = std::min(255, static_cast<int>(c * opts.power_multiplier));
 
 			if (pwr != 0) {
 				gcode_move(px, {}, 0);
@@ -172,4 +174,10 @@ semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options
 
 semi::gcodes semi::generator::finalization() {
 	return {instruction::power{0}, instruction::home{}, instruction::wait_for_movement_finish{}, instruction::laser_off{}};
+}
+
+u8 semi::filters::black_and_white_treshold_filter(const options &opts, const u8 in) {
+	if (opts.black_and_white_treshold)
+		return (opts.black_and_white_treshold.value() > in) ? 0 : 255;
+	return in;
 }

@@ -15,9 +15,18 @@ using progress_t = std::atomic<double>;
 
 namespace semi {
 
+namespace filters {
+struct options {
+	std::optional<u8> black_and_white_treshold;
+};
+
+u8 black_and_white_treshold_filter(const options &opts, u8 in);
+} // namespace filters
+
 struct options {
 	double power_multiplier{1.0};
 	std::optional<u16> force_dwell_time;
+	filters::options filters{};
 	bool center_object{true};
 };
 
