@@ -46,7 +46,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 		ret.emplace_back(std::forward<decltype(value)>(value));
 	};
 
-	auto schedule_power_off{false};
+	std::optional<u8> last_pwr;
 
 	auto gcode_move = [&, offsets{center_offset(img, opts)}](const std::optional<float> x, const std::optional<float> y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
@@ -58,6 +58,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 	for (auto y = 0; y < img.height(); ++y) {
 		gcode_move({}, y, 0);
+		auto schedule_power_off{false};
 		for (auto x = 0; x < img.width(); ++x) {
 			const auto px = ((y % 2) == 0) ? x : img.width() - x - 1;
 			const auto color = QColor::fromRgb(img.pixel(px, y));
@@ -65,21 +66,35 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 			auto c = filters::black_and_white_treshold_filter(opts.filters, color.black());
 			const auto pwr = std::min(255, static_cast<int>(c * opts.power_multiplier));
 
-			if (pwr != 0) {
-				gcode_move(px, {}, 0);
-				encode(instruction::power{pwr});
-				if (opts.force_dwell_time)
-					encode(instruction::dwell{opts.force_dwell_time.value()});
-				schedule_power_off = true;
-			} else {
-				if (schedule_power_off) {
+			if (strategy::dot == opts.strat) {
+				if (pwr != 0) {
+					gcode_move(px, {}, 0);
+					encode(instruction::power{pwr});
+					if (opts.force_dwell_time)
+						encode(instruction::dwell{opts.force_dwell_time.value()});
+					schedule_power_off = true;
+				} else {
+					if (schedule_power_off) {
+						encode(instruction::power{0});
+						schedule_power_off = false;
+					}
+				}
+			}
+
+			if (strategy::lines == opts.strat) {
+				if (pwr != 0) {
+					gcode_move(px, {}, schedule_power_off ? pwr : 0);
+					schedule_power_off = true;
+				}
+
+				if (pwr == 0 && schedule_power_off) {
 					encode(instruction::power{0});
 					schedule_power_off = false;
 				}
 			}
 		}
-		encode(instruction::power{0});
 
+		encode(instruction::power{0});
 		progress = divide(y, img.height());
 	}
 
@@ -117,7 +132,7 @@ semi::gcodes semi::generator::optimize_treshold_max(semi::gcodes &&gcodes) {
 				coordinate.current.y = value.y.value();
 
 			//if (value.power.has_value())
-				//pwr = value.power;
+			//pwr = value.power;
 		}
 
 		if (pwr.value_or(0) > 0) {

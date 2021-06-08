@@ -23,9 +23,15 @@ struct options {
 u8 black_and_white_treshold_filter(const options &opts, u8 in);
 } // namespace filters
 
+enum strategy {
+	dot,
+	lines
+};
+
 struct options {
 	double power_multiplier{1.0};
 	std::optional<u16> force_dwell_time;
+	strategy strat{strategy::dot};
 	filters::options filters{};
 	bool center_object{true};
 };
