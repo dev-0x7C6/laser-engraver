@@ -11,29 +11,38 @@ std::string gcode::generator::grbl::operator()(const std::monostate) const noexc
 
 std::string gcode::generator::grbl::operator()(const instruction::power v) const noexcept { return "S" + std::to_string(v.duty); }
 
-std::string gcode::generator::grbl::operator()(const instruction::move_mm v) const noexcept {
-	std::string ret{"G0"};
+namespace {
+auto movement(instruction::move v, float precision) -> std::string {
+	std::string ret;
+	auto calc = [&](auto value) -> float {
+		if (v.scale)
+			return divide(value, precision);
+
+		return value;
+	};
+
 	if (v.x)
-		ret += " X" + std::to_string(divide(v.x.value(), m_precision));
+		ret += " X" + std::to_string(calc(v.x.value()));
 
 	if (v.y)
-		ret += " Y" + std::to_string(divide(v.y.value(), m_precision));
+		ret += " Y" + std::to_string(calc(v.y.value()));
 
-	return ret;
-}
-
-std::string gcode::generator::grbl::operator()(const instruction::move_dpi v) const noexcept {
-	std::string ret{"G0"};
-	if (v.x)
-		ret += " X" + std::to_string(divide(v.x.value(), m_precision));
-
-	if (v.y)
-		ret += " Y" + std::to_string(divide(v.y.value(), m_precision));
+	if (v.feedrate)
+		ret += " F" + std::to_string(v.feedrate.value());
 
 	if (v.power)
 		ret += " S" + std::to_string(v.power.value());
 
 	return ret;
+}
+} // namespace
+
+std::string gcode::generator::grbl::operator()(const instruction::move_fast v) const noexcept {
+	return "G0" + movement(v, m_precision);
+}
+
+std::string gcode::generator::grbl::operator()(const instruction::move v) const noexcept {
+	return "G1" + movement(v, m_precision);
 }
 
 std::string gcode::generator::grbl::operator()(const instruction::laser_on) const noexcept { return "M3"; }

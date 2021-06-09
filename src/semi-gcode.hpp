@@ -36,12 +36,22 @@ struct options {
 	bool center_object{true};
 };
 
-using gcode = std::variant<std::monostate, instruction::laser_on, instruction::laser_off, instruction::home, instruction::set_home_position, instruction::dwell, instruction::move_dpi, instruction::move_mm, instruction::power, instruction::wait_for_movement_finish>;
+using gcode = std::variant<
+	std::monostate,
+	instruction::dwell,
+	instruction::move_fast,
+	instruction::home,
+	instruction::laser_off,
+	instruction::laser_on,
+	instruction::move,
+	instruction::power,
+	instruction::set_home_position,
+	instruction::wait_for_movement_finish>;
+
 using gcodes = std::vector<gcode>;
 
 namespace generator {
 semi::gcodes from_image(const QImage &img, semi::options, progress_t &);
-semi::gcodes optimize_treshold_max(semi::gcodes &&);
 semi::gcodes workspace_preview(const QImage &img, semi::options);
 semi::gcodes finalization();
 } // namespace generator

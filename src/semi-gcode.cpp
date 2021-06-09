@@ -50,10 +50,15 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 	auto gcode_move = [&, offsets{center_offset(img, opts)}](const std::optional<float> x, const std::optional<float> y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		encode(instruction::move_dpi{
-			x ? std::optional<float>(x.value() - x_offset) : std::nullopt,
-			y ? std::optional<float>(y.value() - y_offset) : std::nullopt,
-			pwr});
+		instruction::move move;
+
+		if (x)
+			move.x = x.value() - x_offset;
+		if (y)
+			move.y = y.value() - y_offset;
+		move.power = pwr;
+
+		encode(std::move(move));
 	};
 
 	for (auto y = 0; y < img.height(); ++y) {
@@ -112,52 +117,6 @@ struct coordinates {
 	coordinate begin_move;
 };
 
-semi::gcodes semi::generator::optimize_treshold_max(semi::gcodes &&gcodes) {
-	coordinates coordinate;
-	std::optional<i32> pwr;
-	auto laser_on_state{false};
-
-	auto ret = initialization();
-
-	for (auto &&gcode : gcodes) {
-		if (std::holds_alternative<instruction::power>(gcode))
-			pwr = std::get<instruction::power>(gcode).duty;
-
-		if (std::holds_alternative<instruction::move_dpi>(gcode)) {
-			const auto value = std::get<instruction::move_dpi>(gcode);
-			if (value.x.has_value())
-				coordinate.current.x = value.x.value();
-
-			if (value.y.has_value())
-				coordinate.current.y = value.y.value();
-
-			//if (value.power.has_value())
-			//pwr = value.power;
-		}
-
-		if (pwr.value_or(0) > 0) {
-			if (!coordinate.begin_move.x.has_value())
-				coordinate.begin_move.x = coordinate.current.x;
-
-			if (!coordinate.begin_move.y.has_value())
-				coordinate.begin_move.y = coordinate.current.y;
-		} else {
-			if (coordinate.begin_move.x.has_value() &&
-				coordinate.begin_move.y.has_value()) {
-				ret.emplace_back(instruction::move_dpi{coordinate.begin_move.x.value(),
-					coordinate.begin_move.y.value(), 0});
-				ret.emplace_back(instruction::move_dpi{coordinate.current.x.value(),
-					coordinate.current.y.value(), 255});
-				coordinate.begin_move.x.reset();
-				coordinate.begin_move.y.reset();
-			}
-		}
-	}
-
-	move_gcodes(finalization(), ret);
-	return ret;
-}
-
 semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options opts) {
 	auto ret = initialization();
 
@@ -173,7 +132,7 @@ semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options
 
 	auto gcode_move = [&, offsets{center_offset(img, opts)}](const float x, const float y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		encode(instruction::move_dpi{(x - x_offset), (y - y_offset), pwr});
+		encode(instruction::move{(x - x_offset), (y - y_offset), pwr});
 		encode(instruction::wait_for_movement_finish{});
 	};
 

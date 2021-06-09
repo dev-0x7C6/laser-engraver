@@ -18,15 +18,30 @@ struct dwell {
 	u16 delay;
 };
 
-struct move_dpi {
+struct move {
+	constexpr move() noexcept = default;
+	constexpr move(float x, float y) noexcept
+			: x(x)
+			, y(y) {
+	}
+
+	constexpr move(float x, float y, bool scale) noexcept
+			: x(x)
+			, y(y)
+			, scale(scale){};
+
+	constexpr move(const move &) noexcept = default;
+	constexpr move(move &&) noexcept = default;
+
 	std::optional<float> x;
 	std::optional<float> y;
-	std::optional<u8> power;
+	std::optional<float> feedrate;
+	std::optional<float> power;
+	bool scale{true};
 };
 
-struct move_mm {
-	std::optional<float> x;
-	std::optional<float> y;
+struct move_fast : public move {
+	using move::move;
 };
 
 struct power {

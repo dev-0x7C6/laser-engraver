@@ -12,7 +12,6 @@ enum class upload_instruction_ret {
 	timeout,
 };
 
-
 using upload_instruction = std::function<upload_instruction_ret(std::string &&gcode, double)>;
 
 namespace gcode {
@@ -28,13 +27,13 @@ namespace generator {
 template <typename T>
 concept generator_type = requires(T object) {
     { object(instruction::dwell{}) } -> std::same_as<std::string>;
+    { object(instruction::move_fast{}) } -> std::same_as<std::string>;
     { object(instruction::home{}) } -> std::same_as<std::string>;
-    { object(instruction::set_home_position{}) } -> std::same_as<std::string>;
     { object(instruction::laser_off{}) } -> std::same_as<std::string>;
     { object(instruction::laser_on{}) } -> std::same_as<std::string>;
-    { object(instruction::move_dpi{}) } -> std::same_as<std::string>;
-    { object(instruction::move_mm{}) } -> std::same_as<std::string>;
+    { object(instruction::move{}) } -> std::same_as<std::string>;
     { object(instruction::power{}) } -> std::same_as<std::string>;
+    { object(instruction::set_home_position{}) } -> std::same_as<std::string>;
     { object(instruction::wait_for_movement_finish{}) } -> std::same_as<std::string>;
     { object(std::monostate{}) } -> std::same_as<std::string>;
 };
@@ -46,14 +45,14 @@ public:
 
 	[[nodiscard]] auto operator()(const instruction::dwell v) const noexcept -> std::string;
 	[[nodiscard]] auto operator()(const instruction::home) const noexcept -> std::string;
-	[[nodiscard]] auto operator()(const instruction::set_home_position) const noexcept -> std::string;
 	[[nodiscard]] auto operator()(const instruction::laser_off) const noexcept -> std::string;
 	[[nodiscard]] auto operator()(const instruction::laser_on) const noexcept -> std::string;
-	[[nodiscard]] auto operator()(const instruction::move_dpi v) const noexcept -> std::string;
-	[[nodiscard]] auto operator()(const instruction::move_mm v) const noexcept -> std::string;
+	[[nodiscard]] auto operator()(const instruction::move v) const noexcept -> std::string;
+	[[nodiscard]] auto operator()(const instruction::move_fast v) const noexcept -> std::string;
 	[[nodiscard]] auto operator()(const instruction::power v) const noexcept -> std::string;
-	[[nodiscard]] auto operator()(const std::monostate) const noexcept -> std::string;
+	[[nodiscard]] auto operator()(const instruction::set_home_position) const noexcept -> std::string;
 	[[nodiscard]] auto operator()(const instruction::wait_for_movement_finish) const noexcept -> std::string;
+	[[nodiscard]] auto operator()(const std::monostate) const noexcept -> std::string;
 
 private:
 	const double m_precision{calculate_precision(300.0)};
