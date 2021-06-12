@@ -48,7 +48,12 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 	std::optional<u8> last_pwr;
 
-	auto gcode_move = [&, offsets{center_offset(img, opts)}](const std::optional<float> x, const std::optional<float> y, const u16 pwr) {
+	auto gcode_move = [&, offsets{center_offset(img, opts)}](
+						  const std::optional<float> x,
+						  const std::optional<float> y,
+						  const u16 pwr,
+						  const instruction::move::etype type,
+						  std::optional<int> feedrate) {
 		const auto [x_offset, y_offset] = offsets;
 		instruction::move move;
 
@@ -57,28 +62,14 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 		if (y)
 			move.y = y.value() - y_offset;
 
-		move.power = pwr;
-		move.feedrate = opts.feedrate;
-
-		encode(std::move(move));
-	};
-
-	auto gcode_move_fast = [&, offsets{center_offset(img, opts)}](const std::optional<float> x, const std::optional<float> y, const u16 pwr) {
-		const auto [x_offset, y_offset] = offsets;
-		instruction::move_fast move;
-
-		if (x)
-			move.x = x.value() - x_offset;
-		if (y)
-			move.y = y.value() - y_offset;
-
-		move.power = pwr;
-
+		move.power.value = pwr;
+		move.feedrate = feedrate;
+		move.type = type;
 		encode(std::move(move));
 	};
 
 	for (auto y = 0; y < img.height(); ++y) {
-		gcode_move({}, y, 0);
+		gcode_move({}, y, 0, instruction::move::etype::rapid, opts.speed.rapid);
 		auto schedule_power_off{false};
 		for (auto x = 0; x < img.width(); ++x) {
 			const auto px = ((y % 2) == 0) ? x : img.width() - x - 1;
@@ -89,7 +80,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 			if (strategy::dot == opts.strat) {
 				if (pwr != 0) {
-					gcode_move_fast(px, {}, 0);
+					gcode_move(px, {}, 0, instruction::move::etype::rapid, opts.speed.rapid);
 					encode(instruction::power{pwr});
 					if (opts.force_dwell_time)
 						encode(instruction::dwell{opts.force_dwell_time.value()});
@@ -105,20 +96,19 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 			if (strategy::lines == opts.strat) {
 				if (pwr != 0) {
 					if (schedule_power_off)
-						gcode_move(px, {}, pwr);
+						gcode_move(px, {}, pwr, instruction::move::etype::precise, opts.speed.precise);
 					else
-						gcode_move_fast(px, {}, 0);
+						gcode_move(px, {}, 0, instruction::move::etype::rapid, opts.speed.rapid);
 					schedule_power_off = true;
 				}
 
 				if (pwr == 0 && schedule_power_off) {
-					encode(instruction::power{0});
 					schedule_power_off = false;
 				}
 			}
 		}
 
-		encode(instruction::power{0});
+		//encode(instruction::power{0});
 		progress = divide(y, img.height());
 	}
 
@@ -151,7 +141,14 @@ semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options
 
 	auto gcode_move = [&, offsets{center_offset(img, opts)}](const float x, const float y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		encode(instruction::move{(x - x_offset), (y - y_offset), pwr});
+		instruction::move move;
+		move.x = x - x_offset;
+		move.y = y - y_offset;
+		move.type = instruction::move::etype::rapid;
+		move.feedrate = opts.speed.rapid;
+		move.power.value = pwr;
+
+		encode(std::move(move));
 		encode(instruction::wait_for_movement_finish{});
 	};
 

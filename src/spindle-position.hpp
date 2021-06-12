@@ -18,21 +18,27 @@ struct spindle_position {
 		return preview_gcode();
 	}
 
-	constexpr instruction::move_fast move_mm_x(const float step) noexcept {
-		instruction::move_fast move{x += step, y};
-		move.scale = false;
+	constexpr instruction::move move_mm_x(const float step) noexcept {
+		instruction::move move{x += step, y};
+		move.feedrate = 1000;
+		move.type = instruction::move::etype::rapid;
+		move.scale = instruction::move::escale::off;
 		return move;
 	}
 
-	constexpr instruction::move_fast move_mm_y(const float step) noexcept {
-		instruction::move_fast move{x, y += step};
-		move.scale = false;
+	constexpr instruction::move move_mm_y(const float step) noexcept {
+		instruction::move move{x, y += step};
+		move.feedrate = 1000;
+		move.type = instruction::move::etype::rapid;
+		move.scale = instruction::move::escale::off;
 		return move;
 	}
 
-	constexpr instruction::move_fast reset_mm() noexcept {
-		instruction::move_fast move{x = 0.0f, y = 0.0f};
-		move.scale = false;
+	constexpr instruction::move reset_mm() noexcept {
+		instruction::move move{x = 0.0f, y = 0.0f};
+		move.feedrate = 1000;
+		move.type = instruction::move::etype::rapid;
+		move.scale = instruction::move::escale::off;
 		return move;
 	}
 

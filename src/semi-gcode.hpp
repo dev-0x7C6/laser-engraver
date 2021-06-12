@@ -28,11 +28,16 @@ enum strategy {
 	lines
 };
 
+struct feedrate {
+	std::optional<float> rapid;
+	std::optional<float> precise;
+};
+
 struct options {
 	double power_multiplier{1.0};
 	std::optional<u16> force_dwell_time;
 	strategy strat{strategy::dot};
-	std::optional<float> feedrate;
+	feedrate speed;
 	filters::options filters{};
 	bool center_object{true};
 };
@@ -40,7 +45,6 @@ struct options {
 using gcode = std::variant<
 	std::monostate,
 	instruction::dwell,
-	instruction::move_fast,
 	instruction::home,
 	instruction::laser_off,
 	instruction::laser_on,
