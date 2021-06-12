@@ -56,6 +56,22 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 			move.x = x.value() - x_offset;
 		if (y)
 			move.y = y.value() - y_offset;
+
+		move.power = pwr;
+		move.feedrate = opts.feedrate;
+
+		encode(std::move(move));
+	};
+
+	auto gcode_move_fast = [&, offsets{center_offset(img, opts)}](const std::optional<float> x, const std::optional<float> y, const u16 pwr) {
+		const auto [x_offset, y_offset] = offsets;
+		instruction::move_fast move;
+
+		if (x)
+			move.x = x.value() - x_offset;
+		if (y)
+			move.y = y.value() - y_offset;
+
 		move.power = pwr;
 
 		encode(std::move(move));
@@ -73,7 +89,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 			if (strategy::dot == opts.strat) {
 				if (pwr != 0) {
-					gcode_move(px, {}, 0);
+					gcode_move_fast(px, {}, 0);
 					encode(instruction::power{pwr});
 					if (opts.force_dwell_time)
 						encode(instruction::dwell{opts.force_dwell_time.value()});
@@ -88,7 +104,10 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 			if (strategy::lines == opts.strat) {
 				if (pwr != 0) {
-					gcode_move(px, {}, schedule_power_off ? pwr : 0);
+					if (schedule_power_off)
+						gcode_move(px, {}, pwr);
+					else
+						gcode_move_fast(px, {}, 0);
 					schedule_power_off = true;
 				}
 

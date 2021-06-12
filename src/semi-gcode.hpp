@@ -32,6 +32,7 @@ struct options {
 	double power_multiplier{1.0};
 	std::optional<u16> force_dwell_time;
 	strategy strat{strategy::dot};
+	std::optional<float> feedrate;
 	filters::options filters{};
 	bool center_object{true};
 };
