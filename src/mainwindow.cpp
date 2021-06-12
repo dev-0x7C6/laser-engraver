@@ -280,6 +280,15 @@ auto MainWindow::semi_opts_from_ui() const noexcept -> semi::options {
 	ret.power_multiplier = divide(m_ui->laser_pwr->value(), m_ui->laser_pwr->maximum());
 	ret.center_object = m_ui->engraveObjectFromCenter->isChecked();
 	ret.force_dwell_time = 0;
+
+	if (m_ui->dot_pattern->isEnabled())
+		ret.strat = semi::strategy::dot;
+
+	if (m_ui->line_by_line->isEnabled())
+		ret.strat = semi::strategy::lines;
+
+	ret.feedrate = m_ui->feedrate->value();
+
 	return ret;
 }
 
