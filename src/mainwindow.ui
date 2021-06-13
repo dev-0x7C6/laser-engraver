@@ -829,6 +829,51 @@
              </widget>
             </item>
             <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_26">
+              <item>
+               <widget class="QLabel" name="label_16">
+                <property name="minimumSize">
+                 <size>
+                  <width>100</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Repeat line:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="repeat_line_times">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="prefix">
+                 <string/>
+                </property>
+                <property name="suffix">
+                 <string> times</string>
+                </property>
+                <property name="decimals">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <double>10000.000000000000000</double>
+                </property>
+                <property name="stepType">
+                 <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+                </property>
+                <property name="value">
+                 <double>0.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_25">
               <item>
                <widget class="QLabel" name="label_15">

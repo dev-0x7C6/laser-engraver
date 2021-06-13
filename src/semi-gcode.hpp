@@ -36,7 +36,7 @@ struct feedrate {
 struct options {
 	float spindle_power_multiplier{1.0f};
 	int spindle_max_power{255};
-
+	u32 repeat_line_count{0};
 	std::optional<u16> force_dwell_time;
 	strategy strat{strategy::dot};
 	feedrate speed;

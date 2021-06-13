@@ -73,44 +73,48 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 	encode(instruction::move(instruction::move::etype::rapid, opts.speed.rapid));
 	encode(instruction::move(instruction::move::etype::precise, opts.speed.precise));
 
-	for (auto y = 0; y < img.height(); ++y) {
-		gcode_move({}, y, 0, instruction::move::etype::rapid);
-		auto schedule_power_off{false};
-		for (auto x = 0; x < img.width(); ++x) {
-			const auto px = ((y % 2) == 0) ? x : img.width() - x - 1;
-			const auto pwr = semi::calculate::power(img.pixel(px, y), opts);
+	auto line_count{0};
 
-			if (strategy::dot == opts.strat) {
-				if (pwr != 0) {
-					gcode_move(px, {}, 0, instruction::move::etype::rapid);
-					encode(instruction::power{pwr});
-					if (opts.force_dwell_time)
-						encode(instruction::dwell{opts.force_dwell_time.value()});
-					schedule_power_off = true;
-				} else {
-					if (schedule_power_off) {
-						encode(instruction::power{0});
-						schedule_power_off = false;
+	for (auto y = 0; y < img.height(); ++y) {
+		for (auto repeat = 0u; repeat <= opts.repeat_line_count; ++repeat) {
+			gcode_move({}, y, 0, instruction::move::etype::rapid);
+			auto schedule_power_off{false};
+			for (auto x = 0; x < img.width(); ++x) {
+				const auto px = ((line_count % 2) == 0) ? x : img.width() - x - 1;
+				const auto pwr = semi::calculate::power(img.pixel(px, y), opts);
+
+				if (strategy::dot == opts.strat) {
+					if (pwr != 0) {
+						gcode_move(px, {}, 0, instruction::move::etype::rapid);
+						encode(instruction::power{pwr});
+						if (opts.force_dwell_time)
+							encode(instruction::dwell{opts.force_dwell_time.value()});
+						schedule_power_off = true;
+					} else {
+						if (schedule_power_off) {
+							encode(instruction::power{0});
+							schedule_power_off = false;
+						}
 					}
 				}
+
+				if (strategy::lines == opts.strat) {
+					if (pwr != 0) {
+						if (schedule_power_off)
+							gcode_move(px, {}, pwr, instruction::move::etype::precise);
+						else
+							gcode_move(px, {}, 0, instruction::move::etype::rapid);
+						schedule_power_off = true;
+					}
+
+					if (pwr == 0 && schedule_power_off)
+						schedule_power_off = false;
+				}
 			}
 
-			if (strategy::lines == opts.strat) {
-				if (pwr != 0) {
-					if (schedule_power_off)
-						gcode_move(px, {}, pwr, instruction::move::etype::precise);
-					else
-						gcode_move(px, {}, 0, instruction::move::etype::rapid);
-					schedule_power_off = true;
-				}
-
-				if (pwr == 0 && schedule_power_off) {
-					schedule_power_off = false;
-				}
-			}
+			progress = divide(y, img.height());
+			line_count++;
 		}
-
-		progress = divide(y, img.height());
 	}
 
 	move_gcodes(finalization(), ret);

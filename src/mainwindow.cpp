@@ -289,6 +289,7 @@ auto MainWindow::semi_opts_from_ui() const noexcept -> semi::options {
 
 	ret.speed.rapid = m_ui->fast_moves->value();
 	ret.speed.precise = m_ui->slow_moves->value();
+	ret.repeat_line_count = m_ui->repeat_line_times->value();
 
 	return ret;
 }
