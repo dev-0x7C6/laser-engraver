@@ -111,23 +111,12 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 			}
 		}
 
-		//encode(instruction::power{0});
 		progress = divide(y, img.height());
 	}
 
 	move_gcodes(finalization(), ret);
 	return ret;
 }
-
-struct coordinate {
-	std::optional<float> x;
-	std::optional<float> y;
-};
-
-struct coordinates {
-	coordinate current;
-	coordinate begin_move;
-};
 
 semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options opts) {
 	auto ret = initialization();
