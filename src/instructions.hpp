@@ -44,6 +44,10 @@ struct move {
 			, y(y)
 			, scale(type){};
 
+	constexpr move(etype type, std::optional<int> feedrate) noexcept
+			: feedrate(feedrate)
+			, type(type) {}
+
 	constexpr move(const move &) noexcept = default;
 	constexpr move(move &&) noexcept = default;
 

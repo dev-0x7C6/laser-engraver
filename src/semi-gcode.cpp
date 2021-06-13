@@ -53,7 +53,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 						  const std::optional<float> y,
 						  const u16 pwr,
 						  const instruction::move::etype type,
-						  std::optional<int> feedrate) {
+						  std::optional<int> feedrate = {}) {
 		const auto [x_offset, y_offset] = offsets;
 		instruction::move move;
 
@@ -68,8 +68,11 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 		encode(std::move(move));
 	};
 
+	encode(instruction::move(instruction::move::etype::rapid, opts.speed.rapid));
+	encode(instruction::move(instruction::move::etype::precise, opts.speed.precise));
+
 	for (auto y = 0; y < img.height(); ++y) {
-		gcode_move({}, y, 0, instruction::move::etype::rapid, opts.speed.rapid);
+		gcode_move({}, y, 0, instruction::move::etype::rapid);
 		auto schedule_power_off{false};
 		for (auto x = 0; x < img.width(); ++x) {
 			const auto px = ((y % 2) == 0) ? x : img.width() - x - 1;
@@ -80,7 +83,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 
 			if (strategy::dot == opts.strat) {
 				if (pwr != 0) {
-					gcode_move(px, {}, 0, instruction::move::etype::rapid, opts.speed.rapid);
+					gcode_move(px, {}, 0, instruction::move::etype::rapid);
 					encode(instruction::power{pwr});
 					if (opts.force_dwell_time)
 						encode(instruction::dwell{opts.force_dwell_time.value()});
@@ -96,9 +99,9 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 			if (strategy::lines == opts.strat) {
 				if (pwr != 0) {
 					if (schedule_power_off)
-						gcode_move(px, {}, pwr, instruction::move::etype::precise, opts.speed.precise);
+						gcode_move(px, {}, pwr, instruction::move::etype::precise);
 					else
-						gcode_move(px, {}, 0, instruction::move::etype::rapid, opts.speed.rapid);
+						gcode_move(px, {}, 0, instruction::move::etype::rapid);
 					schedule_power_off = true;
 				}
 
