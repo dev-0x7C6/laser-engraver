@@ -20,16 +20,27 @@ TEST(qt_colors, make_sure) {
 
 TEST(semi_filters, black_and_white_filter) {
 	semi::filters::options filters;
-	filters.black_and_white_treshold = 1;
-	EXPECT_EQ(semi::filters::black_and_white_treshold_filter(filters, 0), 0);
-	EXPECT_EQ(semi::filters::black_and_white_treshold_filter(filters, 1), 255);
-	EXPECT_EQ(semi::filters::black_and_white_treshold_filter(filters, 255), 255);
+	filters.black_and_white_treshold = 0.01f;
+	EXPECT_DOUBLE_EQ(semi::filters::black_and_white_treshold_filter(filters, 0.0f), 0.0f);
+	EXPECT_DOUBLE_EQ(semi::filters::black_and_white_treshold_filter(filters, 0.01f), 1.0f);
+	EXPECT_DOUBLE_EQ(semi::filters::black_and_white_treshold_filter(filters, 1.0f), 1.0f);
+}
 
-	for (auto i = 0; i < 255; ++i) {
-		filters.black_and_white_treshold = i;
-		for (auto j = 0; j < 255; ++j)
-			EXPECT_EQ(semi::filters::black_and_white_treshold_filter(filters, j), j >= i ? 255 : 0);
-	}
+TEST(calculations, power) {
+	semi::options opts;
+	opts.spindle_max_power = 1000;
+	opts.spindle_power_multiplier = 1.0f;
+
+	EXPECT_DOUBLE_EQ(semi::calculate::power(QColor(Qt::black).rgb(), opts), 1000);
+	opts.spindle_power_multiplier = 0.5f;
+
+	EXPECT_DOUBLE_EQ(semi::calculate::power(QColor(Qt::black).rgb(), opts), 500);
+	opts.spindle_power_multiplier = 0.1f;
+
+	EXPECT_DOUBLE_EQ(semi::calculate::power(QColor(Qt::black).rgb(), opts), 100);
+	opts.spindle_power_multiplier = 0.001f;
+
+	EXPECT_DOUBLE_EQ(semi::calculate::power(QColor(Qt::black).rgb(), opts), 1);
 }
 
 TEST(semi_generator, from_image) {

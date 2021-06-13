@@ -277,7 +277,7 @@ auto MainWindow::gcode_opts_from_ui() const noexcept -> gcode::options {
 
 auto MainWindow::semi_opts_from_ui() const noexcept -> semi::options {
 	semi::options ret;
-	ret.power_multiplier = divide(m_ui->laser_pwr->value(), m_ui->laser_pwr->maximum());
+	ret.spindle_power_multiplier = divide(m_ui->laser_pwr->value(), m_ui->laser_pwr->maximum());
 	ret.center_object = m_ui->engraveObjectFromCenter->isChecked();
 	ret.force_dwell_time = 0;
 

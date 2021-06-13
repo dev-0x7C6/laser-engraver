@@ -17,10 +17,10 @@ namespace semi {
 
 namespace filters {
 struct options {
-	std::optional<u8> black_and_white_treshold;
+	std::optional<float> black_and_white_treshold;
 };
 
-u8 black_and_white_treshold_filter(const options &opts, u8 in);
+float black_and_white_treshold_filter(const options &opts, float in);
 } // namespace filters
 
 enum strategy {
@@ -34,7 +34,9 @@ struct feedrate {
 };
 
 struct options {
-	double power_multiplier{1.0};
+	float spindle_power_multiplier{1.0f};
+	int spindle_max_power{255};
+
 	std::optional<u16> force_dwell_time;
 	strategy strat{strategy::dot};
 	feedrate speed;
@@ -54,6 +56,10 @@ using gcode = std::variant<
 	instruction::wait_for_movement_finish>;
 
 using gcodes = std::vector<gcode>;
+
+namespace calculate {
+i32 power(int color, const semi::options &opts) noexcept;
+}
 
 namespace generator {
 semi::gcodes from_image(const QImage &img, semi::options, progress_t &);

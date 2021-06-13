@@ -35,6 +35,13 @@ semi::gcodes initialization() {
 }
 } // namespace
 
+i32 semi::calculate::power(const int color, const options &opts) noexcept {
+	const auto qcolor = QColor::fromRgb(color);
+	const auto f1 = filters::black_and_white_treshold_filter(opts.filters, qcolor.blackF());
+	const auto pwr = std::min(opts.spindle_max_power, static_cast<int>(opts.spindle_max_power * opts.spindle_power_multiplier * f1));
+	return pwr;
+}
+
 semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, progress_t &progress) {
 	raii_progress progress_raii(progress);
 	auto ret = initialization();
@@ -71,10 +78,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 		auto schedule_power_off{false};
 		for (auto x = 0; x < img.width(); ++x) {
 			const auto px = ((y % 2) == 0) ? x : img.width() - x - 1;
-			const auto color = QColor::fromRgb(img.pixel(px, y));
-
-			auto c = filters::black_and_white_treshold_filter(opts.filters, color.black());
-			const auto pwr = std::min(255, static_cast<int>(c * opts.power_multiplier));
+			const auto pwr = semi::calculate::power(img.pixel(px, y), opts);
 
 			if (strategy::dot == opts.strat) {
 				if (pwr != 0) {
@@ -150,8 +154,8 @@ semi::gcodes semi::generator::finalization() {
 	return {instruction::power{0}, instruction::home{}, instruction::wait_for_movement_finish{}, instruction::laser_off{}};
 }
 
-u8 semi::filters::black_and_white_treshold_filter(const options &opts, const u8 in) {
+float semi::filters::black_and_white_treshold_filter(const options &opts, const float in) {
 	if (opts.black_and_white_treshold)
-		return (opts.black_and_white_treshold.value() > in) ? 0 : 255;
+		return (opts.black_and_white_treshold.value() > in) ? 0.0f : 1.0f;
 	return in;
 }
