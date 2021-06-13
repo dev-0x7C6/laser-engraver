@@ -53,8 +53,8 @@ std::string gcode::generator::grbl::operator()(const instruction::move v) const 
 	if (v.feedrate)
 		ret += " F" + std::to_string(v.feedrate.value());
 
-	if (v.power.value)
-		ret += " S" + std::to_string(v.power.value.value());
+	if (v.pwr)
+		ret += " S" + std::to_string(v.pwr.value().duty);
 
 	return ret;
 }

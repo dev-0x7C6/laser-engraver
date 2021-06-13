@@ -18,8 +18,11 @@ struct dwell {
 	u16 delay;
 };
 
-struct power_type {
-	std::optional<int> value;
+struct power {
+	constexpr power() = default;
+	constexpr power(const i32 duty) noexcept
+			: duty(duty) {}
+	i32 duty{};
 };
 
 struct move {
@@ -44,22 +47,19 @@ struct move {
 			, y(y)
 			, scale(type){};
 
-	constexpr move(etype type, std::optional<int> feedrate) noexcept
+	constexpr move(etype type, std::optional<int> feedrate = {}, std::optional<power> pwr = {}) noexcept
 			: feedrate(feedrate)
-			, type(type) {}
+			, type(type)
+			, pwr(pwr) {}
 
 	constexpr move(const move &) noexcept = default;
 	constexpr move(move &&) noexcept = default;
 
 	std::optional<float> x;
 	std::optional<float> y;
-	power_type power;
+	std::optional<power> pwr;
 	std::optional<int> feedrate;
 	escale scale{escale::dpi};
 	etype type{etype::precise};
-};
-
-struct power {
-	i32 duty;
 };
 } // namespace instruction

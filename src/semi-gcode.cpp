@@ -46,8 +46,6 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 		ret.emplace_back(std::forward<decltype(value)>(value));
 	};
 
-	std::optional<u8> last_pwr;
-
 	auto gcode_move = [&, offsets{center_offset(img, opts)}](
 						  const std::optional<float> x,
 						  const std::optional<float> y,
@@ -55,16 +53,13 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 						  const instruction::move::etype type,
 						  std::optional<int> feedrate = {}) {
 		const auto [x_offset, y_offset] = offsets;
-		instruction::move move;
+		instruction::move move(type, feedrate, instruction::power(pwr));
 
 		if (x)
 			move.x = x.value() - x_offset;
 		if (y)
 			move.y = y.value() - y_offset;
 
-		move.power.value = pwr;
-		move.feedrate = feedrate;
-		move.type = type;
 		encode(std::move(move));
 	};
 
@@ -128,17 +123,14 @@ semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options
 		ret.emplace_back(std::forward<decltype(value)>(value));
 	};
 
-	const auto w = static_cast<i16>(img.width());
-	const auto h = static_cast<i16>(img.height());
+	const auto w = static_cast<float>(img.width());
+	const auto h = static_cast<float>(img.height());
 
 	auto gcode_move = [&, offsets{center_offset(img, opts)}](const float x, const float y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		instruction::move move;
+		instruction::move move(instruction::move::etype::rapid, opts.speed.rapid, instruction::power(pwr));
 		move.x = x - x_offset;
 		move.y = y - y_offset;
-		move.type = instruction::move::etype::rapid;
-		move.feedrate = opts.speed.rapid;
-		move.power.value = pwr;
 
 		encode(std::move(move));
 		encode(instruction::wait_for_movement_finish{});
