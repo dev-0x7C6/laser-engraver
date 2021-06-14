@@ -42,6 +42,51 @@ i32 semi::calculate::power(const int color, const options &opts) noexcept {
 	return pwr;
 }
 
+class x_move_scheduler {
+public:
+	void insert(const instruction::move &rhs, const semi::options &opts) {
+		auto engraving_move = [&](const instruction::move &rhs) -> std::optional<std::pair<instruction::move, instruction::move>> {
+			if (rhs.pwr == 0)
+				return std::nullopt;
+
+			instruction::move s = rhs;
+			instruction::move e = rhs;
+			s.pwr = 0;
+			s.feedrate = opts.speed.rapid;
+			s.type = instruction::move::etype::rapid;
+			e.x += 1;
+			return std::make_pair(s, e);
+		};
+
+		if (!m_move_pair) {
+			m_move_pair = engraving_move(rhs);
+		} else {
+			if (m_move_pair->second.is_next_move_adaptive(rhs)) {
+				m_move_pair->second = rhs;
+			} else {
+				m_moves.push_back(m_move_pair->first);
+				m_moves.push_back(m_move_pair->second);
+				m_move_pair = engraving_move(rhs);
+			}
+		}
+	}
+
+	auto finish() {
+		if (m_move_pair) {
+			m_moves.push_back(m_move_pair->first);
+			m_moves.push_back(m_move_pair->second);
+			m_move_pair->second.pwr = 0;
+			m_moves.push_back(m_move_pair->second);
+		}
+
+		return std::move(m_moves);
+	}
+
+private:
+	std::optional<std::pair<instruction::move, instruction::move>> m_move_pair;
+	std::vector<instruction::move> m_moves;
+};
+
 semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, progress_t &progress) {
 	raii_progress progress_raii(progress);
 	auto ret = initialization();
@@ -58,7 +103,7 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 						  const std::optional<float> y,
 						  const u16 pwr,
 						  const instruction::move::etype type,
-						  std::optional<int> feedrate = {}) {
+						  int feedrate = {}) {
 		const auto [x_offset, y_offset] = offsets;
 		instruction::move move(type, feedrate, instruction::power(pwr));
 
@@ -70,15 +115,18 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 		encode(std::move(move));
 	};
 
-	encode(instruction::move(instruction::move::etype::rapid, opts.speed.rapid));
-	encode(instruction::move(instruction::move::etype::precise, opts.speed.precise));
+	auto offsets{center_offset(img, opts)};
+	const auto [x_offset, y_offset] = offsets;
 
 	auto line_count{0};
 
 	for (auto y = 0; y < img.height(); ++y) {
+		gcode_move({}, y, 0, instruction::move::etype::precise);
+
 		for (auto repeat = 0u; repeat <= opts.repeat_line_count; ++repeat) {
-			gcode_move({}, y, 0, instruction::move::etype::rapid);
-			auto schedule_power_off{false};
+			auto schedule_power_off{true};
+			x_move_scheduler sched;
+
 			for (auto x = 0; x < img.width(); ++x) {
 				const auto px = ((line_count % 2) == 0) ? x : img.width() - x - 1;
 				const auto pwr = semi::calculate::power(img.pixel(px, y), opts);
@@ -99,22 +147,25 @@ semi::gcodes semi::generator::from_image(const QImage &img, semi::options opts, 
 				}
 
 				if (strategy::lines == opts.strat) {
-					if (pwr != 0) {
-						if (schedule_power_off)
-							gcode_move(px, {}, pwr, instruction::move::etype::precise);
-						else
-							gcode_move(px, {}, 0, instruction::move::etype::rapid);
-						schedule_power_off = true;
-					}
+					const auto type = (pwr == 0) ? instruction::move::etype::rapid :
+													 instruction::move::etype::precise;
+					const auto feedrate = (pwr == 0) ? opts.speed.rapid :
+														 opts.speed.precise;
+					instruction::move m(type, feedrate, pwr);
+					m.x = px - x_offset;
+					m.y = y - y_offset;
 
-					if (pwr == 0 && schedule_power_off)
-						schedule_power_off = false;
+					sched.insert(m, opts);
 				}
 			}
 
-			progress = divide(y, img.height());
+			for (auto &&moves : sched.finish())
+				ret.emplace_back(std::move(moves));
+
 			line_count++;
 		}
+
+		progress = divide(y, img.height());
 	}
 
 	move_gcodes(finalization(), ret);

@@ -28,8 +28,8 @@ auto code(const instruction::move &move) -> const char * {
 
 auto convert(const float v) -> std::string {
 	std::string ret;
-	ret.resize(std::snprintf(nullptr, 0, "%.3f", v) + 1, 0);
-	std::snprintf(ret.data(), ret.size(), "%.3f", v);
+	ret.resize(std::snprintf(nullptr, 0, "%.3f", v), 0);
+	std::snprintf(ret.data(), ret.size() + 1, "%.3f", v);
 	return ret;
 }
 
@@ -44,17 +44,10 @@ std::string gcode::generator::grbl::operator()(const instruction::move v) const 
 		return value;
 	};
 
-	if (v.x)
-		ret += " X" + convert(calc(v.x.value()));
-
-	if (v.y)
-		ret += " Y" + convert(calc(v.y.value()));
-
-	if (v.feedrate)
-		ret += " F" + std::to_string(v.feedrate.value());
-
-	if (v.pwr)
-		ret += " S" + std::to_string(v.pwr.value().duty);
+	ret += " X" + convert(calc(v.x));
+	ret += " Y" + convert(calc(v.y));
+	ret += " F" + std::to_string(v.feedrate);
+	ret += " S" + std::to_string(v.pwr.duty);
 
 	return ret;
 }

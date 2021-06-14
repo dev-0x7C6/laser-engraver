@@ -19,10 +19,17 @@ struct dwell {
 };
 
 struct power {
-	constexpr power() = default;
+	constexpr power() noexcept = default;
 	constexpr power(const i32 duty) noexcept
 			: duty(duty) {}
+	constexpr power(const power &) noexcept = default;
+	constexpr power(power &&) noexcept = default;
+	constexpr power &operator=(const power &) noexcept = default;
+	constexpr power &operator=(power &&) noexcept = default;
+
 	i32 duty{};
+
+	constexpr bool operator<=>(const power &rhs) const noexcept = default;
 };
 
 struct move {
@@ -47,7 +54,7 @@ struct move {
 			, y(y)
 			, scale(type){};
 
-	constexpr move(etype type, std::optional<int> feedrate = {}, std::optional<power> pwr = {}) noexcept
+	constexpr move(etype type, int feedrate = {}, power pwr = {}) noexcept
 			: feedrate(feedrate)
 			, type(type)
 			, pwr(pwr) {}
@@ -55,10 +62,23 @@ struct move {
 	constexpr move(const move &) noexcept = default;
 	constexpr move(move &&) noexcept = default;
 
-	std::optional<float> x;
-	std::optional<float> y;
-	std::optional<power> pwr;
-	std::optional<int> feedrate;
+	constexpr move &operator=(const move &) noexcept = default;
+	constexpr move &operator=(move &&) noexcept = default;
+
+	constexpr auto is_next_move_adaptive(const move &rhs) {
+		bool is_adaptive{true};
+		is_adaptive &= (y == rhs.y);
+		is_adaptive &= (pwr == rhs.pwr);
+		is_adaptive &= (feedrate == rhs.feedrate);
+		is_adaptive &= (scale == rhs.scale);
+		is_adaptive &= (type == rhs.type);
+		return is_adaptive;
+	}
+
+	float x{};
+	float y{};
+	power pwr{0};
+	int feedrate{1000};
 	escale scale{escale::dpi};
 	etype type{etype::precise};
 };

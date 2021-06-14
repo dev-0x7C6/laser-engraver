@@ -29,8 +29,8 @@ enum strategy {
 };
 
 struct feedrate {
-	std::optional<float> rapid;
-	std::optional<float> precise;
+	float rapid{2000};
+	float precise{1000};
 };
 
 struct options {
