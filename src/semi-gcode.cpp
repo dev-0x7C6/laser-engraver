@@ -58,11 +58,13 @@ public:
 		}
 	}
 
-	void movement(const float x, const float y, const float pwr) {
+	void movement(const float x, const float y, const i32 pwr) {
 		instruction::move current_move;
 		current_move.x = x;
 		current_move.y = y;
 		current_move.pwr.duty = pwr;
+		current_move.feedrate = (pwr == 0) ? options.speed.rapid : options.speed.precise;
+		current_move.type = (pwr == 0) ? instruction::move::etype::rapid : instruction::move::etype::precise;
 
 		auto engraving_move = [&](const instruction::move &rhs) -> std::optional<std::pair<instruction::move, instruction::move>> {
 			if (rhs.pwr == 0)
@@ -74,8 +76,6 @@ public:
 			begin_move.feedrate = options.speed.rapid;
 			begin_move.type = instruction::move::etype::rapid;
 			end_move.x += 1;
-			end_move.feedrate = options.speed.precise;
-			end_move.type = instruction::move::etype::precise;
 			return std::make_pair(begin_move, end_move);
 		};
 
