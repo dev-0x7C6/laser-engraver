@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>404</width>
-    <height>327</height>
+    <height>336</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -189,7 +189,7 @@
         <string> mm/min</string>
        </property>
        <property name="maximum">
-        <double>10000.000000000000000</double>
+        <double>1000000.000000000000000</double>
        </property>
        <property name="stepType">
         <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
@@ -231,7 +231,7 @@
         <string> mm/min</string>
        </property>
        <property name="maximum">
-        <double>10000.000000000000000</double>
+        <double>1000000.000000000000000</double>
        </property>
        <property name="stepType">
         <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
@@ -273,7 +273,7 @@
         <string> mm/min</string>
        </property>
        <property name="maximum">
-        <double>10000.000000000000000</double>
+        <double>1000000.000000000000000</double>
        </property>
        <property name="stepType">
         <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
@@ -322,7 +322,7 @@
         <string> mm/s²</string>
        </property>
        <property name="maximum">
-        <double>10000.000000000000000</double>
+        <double>1000000.000000000000000</double>
        </property>
        <property name="stepType">
         <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
@@ -364,7 +364,7 @@
         <string> mm/s²</string>
        </property>
        <property name="maximum">
-        <double>10000.000000000000000</double>
+        <double>1000000.000000000000000</double>
        </property>
        <property name="stepType">
         <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
@@ -406,7 +406,7 @@
         <string> mm/s²</string>
        </property>
        <property name="maximum">
-        <double>10000.000000000000000</double>
+        <double>1000000.000000000000000</double>
        </property>
        <property name="stepType">
         <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
