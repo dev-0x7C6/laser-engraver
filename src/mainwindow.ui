@@ -43,7 +43,7 @@
         <enum>QTabWidget::West</enum>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -903,7 +903,7 @@
                  <string> mm/min</string>
                 </property>
                 <property name="maximum">
-                 <double>10000.000000000000000</double>
+                 <double>1000000.000000000000000</double>
                 </property>
                 <property name="stepType">
                  <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
@@ -945,7 +945,7 @@
                  <string> mm/min</string>
                 </property>
                 <property name="maximum">
-                 <double>10000.000000000000000</double>
+                 <double>1000000.000000000000000</double>
                 </property>
                 <property name="stepType">
                  <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
