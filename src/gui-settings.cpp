@@ -84,6 +84,7 @@ GuiSettings::GuiSettings(Ui::MainWindow &ui, QSettings &settings)
 
 	{
 		raii_settings_group _(settings, "engraver");
+		ui.feedrate->setValue(settings.value("feedrate", 1000).toInt());
 		ui.engraveObjectFromCenter->setChecked(settings.value("engrave_object_from_center", false).toBool());
 		ui.engraveFromCurrentPosition->setChecked(settings.value("engrave_from_current_positon", true).toBool());
 	}
@@ -117,6 +118,7 @@ GuiSettings::~GuiSettings() {
 
 	{
 		raii_settings_group _(settings, "engraver");
+		settings.setValue("feedrate", ui.feedrate->value());
 		settings.setValue("engrave_object_from_center", ui.engraveObjectFromCenter->isChecked());
 		settings.setValue("engrave_from_current_positon", ui.engraveFromCurrentPosition->isChecked());
 	}
