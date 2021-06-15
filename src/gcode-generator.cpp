@@ -49,12 +49,14 @@ std::string gcode::generator::grbl::operator()(const instruction::move v) const 
 
 	if (instruction::move::etype::rapid != v.type) {
 		if (m_last_feedrate != v.feedrate) {
-			ret += " F" + std::to_string(v.feedrate);
+			if (v.feedrate >= 0)
+				ret += " F" + std::to_string(v.feedrate);
 			m_last_feedrate = v.feedrate;
 		}
 	}
 
-	ret += " S" + std::to_string(v.pwr.duty);
+	if (v.pwr.duty >= 0)
+		ret += " S" + std::to_string(v.pwr.duty);
 
 	return ret;
 }
