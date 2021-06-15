@@ -87,6 +87,7 @@ GuiSettings::GuiSettings(Ui::MainWindow &ui, QSettings &settings)
 		ui.feedrate->setValue(settings.value("feedrate", 1000).toInt());
 		ui.line_pattern->setChecked(settings.value("line_pattern", true).toBool());
 		ui.dot_pattern->setChecked(settings.value("dot_pattern", false).toBool());
+		ui.repeat_line_times->setValue(settings.value("repeat_line_times", 0).toInt());
 		ui.engraveObjectFromCenter->setChecked(settings.value("engrave_object_from_center", false).toBool());
 		ui.engraveFromCurrentPosition->setChecked(settings.value("engrave_from_current_positon", true).toBool());
 	}
@@ -123,6 +124,7 @@ GuiSettings::~GuiSettings() {
 		settings.setValue("engrave_from_current_positon", ui.engraveFromCurrentPosition->isChecked());
 		settings.setValue("engrave_object_from_center", ui.engraveObjectFromCenter->isChecked());
 		settings.setValue("feedrate", ui.feedrate->value());
+		settings.setValue("repeat_line_times", ui.repeat_line_times->value());
 		settings.setValue("dot_pattern", ui.dot_pattern->isChecked());
 		settings.setValue("line_pattern", ui.line_pattern->isChecked());
 	}
