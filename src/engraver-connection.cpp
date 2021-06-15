@@ -35,8 +35,8 @@ auto EngraverConnection::process(std::chrono::milliseconds timeout) -> upload_in
 		timer.start();
 
 		for (;;) {
-			m_port.waitForReadyRead(1);
-			QApplication::processEvents(QEventLoop::AllEvents, 1);
+			m_port.waitForReadyRead(10);
+			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 10);
 
 			if (const auto response = m_port.readLine(); !response.isEmpty()) {
 				emit gcodeReceived(QString::fromUtf8(response));
