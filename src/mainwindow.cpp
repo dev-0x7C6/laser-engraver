@@ -287,6 +287,9 @@ auto MainWindow::semi_opts_from_ui() const noexcept -> semi::options {
 	if (m_ui->line_pattern->isEnabled())
 		ret.strat = semi::strategy::lines;
 
+	if (m_ui->black_and_white_filter_treshold->value() > 0.0f)
+		ret.filters.black_and_white_treshold = m_ui->black_and_white_filter_treshold->value();
+
 	ret.speed.value = m_ui->feedrate->value();
 	ret.repeat_line_count = m_ui->repeat_line_times->value();
 
