@@ -287,8 +287,7 @@ auto MainWindow::semi_opts_from_ui() const noexcept -> semi::options {
 	if (m_ui->line_by_line->isEnabled())
 		ret.strat = semi::strategy::lines;
 
-	ret.speed.rapid = m_ui->fast_moves->value();
-	ret.speed.precise = m_ui->slow_moves->value();
+	ret.speed.value = m_ui->feedrate->value();
 	ret.repeat_line_count = m_ui->repeat_line_times->value();
 
 	return ret;

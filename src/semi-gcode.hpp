@@ -29,8 +29,7 @@ enum strategy {
 };
 
 struct feedrate {
-	float rapid{2000};
-	float precise{1000};
+	i32 value{1000};
 };
 
 struct options {

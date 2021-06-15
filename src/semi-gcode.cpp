@@ -63,7 +63,7 @@ public:
 		current_move.x = x;
 		current_move.y = y;
 		current_move.pwr.duty = pwr;
-		current_move.feedrate = (pwr == 0) ? options.speed.rapid : options.speed.precise;
+		current_move.feedrate = options.speed.value;
 		current_move.type = (pwr == 0) ? instruction::move::etype::rapid : instruction::move::etype::precise;
 
 		auto engraving_move = [&](const instruction::move &rhs) -> std::optional<std::pair<instruction::move, instruction::move>> {
@@ -73,7 +73,7 @@ public:
 			instruction::move begin_move = rhs;
 			instruction::move end_move = rhs;
 			begin_move.pwr = 0;
-			begin_move.feedrate = options.speed.rapid;
+			begin_move.feedrate = options.speed.value;
 			begin_move.type = instruction::move::etype::rapid;
 			end_move.x += 1;
 			return std::make_pair(begin_move, end_move);
@@ -187,7 +187,7 @@ semi::gcodes semi::generator::workspace_preview(const QImage &img, semi::options
 
 	auto gcode_move = [&, offsets{center_offset(img, opts)}](const float x, const float y, const u16 pwr) {
 		const auto [x_offset, y_offset] = offsets;
-		instruction::move move(instruction::move::etype::rapid, opts.speed.rapid, instruction::power(pwr));
+		instruction::move move(instruction::move::etype::rapid, opts.speed.value, instruction::power(pwr));
 		move.x = x - x_offset;
 		move.y = y - y_offset;
 
