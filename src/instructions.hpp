@@ -77,7 +77,7 @@ struct move {
 
 	float x{};
 	float y{};
-	power pwr{0};
+	power pwr{-1};
 	int feedrate{1000};
 	escale scale{escale::dpi};
 	etype type{etype::precise};
