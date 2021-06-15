@@ -54,6 +54,7 @@ public:
 
 private:
 	const double m_precision{calculate_precision(300.0)};
+	mutable std::optional<int> m_last_feedrate;
 };
 
 } // namespace generator

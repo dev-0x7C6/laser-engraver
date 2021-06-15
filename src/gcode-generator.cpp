@@ -47,8 +47,12 @@ std::string gcode::generator::grbl::operator()(const instruction::move v) const 
 	ret += " X" + convert(calc(v.x));
 	ret += " Y" + convert(calc(v.y));
 
-	if (instruction::move::etype::rapid != v.type)
-		ret += " F" + std::to_string(v.feedrate); // glbr do not react on feedrate for rapid moves
+	if (instruction::move::etype::rapid != v.type) {
+		if (m_last_feedrate != v.feedrate) {
+			ret += " F" + std::to_string(v.feedrate);
+			m_last_feedrate = v.feedrate;
+		}
+	}
 
 	ret += " S" + std::to_string(v.pwr.duty);
 
