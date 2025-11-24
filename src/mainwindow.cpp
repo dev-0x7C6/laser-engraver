@@ -58,12 +58,12 @@ MainWindow::MainWindow(QWidget *parent)
 	m_actionDisconnectEngraver = file->addAction("Disconnect", this, &MainWindow::disconnectEngraver);
 	m_actionConnectEngraver->setIcon(QIcon::fromTheme("network-wired"));
 	m_actionDisconnectEngraver->setIcon(QIcon::fromTheme("network-offline"));
-	auto print = file->addAction(QIcon::fromTheme("document-print"), "&Print", this, &MainWindow::print, QKeySequence::Print);
-	file->addAction(QIcon::fromTheme("document-print-preview"), "Preview", this, &MainWindow::preview, QKeySequence(Qt::Key::Key_P));
-	file->addAction(QIcon::fromTheme("document-save"), "&Save As", this, &MainWindow::saveAs, QKeySequence::SaveAs);
-	auto open = file->addAction(QIcon::fromTheme("document-open"), "&Open", this, &MainWindow::insertImageObject, QKeySequence::Open);
+	auto print = file->addAction(QIcon::fromTheme("document-print"), "&Print", QKeySequence::Print, this, &MainWindow::print);
+	file->addAction(QIcon::fromTheme("document-print-preview"), "Preview", QKeySequence(Qt::Key::Key_P), this, &MainWindow::preview);
+	file->addAction(QIcon::fromTheme("document-save"), "&Save As", QKeySequence::SaveAs, this, &MainWindow::saveAs);
+	auto open = file->addAction(QIcon::fromTheme("document-open"), "&Open", QKeySequence::Open, this, &MainWindow::insertImageObject);
 	file->addSeparator();
-	file->addAction(QIcon::fromTheme("application-exit"), "&Close", this, &MainWindow::close, QKeySequence::Quit);
+	file->addAction(QIcon::fromTheme("application-exit"), "&Close", QKeySequence::Quit, this, &MainWindow::close);
 
 	connect(m_ui->dpi, qOverload<int>(&QSpinBox::valueChanged), this, [this](auto &&value) { m_grid->updateDpi(value, m_ui->scaleObjectsWithDpi->isChecked()); });
 
@@ -81,18 +81,18 @@ MainWindow::MainWindow(QWidget *parent)
 	workspace->addAction(QIcon::fromTheme("image-x-generic"), "Insert image", this, &MainWindow::insertImageObject);
 
 	auto object = menu->addMenu("&Object");
-	auto move_up = object->addAction(QIcon::fromTheme("go-up"), "Move Up", m_grid, &Workspace::selected_object_move_up, QKeySequence::Forward);
-	auto move_down = object->addAction(QIcon::fromTheme("go-down"), "Move Down", m_grid, &Workspace::selected_object_move_down, QKeySequence::Back);
-	auto move_top = object->addAction(QIcon::fromTheme("go-top"), "Raise to Top", m_grid, &Workspace::selected_object_raise_to_top, QKeySequence(Qt::Key::Key_Home));
-	auto move_bottom = object->addAction(QIcon::fromTheme("go-bottom"), "Lower to Bottom", m_grid, &Workspace::selected_object_lower_to_bottom, QKeySequence(Qt::Key::Key_End));
+	auto move_up = object->addAction(QIcon::fromTheme("go-up"), "Move Up", QKeySequence::Forward, m_grid, &Workspace::selected_object_move_up);
+	auto move_down = object->addAction(QIcon::fromTheme("go-down"), "Move Down", QKeySequence::Back, m_grid, &Workspace::selected_object_move_down);
+	auto move_top = object->addAction(QIcon::fromTheme("go-top"), "Raise to Top", QKeySequence(Qt::Key::Key_Home), m_grid, &Workspace::selected_object_raise_to_top);
+	auto move_bottom = object->addAction(QIcon::fromTheme("go-bottom"), "Lower to Bottom", QKeySequence(Qt::Key::Key_End), m_grid, &Workspace::selected_object_lower_to_bottom);
 
 	object->addSeparator();
-	auto object_zoom_in_half = object->addAction(QIcon::fromTheme("zoom-in"), "Zoom in", this, &MainWindow::zoomInObject, QKeySequence(Qt::Key::Key_Plus));
-	auto object_zoom_out_half = object->addAction(QIcon::fromTheme("zoom-out"), "Zoom out", this, &MainWindow::zoomOutObject, QKeySequence(Qt::Key::Key_Minus));
+	auto object_zoom_in_half = object->addAction(QIcon::fromTheme("zoom-in"), "Zoom in", QKeySequence(Qt::Key::Key_Plus), this, &MainWindow::zoomInObject);
+	auto object_zoom_out_half = object->addAction(QIcon::fromTheme("zoom-out"), "Zoom out", QKeySequence(Qt::Key::Key_Minus), this, &MainWindow::zoomOutObject);
 	object->addSeparator();
-	auto center_object = object->addAction(QIcon::fromTheme("format-justify-center"), "Center", m_grid, &Workspace::selected_object_center, QKeySequence(Qt::Key::Key_C));
+	auto center_object = object->addAction(QIcon::fromTheme("format-justify-center"), "Center", QKeySequence(Qt::Key::Key_C), m_grid, &Workspace::selected_object_center);
 	object->addSeparator();
-	auto remove = object->addAction(QIcon::fromTheme("edit-delete"), "Delete", m_grid, &Workspace::selected_object_remove, QKeySequence::Delete);
+	auto remove = object->addAction(QIcon::fromTheme("edit-delete"), "Delete", QKeySequence::Delete, m_grid, &Workspace::selected_object_remove);
 	auto edit_label = object->addAction("Edit label", this, &MainWindow::editLabelObject);
 
 	for (auto &&action : {move_up, move_down, move_top, move_bottom, remove, object_zoom_in_half, object_zoom_out_half, center_object, edit_label})
@@ -103,16 +103,16 @@ MainWindow::MainWindow(QWidget *parent)
 	using namespace engraver;
 
 	auto tool = menu->addMenu("&Commands");
-	auto home = tool->addAction(QIcon::fromTheme("go-home"), "Home", &m_spindle, &spindle::manager::home, QKeySequence(Qt::Key::Key_H));
-	auto new_home = tool->addAction(QIcon::fromTheme("go-home"), "Save as Home", &m_spindle, &spindle::manager::home_and_save, QKeySequence(Qt::Key::Key_S));
+	auto home = tool->addAction(QIcon::fromTheme("go-home"), "Home", QKeySequence(Qt::Key::Key_H), &m_spindle, &spindle::manager::home);
+	auto new_home = tool->addAction(QIcon::fromTheme("go-home"), "Save as Home", QKeySequence(Qt::Key::Key_S), &m_spindle, &spindle::manager::home_and_save);
 	tool->addSeparator();
 	m_actionLaserState = tool->addAction(
-		"Laser preview", this, &MainWindow::toggleSpindle, QKeySequence(Qt::Key::Key_Space));
+		"Laser preview", QKeySequence(Qt::Key::Key_Space), this, &MainWindow::toggleSpindle);
 	tool->addSeparator();
-	auto go_u = tool->addAction(QIcon::fromTheme("go-up"), "Go Up", &m_spindle, &spindle::manager::move_up, QKeySequence(Qt::Key::Key_Up));
-	auto go_d = tool->addAction(QIcon::fromTheme("go-down"), "Go Down", &m_spindle, &spindle::manager::move_down, QKeySequence(Qt::Key::Key_Down));
-	auto go_l = tool->addAction(QIcon::fromTheme("go-previous"), "Go Left", &m_spindle, &spindle::manager::move_left, QKeySequence(Qt::Key::Key_Left));
-	auto go_r = tool->addAction(QIcon::fromTheme("go-next"), "Go Right", &m_spindle, &spindle::manager::move_right, QKeySequence(Qt::Key::Key_Right));
+	auto go_u = tool->addAction(QIcon::fromTheme("go-up"), "Go Up", QKeySequence(Qt::Key::Key_Up), &m_spindle, &spindle::manager::move_up);
+	auto go_d = tool->addAction(QIcon::fromTheme("go-down"), "Go Down", QKeySequence(Qt::Key::Key_Down), &m_spindle, &spindle::manager::move_down);
+	auto go_l = tool->addAction(QIcon::fromTheme("go-previous"), "Go Left", QKeySequence(Qt::Key::Key_Left), &m_spindle, &spindle::manager::move_left);
+	auto go_r = tool->addAction(QIcon::fromTheme("go-next"), "Go Right", QKeySequence(Qt::Key::Key_Right), &m_spindle, &spindle::manager::move_right);
 
 	m_actionLaserState->setCheckable(true);
 	m_ui->turnLaserOn->setDefaultAction(m_actionLaserState);
@@ -129,7 +129,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_actionDisconnectEngraver->setVisible(false);
 
 	auto window = menu->addMenu("&Window");
-	window->addAction(QIcon::fromTheme("view-fullscreen"), "Fullscreen", this, &MainWindow::toggleFullscreen, QKeySequence(Qt::Key_F11));
+	window->addAction(QIcon::fromTheme("view-fullscreen"), "Fullscreen", QKeySequence(Qt::Key_F11), this, &MainWindow::toggleFullscreen);
 
 	auto machine = menu->addMenu("&Settings");
 	machine->addAction(QIcon::fromTheme("list-add"), "Add engraver", &m_engraverManager, &EngraverManager::addEngraver);

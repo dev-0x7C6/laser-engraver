@@ -1,20 +1,16 @@
-cmake_minimum_required(VERSION 3.12...3.20)
+cmake_minimum_required(VERSION 3.20)
 
-project(laser-engraver-toolkit)
+project(laser-engraver-toolkit VERSION 0.8.0)
 
 option(TESTS "Build unit tests" ON)
 option(BENCHMARKS "Build benchmarks" ON)
-
-if (TESTS)
-    find_package(GTest)
-endif()
 
 if (BENCHMARKS)
     include(FindPkgConfig)
     pkg_check_modules(BENCHMARK REQUIRED IMPORTED_TARGET benchmark)
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -22,7 +18,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt5 COMPONENTS Core Gui Widgets SerialPort REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets SerialPort REQUIRED)
 find_package(Threads)
 
 
@@ -34,8 +30,8 @@ add_library(semi-gcode-lib STATIC
 )
 
 target_link_libraries(semi-gcode-lib PUBLIC
-    Qt5::Core
-    Qt5::Widgets
+    Qt6::Core
+    Qt6::Widgets
 )
 
 set(sources
@@ -47,6 +43,9 @@ set(sources
         src/dialogs/font-dialog.cpp
         src/dialogs/font-dialog.h
         src/dialogs/font-dialog.ui
+        glbr-settings.hpp
+        glbr-settings.cpp
+        glbr-settings.ui
         src/engraver-connection.cpp
         src/engraver-connection.h
         src/engraver-manager.cpp
@@ -90,6 +89,8 @@ set(sources
 )
 
 if (TESTS)
+    find_package(GTest)
+
     add_executable(laser-engraver-tests
             src/ut/instruction-tests.cpp
             src/ut/main.cpp
@@ -117,9 +118,9 @@ target_compile_definitions(laser-engraver-toolkit PRIVATE QT_DEPRECATED_WARNINGS
 target_compile_definitions(laser-engraver-toolkit PRIVATE QT_DISABLE_DEPRECATED_BEFORE=0x060000)
 
 target_link_libraries(laser-engraver-toolkit PRIVATE
-    Qt5::Core
-    Qt5::Widgets
-    Qt5::SerialPort
+    Qt6::Core
+    Qt6::Widgets
+    Qt6::SerialPort
     Threads::Threads
     semi-gcode-lib
 )
